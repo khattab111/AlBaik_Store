@@ -1,0 +1,38 @@
+<?php
+
+return [
+    'language' => 'Language',
+    'switch_to_arabic' => 'العربية',
+    'switch_to_english' => 'English',
+    'groups' => [
+        'Catalog' => 'Catalog',
+        'Sales' => 'Sales',
+        'Inventory' => 'Inventory',
+        'Marketing' => 'Marketing',
+        'Settings' => 'Settings',
+        'Reports' => 'Reports',
+        'Customers' => 'Customers',
+    ],
+    'resources' => [
+        'activity-logs' => ['singular' => 'Activity Log', 'plural' => 'Activity Logs'],
+        'banners' => ['singular' => 'Banner', 'plural' => 'Banners'],
+        'brands' => ['singular' => 'Brand', 'plural' => 'Brands'],
+        'categories' => ['singular' => 'Category', 'plural' => 'Categories'],
+        'coupons' => ['singular' => 'Coupon', 'plural' => 'Coupons'],
+        'currencies' => ['singular' => 'Currency', 'plural' => 'Currencies'],
+        'flash-sales' => ['singular' => 'Flash Sale', 'plural' => 'Flash Sales'],
+        'inventory-movements' => ['singular' => 'Inventory Movement', 'plural' => 'Inventory Movements'],
+        'orders' => ['singular' => 'Order', 'plural' => 'Orders'],
+        'payment-methods' => ['singular' => 'Payment Method', 'plural' => 'Payment Methods'],
+        'payments' => ['singular' => 'Payment', 'plural' => 'Payments'],
+        'products' => ['singular' => 'Product', 'plural' => 'Products'],
+        'reviews' => ['singular' => 'Review', 'plural' => 'Reviews'],
+        'settings' => ['singular' => 'Setting', 'plural' => 'Settings'],
+        'shipping-methods' => ['singular' => 'Shipping Method', 'plural' => 'Shipping Methods'],
+        'shipping-rules' => ['singular' => 'Shipping Rule', 'plural' => 'Shipping Rules'],
+        'shipping-zones' => ['singular' => 'Shipping Zone', 'plural' => 'Shipping Zones'],
+        'suppliers' => ['singular' => 'Supplier', 'plural' => 'Suppliers'],
+        'users' => ['singular' => 'User', 'plural' => 'Users'],
+        'warehouses' => ['singular' => 'Warehouse', 'plural' => 'Warehouses'],
+    ],
+];

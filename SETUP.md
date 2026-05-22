@@ -1,0 +1,88 @@
+# AlBaik Store Setup
+
+1. Copy environment and set database credentials:
+
+```bash
+cp .env.example .env
+# edit .env (DB_* and APP_URL)
+```
+
+2. Install PHP deps:
+
+```bash
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+```
+
+3. Install JS deps and build:
+
+```bash
+npm install --legacy-peer-deps
+npm run dev
+```
+
+## Production checklist
+
+Use MySQL and Redis in production:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+DB_CONNECTION=mysql
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+```
+
+Then run:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan storage:link
+php artisan queue:work redis --tries=3 --timeout=90
+```
+
+Recommended services:
+
+- Supervisor or systemd for `queue:work`.
+- Cron entry for Laravel scheduler: `php artisan schedule:run` every minute.
+- HTTPS, secure cookies, and a production mail driver.
+- Redis-backed cache, sessions, and queues.
+- Daily database backups and object storage for uploaded media.
+
+Notes:
+
+- React entry: `resources/js/entry.jsx`
+- Filament admin installed via Composer
+- See `vite.config.js` for built assets
+- Admin panel: `/admin`
+- API routes are intentionally disabled in the current Filament-first phase.
+
+## Demo accounts
+
+After running `php artisan db:seed`, use:
+
+- Admin: `admin@qr.com` / `password`
+- Super Admin: `admin@albaikstore.local` / `password`
+- Customer: `customer@qr.com` / `password`
+- Wholesale Customer: `wholesale@qr.com` / `password`
+
+## Current admin modules
+
+- Products, variants, images, categories, brands, tags, suppliers
+- Orders, payments, payment methods, invoices, order timeline
+- Shipping methods, shipping zones, shipping rules
+- Coupons and flash sales
+- Warehouses and inventory movements
+- Reviews, banners, settings, currencies
+- Users, roles, permissions
+- Activity logs
+- Dashboard stats and latest orders
