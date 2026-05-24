@@ -23,4 +23,13 @@ class OrderController extends Controller
             'order' => $order->load(['items.product', 'items.variant', 'paymentMethod', 'shippingMethod', 'payments', 'timeline']),
         ]);
     }
+
+    public function success(Request $request, Order $order): View
+    {
+        abort_unless($order->user_id === $request->user()->id, 403);
+
+        return view('orders.success', [
+            'order' => $order->load(['paymentMethod', 'shippingMethod', 'payments']),
+        ]);
+    }
 }

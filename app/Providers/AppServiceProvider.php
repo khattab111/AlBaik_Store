@@ -7,17 +7,21 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Services\CurrencyService;
 use App\Services\DiscountService;
+use App\Services\GuestCartService;
 use App\Services\InventoryService;
 use App\Services\OrderService;
 use App\Services\OrderWorkflowService;
 use App\Services\PaymentService;
 use App\Services\ProductService;
 use App\Services\ShippingService;
+use App\Services\SiteSettingService;
 use App\Events\OrderPlaced;
 use App\Listeners\QueueOrderInvoice;
+use App\Models\Category;
 use App\Models\Order;
 use App\Observers\OrderObserver;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -36,13 +40,47 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PaymentService::class);
         $this->app->singleton(DiscountService::class);
         $this->app->singleton(OrderWorkflowService::class);
+        $this->app->singleton(SiteSettingService::class);
     }
 
     public function boot(): void
     {
         Event::listen(OrderPlaced::class, QueueOrderInvoice::class);
         Order::observe(OrderObserver::class);
+        $this->shareStorefrontNavigation();
         $this->configureFilamentTranslations();
+    }
+
+    private function shareStorefrontNavigation(): void
+    {
+        View::composer('layouts.app', function ($view): void {
+            $user = auth()->user();
+            $siteSettings = app(SiteSettingService::class);
+            $cartCount = 0;
+            $wishlistCount = 0;
+
+            if ($user) {
+                $cart = $user->cart()->first();
+                $cartCount = $cart ? (int) $cart->items()->sum('quantity') : 0;
+                $wishlistCount = (int) $user->wishlist()->count();
+            } else {
+                $cartCount = app(GuestCartService::class)->count();
+            }
+
+            $view->with([
+                'navCategories' => Category::where('status', true)
+                    ->whereNull('parent_id')
+                    ->withCount('products')
+                    ->orderBy('name->'.app()->getLocale())
+                    ->take(6)
+                    ->get(),
+                'cartCount' => $cartCount,
+                'wishlistCount' => $wishlistCount,
+                'siteIdentity' => $siteSettings->identity(),
+                'siteContact' => $siteSettings->contact(),
+                'siteSocial' => $siteSettings->social(),
+            ]);
+        });
     }
 
     private function configureFilamentTranslations(): void

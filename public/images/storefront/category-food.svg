@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" role="img" aria-labelledby="title">
+  <title id="title">Food category</title>
+  <rect width="420" height="300" rx="28" fill="#fff7ed"/>
+  <circle cx="96" cy="72" r="54" fill="#fee2e2"/>
+  <rect x="78" y="122" width="250" height="104" rx="52" fill="#f59e0b"/>
+  <path d="M102 123c36-58 159-58 202 0" fill="#b91c1c"/>
+  <circle cx="145" cy="94" r="10" fill="#fff"/>
+  <circle cx="204" cy="84" r="10" fill="#fff"/>
+  <circle cx="265" cy="96" r="10" fill="#fff"/>
+  <rect x="122" y="172" width="172" height="18" rx="9" fill="#7f1d1d" opacity=".7"/>
+</svg>

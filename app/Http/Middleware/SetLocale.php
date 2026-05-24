@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\LanguageService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -12,14 +13,30 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = session('locale', config('app.locale', 'ar'));
+        $languages = app(LanguageService::class)->active();
+        $supportedLocales = array_keys($languages);
+        $fallbackLocale = config('locales.fallback', config('app.fallback_locale', 'en'));
+        $defaultLocale = app(LanguageService::class)->defaultCode();
+        $locale = session('locale', $request->cookie('locale', $defaultLocale));
 
-        if (! in_array($locale, ['ar', 'en'], true)) {
-            $locale = 'ar';
+        if (! in_array($locale, $supportedLocales, true)) {
+            $locale = in_array($fallbackLocale, $supportedLocales, true)
+                ? $fallbackLocale
+                : ($supportedLocales[0] ?? 'en');
         }
 
         App::setLocale($locale);
-        View::share('isRtl', $locale === 'ar');
+        App::setFallbackLocale($fallbackLocale);
+
+        $localeConfig = $languages[$locale] ?? [];
+        $direction = $localeConfig['direction'] ?? 'ltr';
+
+        View::share([
+            'currentLocale' => $locale,
+            'supportedLocales' => $languages,
+            'textDirection' => $direction,
+            'isRtl' => $direction === 'rtl',
+        ]);
 
         return $next($request);
     }

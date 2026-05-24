@@ -12,9 +12,11 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\PaymentMethod;
 use App\Models\ShippingMethod;
+use App\Models\User;
 use App\Repositories\CartRepository;
 use App\Services\InventoryService;
 use App\Services\PaymentService;
+use App\Services\ProductPricingService;
 use App\Services\ShippingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,12 +28,14 @@ class CreateOrderFromCart
         private readonly InventoryService $inventory,
         private readonly ShippingService $shipping,
         private readonly PaymentService $payments,
+        private readonly ProductPricingService $pricing,
     ) {}
 
     public function handle(CheckoutData $data): Order
     {
         return DB::transaction(function () use ($data) {
-            $cart = $this->carts->findForUser($data->userId)->load(['items.product', 'items.variant']);
+            $cart = $this->carts->findForUser($data->userId)->load(['items.product.priceTiers', 'items.variant']);
+            $user = User::findOrFail($data->userId);
 
             if ($cart->items->isEmpty()) {
                 throw ValidationException::withMessages(['cart' => 'Cart is empty.']);
@@ -45,7 +49,17 @@ class CreateOrderFromCart
                 $this->inventory->assertAvailable($item->product, $item->quantity, $item->variant_id);
             }
 
-            $subtotal = $cart->items->sum(fn (CartItem $item) => $item->quantity * (float) $item->unit_price);
+            $pricedItems = $cart->items->map(function (CartItem $item) use ($user): array {
+                $price = $this->pricing->getPriceForUser($item->product, $user, $item->quantity);
+
+                return [
+                    'item' => $item,
+                    'price' => $price,
+                    'subtotal' => round($item->quantity * $price->price, 2),
+                ];
+            });
+
+            $subtotal = $pricedItems->sum('subtotal');
             $quantity = $cart->items->sum('quantity');
             $weight = $cart->items->sum(fn (CartItem $item) => $item->quantity * (float) $item->product->weight);
             $discount = $this->discountAmount($data->couponCode, $subtotal);
@@ -76,14 +90,21 @@ class CreateOrderFromCart
                 'shipping_street' => $shippingAddress->street,
             ]);
 
-            foreach ($cart->items as $item) {
+            foreach ($pricedItems as $pricedItem) {
+                /** @var CartItem $item */
+                $item = $pricedItem['item'];
+                $price = $pricedItem['price'];
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'variant_id' => $item->variant_id,
                     'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'total_price' => $item->quantity * (float) $item->unit_price,
+                    'unit_price' => $price->price,
+                    'price_type' => $price->priceType,
+                    'applied_tier_id' => $price->appliedTierId,
+                    'subtotal' => $pricedItem['subtotal'],
+                    'total_price' => $pricedItem['subtotal'],
                 ]);
             }
 

@@ -19,6 +19,7 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\ProductPriceTier;
 use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Models\Setting;
@@ -29,6 +30,7 @@ use App\Models\Supplier;
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Models\WholesaleApplication;
 use App\Models\Wishlist;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -361,6 +363,46 @@ class ShopSeeder extends Seeder
             ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-main.jpg"], ['alt_text' => $data['name'], 'is_primary' => true]);
             ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-gallery.jpg"], ['alt_text' => $data['name'].' gallery', 'is_primary' => false]);
 
+            ProductPriceTier::updateOrCreate([
+                'product_id' => $product->id,
+                'type' => 'retail',
+                'min_quantity' => 1,
+            ], [
+                'price' => $data['retail_price'],
+                'is_active' => true,
+                'sort_order' => 1,
+            ]);
+
+            ProductPriceTier::updateOrCreate([
+                'product_id' => $product->id,
+                'type' => 'wholesale',
+                'min_quantity' => $data['wholesale_minimum_quantity'],
+            ], [
+                'price' => $data['wholesale_price'],
+                'is_active' => true,
+                'sort_order' => 10,
+            ]);
+
+            ProductPriceTier::updateOrCreate([
+                'product_id' => $product->id,
+                'type' => 'wholesale',
+                'min_quantity' => max(50, $data['wholesale_minimum_quantity'] * 2),
+            ], [
+                'price' => round($data['wholesale_price'] * 0.94, 2),
+                'is_active' => true,
+                'sort_order' => 20,
+            ]);
+
+            ProductPriceTier::updateOrCreate([
+                'product_id' => $product->id,
+                'type' => 'wholesale',
+                'min_quantity' => max(100, $data['wholesale_minimum_quantity'] * 4),
+            ], [
+                'price' => round($data['wholesale_price'] * 0.9, 2),
+                'is_active' => true,
+                'sort_order' => 30,
+            ]);
+
             foreach ($data['variants'] as $variantData) {
                 $variant = ProductVariant::updateOrCreate(['sku' => $variantData['sku']], [
                     'product_id' => $product->id,
@@ -413,8 +455,23 @@ class ShopSeeder extends Seeder
         Wishlist::updateOrCreate(['user_id' => $users['wholesale']->id, 'product_id' => $products['bulk-rice']->id]);
 
         $cart = Cart::firstOrCreate(['user_id' => $users['customer']->id], ['currency_id' => $currencies['USD']->id]);
-        CartItem::updateOrCreate(['cart_id' => $cart->id, 'product_id' => $products['sauce']->id, 'variant_id' => null], ['quantity' => 3, 'unit_price' => 3.50]);
-        CartItem::updateOrCreate(['cart_id' => $cart->id, 'product_id' => $products['bottle']->id, 'variant_id' => null], ['quantity' => 1, 'unit_price' => 29.99]);
+        CartItem::updateOrCreate(['cart_id' => $cart->id, 'product_id' => $products['sauce']->id, 'variant_id' => null], ['quantity' => 3, 'unit_price' => 3.50, 'price_type' => 'retail', 'applied_tier_id' => $products['sauce']->priceTiers()->where('type', 'retail')->value('id')]);
+        CartItem::updateOrCreate(['cart_id' => $cart->id, 'product_id' => $products['bottle']->id, 'variant_id' => null], ['quantity' => 1, 'unit_price' => 34.99, 'price_type' => 'retail', 'applied_tier_id' => $products['bottle']->priceTiers()->where('type', 'retail')->value('id')]);
+
+        WholesaleApplication::updateOrCreate(
+            ['email' => 'market.owner@example.test'],
+            [
+                'full_name' => 'Pending Wholesale Applicant',
+                'phone' => '+963900000099',
+                'whatsapp' => '+963900000099',
+                'business_name' => 'Demo Market',
+                'business_type' => 'Grocery / Food Supplies',
+                'city' => 'Damascus',
+                'address' => 'Main market street',
+                'notes' => 'Interested in weekly wholesale orders.',
+                'status' => WholesaleApplication::STATUS_PENDING,
+            ]
+        );
 
         Review::updateOrCreate(['product_id' => $products['sandwich']->id, 'user_id' => $users['customer']->id], ['rating' => 5, 'title' => 'Excellent taste', 'comment' => 'Great demo product for testing published reviews.', 'images' => [], 'is_published' => true]);
         Review::updateOrCreate(['product_id' => $products['bottle']->id, 'user_id' => $users['wholesale']->id], ['rating' => 4, 'title' => 'Good wholesale option', 'comment' => 'Useful item for business gifting.', 'images' => [], 'is_published' => false]);
@@ -461,9 +518,20 @@ class ShopSeeder extends Seeder
             ]);
 
             foreach ($data['items'] as $item) {
-                OrderItem::updateOrCreate(['order_id' => $order->id, 'product_id' => $products[$item['product']]->id, 'variant_id' => null], [
+                $product = $products[$item['product']];
+                $priceType = (float) $item['unit'] < (float) $product->retail_price ? 'wholesale' : 'retail';
+                $tier = $product->priceTiers()
+                    ->where('type', $priceType)
+                    ->where('min_quantity', '<=', $item['qty'])
+                    ->orderByDesc('min_quantity')
+                    ->first();
+
+                OrderItem::updateOrCreate(['order_id' => $order->id, 'product_id' => $product->id, 'variant_id' => null], [
                     'quantity' => $item['qty'],
                     'unit_price' => $item['unit'],
+                    'price_type' => $priceType,
+                    'applied_tier_id' => $tier?->id,
+                    'subtotal' => $item['qty'] * $item['unit'],
                     'total_price' => $item['qty'] * $item['unit'],
                 ]);
             }
@@ -487,11 +555,84 @@ class ShopSeeder extends Seeder
     private function seedSettingsAndBanners(): void
     {
         Setting::updateOrCreate(['key' => 'store.name'], ['group' => 'general', 'value' => ['en' => 'AlBaik Store', 'ar' => 'متجر البيك'], 'type' => 'json', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.tagline'], ['group' => 'identity', 'value' => ['en' => 'Premium Market', 'ar' => 'سوق مميز'], 'type' => 'json', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.short_description'], ['group' => 'identity', 'value' => ['en' => 'Original products, competitive prices, and a complete shopping experience for retail and wholesale customers.', 'ar' => 'منتجات أصلية، أسعار منافسة، وتجربة تسوق كاملة لعملاء التجزئة والجملة.'], 'type' => 'json', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.logo'], ['group' => 'identity', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.favicon'], ['group' => 'identity', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.default_product_image'], ['group' => 'identity', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.primary_color'], ['group' => 'identity', 'value' => ['value' => '#b91c1c'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.primary_hover_color'], ['group' => 'identity', 'value' => ['value' => '#991b1b'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.accent_color'], ['group' => 'identity', 'value' => ['value' => '#f59e0b'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.topbar_color'], ['group' => 'identity', 'value' => ['value' => '#020617'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.header_bg_color'], ['group' => 'identity', 'value' => ['value' => '#ffffff'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.nav_bg_color'], ['group' => 'identity', 'value' => ['value' => '#ffffff'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.body_bg_color'], ['group' => 'identity', 'value' => ['value' => '#f8fafc'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.surface_color'], ['group' => 'identity', 'value' => ['value' => '#ffffff'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.surface_tint_color'], ['group' => 'identity', 'value' => ['value' => '#fff5f5'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.text_color'], ['group' => 'identity', 'value' => ['value' => '#0f172a'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.muted_text_color'], ['group' => 'identity', 'value' => ['value' => '#64748b'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.border_color'], ['group' => 'identity', 'value' => ['value' => '#e2e8f0'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.hero_overlay_from'], ['group' => 'identity', 'value' => ['value' => 'rgba(2,6,23,.96)'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.hero_overlay_to'], ['group' => 'identity', 'value' => ['value' => 'rgba(185,28,28,.52)'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.default_locale'], ['group' => 'localization', 'value' => ['value' => 'ar'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.support_email'], ['group' => 'support', 'value' => ['value' => 'support@albaikstore.local'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'contact.email'], ['group' => 'contact', 'value' => ['value' => 'support@albaikstore.local'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'contact.phone'], ['group' => 'contact', 'value' => ['value' => '+963 900 000 000'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'contact.whatsapp'], ['group' => 'contact', 'value' => ['value' => '+963 900 000 000'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'contact.address'], ['group' => 'contact', 'value' => ['en' => 'Damascus, Syria', 'ar' => 'دمشق، سوريا'], 'type' => 'json', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'contact.working_hours'], ['group' => 'contact', 'value' => ['en' => 'Daily from 9:00 to 18:00', 'ar' => 'يومياً من 9:00 إلى 18:00'], 'type' => 'json', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'contact.map_url'], ['group' => 'contact', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'social.facebook'], ['group' => 'social', 'value' => ['value' => 'https://facebook.com'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'social.instagram'], ['group' => 'social', 'value' => ['value' => 'https://instagram.com'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'social.youtube'], ['group' => 'social', 'value' => ['value' => 'https://youtube.com'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'orders.low_stock_alert_threshold'], ['group' => 'inventory', 'value' => ['value' => 10], 'type' => 'number', 'is_public' => false]);
 
-        Banner::updateOrCreate(['placement' => 'home', 'sort_order' => 1], ['title' => 'Launch Offers', 'subtitle' => 'Retail and wholesale deals are ready for testing.', 'image' => 'demo/banners/launch.jpg', 'url' => '/admin/flash-sales', 'is_active' => true]);
-        Banner::updateOrCreate(['placement' => 'shop', 'sort_order' => 2], ['title' => 'Wholesale Supplies', 'subtitle' => 'Bulk products with special prices.', 'image' => 'demo/banners/wholesale.jpg', 'url' => '/admin/products', 'is_active' => true]);
+        Banner::updateOrCreate(['placement' => 'home', 'sort_order' => 1], [
+            'title' => ['ar' => 'عروض الإطلاق', 'en' => 'Launch Offers'],
+            'subtitle' => ['ar' => 'عروض التجزئة والجملة جاهزة للتجربة مع دفع يدوي وشحن مرن.', 'en' => 'Retail and wholesale deals are ready for testing with manual payment and flexible shipping.'],
+            'eyebrow' => ['ar' => 'متجر إلكتروني مميز', 'en' => 'Premium online store'],
+            'primary_button_text' => ['ar' => 'تسوق الآن', 'en' => 'Shop Now'],
+            'secondary_button_text' => ['ar' => 'مشاهدة العروض', 'en' => 'View Offers'],
+            'title_ar' => 'عروض الإطلاق',
+            'title_en' => 'Launch Offers',
+            'subtitle_ar' => 'عروض التجزئة والجملة جاهزة للتجربة مع دفع يدوي وشحن مرن.',
+            'subtitle_en' => 'Retail and wholesale deals are ready for testing with manual payment and flexible shipping.',
+            'eyebrow_ar' => 'متجر إلكتروني مميز',
+            'eyebrow_en' => 'Premium online store',
+            'primary_button_text_ar' => 'تسوق الآن',
+            'primary_button_text_en' => 'Shop Now',
+            'secondary_button_text_ar' => 'مشاهدة العروض',
+            'secondary_button_text_en' => 'View Offers',
+            'image' => 'demo/banners/launch.jpg',
+            'url' => '/products',
+            'secondary_url' => '/offers',
+            'background_color' => '#fff7f7',
+            'text_color' => null,
+            'is_active' => true,
+        ]);
+        Banner::updateOrCreate(['placement' => 'home', 'sort_order' => 2], [
+            'title' => ['ar' => 'توريدات الجملة', 'en' => 'Wholesale Supplies'],
+            'subtitle' => ['ar' => 'منتجات بكميات كبيرة وأسعار خاصة لعملاء الجملة.', 'en' => 'Bulk products with special prices for wholesale customers.'],
+            'eyebrow' => ['ar' => 'حلول تجارية', 'en' => 'Business supplies'],
+            'primary_button_text' => ['ar' => 'تصفح المنتجات', 'en' => 'Browse Products'],
+            'secondary_button_text' => ['ar' => 'تواصل معنا', 'en' => 'Contact Us'],
+            'title_ar' => 'توريدات الجملة',
+            'title_en' => 'Wholesale Supplies',
+            'subtitle_ar' => 'منتجات بكميات كبيرة وأسعار خاصة لعملاء الجملة.',
+            'subtitle_en' => 'Bulk products with special prices for wholesale customers.',
+            'eyebrow_ar' => 'حلول تجارية',
+            'eyebrow_en' => 'Business supplies',
+            'primary_button_text_ar' => 'تصفح المنتجات',
+            'primary_button_text_en' => 'Browse Products',
+            'secondary_button_text_ar' => 'تواصل معنا',
+            'secondary_button_text_en' => 'Contact Us',
+            'image' => 'demo/banners/wholesale.jpg',
+            'url' => '/products',
+            'secondary_url' => '/contact',
+            'background_color' => '#f8fafc',
+            'text_color' => null,
+            'is_active' => true,
+        ]);
+        Banner::updateOrCreate(['placement' => 'shop', 'sort_order' => 1], ['title' => ['ar' => 'توريدات الجملة', 'en' => 'Wholesale Supplies'], 'subtitle' => ['ar' => 'منتجات بكميات كبيرة وأسعار خاصة.', 'en' => 'Bulk products with special prices.'], 'image' => 'demo/banners/wholesale.jpg', 'url' => '/products', 'is_active' => true]);
     }
 }

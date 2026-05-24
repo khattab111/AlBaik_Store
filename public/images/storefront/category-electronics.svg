@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" role="img" aria-labelledby="title">
+  <title id="title">Electronics category</title>
+  <rect width="420" height="300" rx="28" fill="#eef2ff"/>
+  <rect x="120" y="54" width="180" height="220" rx="28" fill="#0f172a"/>
+  <rect x="140" y="82" width="140" height="150" rx="18" fill="#ffffff"/>
+  <circle cx="210" cy="252" r="10" fill="#94a3b8"/>
+  <path d="M168 132h84M168 164h56M168 196h72" stroke="#ef4444" stroke-width="14" stroke-linecap="round"/>
+</svg>

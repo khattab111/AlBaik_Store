@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -67,6 +68,22 @@ class User extends Authenticatable implements FilamentUser
     public function cart()
     {
         return $this->hasOne(Cart::class);
+    }
+
+    public function wholesaleApplications(): HasMany
+    {
+        return $this->hasMany(WholesaleApplication::class);
+    }
+
+    public function reviewedWholesaleApplications(): HasMany
+    {
+        return $this->hasMany(WholesaleApplication::class, 'reviewed_by');
+    }
+
+    public function isWholesaleCustomer(): bool
+    {
+        return $this->type === 'wholesale_customer'
+            || $this->hasAnyRole(['Wholesale Customer', 'wholesale_customer']);
     }
 
     public function canAccessPanel(Panel $panel): bool

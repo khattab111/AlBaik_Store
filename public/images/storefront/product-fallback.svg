@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 520" role="img" aria-labelledby="title">
+  <title id="title">Product placeholder</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1f2"/>
+      <stop offset=".55" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="pack" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ef4444"/>
+      <stop offset="1" stop-color="#991b1b"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="520" rx="34" fill="url(#bg)"/>
+  <ellipse cx="320" cy="430" rx="180" ry="28" fill="#e2e8f0"/>
+  <rect x="210" y="118" width="220" height="270" rx="34" fill="#fff"/>
+  <rect x="238" y="150" width="164" height="130" rx="24" fill="url(#pack)"/>
+  <circle cx="320" cy="215" r="46" fill="#fbbf24"/>
+  <rect x="250" y="312" width="140" height="16" rx="8" fill="#0f172a"/>
+  <rect x="270" y="346" width="100" height="12" rx="6" fill="#94a3b8"/>
+</svg>

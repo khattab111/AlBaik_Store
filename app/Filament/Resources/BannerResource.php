@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BannerResource\Pages;
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Models\Banner;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class BannerResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = Banner::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
@@ -23,13 +24,39 @@ class BannerResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('title')->required(),
-            Forms\Components\TextInput::make('subtitle'),
-            Forms\Components\FileUpload::make('image')->image()->directory('banners'),
-            Forms\Components\TextInput::make('url')->url(),
-            Forms\Components\TextInput::make('placement')->required()->default('home'),
-            Forms\Components\TextInput::make('sort_order')->numeric()->default(0),
-            Forms\Components\Toggle::make('is_active')->default(true),
+            Forms\Components\Tabs::make('banner_tabs')
+                ->tabs([
+                    Forms\Components\Tabs\Tab::make(__('Content'))
+                        ->schema([
+                            static::translatableTabs(fn (string $code): array => [
+                                Forms\Components\TextInput::make("title.{$code}")->label(__('Title'))->required(),
+                                Forms\Components\TextInput::make("eyebrow.{$code}")->label(__('Eyebrow')),
+                                Forms\Components\Textarea::make("subtitle.{$code}")->label(__('Subtitle'))->rows(3),
+                                Forms\Components\TextInput::make("primary_button_text.{$code}")->label(__('Primary button')),
+                                Forms\Components\TextInput::make("secondary_button_text.{$code}")->label(__('Secondary button')),
+                            ]),
+                        ]),
+                    Forms\Components\Tabs\Tab::make(__('Actions and media'))
+                        ->schema([
+                            Forms\Components\FileUpload::make('image')->image()->directory('banners')->disk('public')->visibility('public'),
+                            Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\TextInput::make('url')->label(__('Primary URL')),
+                                Forms\Components\TextInput::make('secondary_url')->label(__('Secondary URL')),
+                            ]),
+                        ]),
+                    Forms\Components\Tabs\Tab::make(__('Display'))
+                        ->schema([
+                            Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\TextInput::make('placement')->required()->default('home'),
+                                Forms\Components\TextInput::make('sort_order')->numeric()->default(0),
+                                Forms\Components\ColorPicker::make('background_color')->label(__('Background color')),
+                                Forms\Components\ColorPicker::make('text_color')->label(__('Text color')),
+                                Forms\Components\DateTimePicker::make('starts_at')->label(__('Starts at')),
+                                Forms\Components\DateTimePicker::make('ends_at')->label(__('Ends at')),
+                            ]),
+                            Forms\Components\Toggle::make('is_active')->default(true),
+                        ]),
+                ]),
         ]);
     }
 

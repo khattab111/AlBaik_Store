@@ -1,5 +1,55 @@
 # AlBaik Store Setup
 
+## Local Docker setup
+
+This project requires PHP 8.2+ with MySQL, DOM/XML, Intl, Zip, and related extensions. If those extensions are not installed on the host, use the included Docker setup:
+
+```bash
+docker compose build app
+docker compose up -d mysql
+docker compose run --rm app composer install
+docker compose run --rm app php artisan key:generate
+docker compose run --rm app php artisan migrate --seed
+npm ci --legacy-peer-deps
+npm run build
+docker compose up -d app
+```
+
+Open:
+
+```text
+http://localhost:8000
+http://localhost:8000/admin
+```
+
+MySQL is exposed on host port `3307` and is available to Laravel inside Docker as:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=albaik_store
+DB_USERNAME=albaik
+DB_PASSWORD=albaik_password
+```
+
+Verify the setup:
+
+```bash
+docker compose run --rm app composer check-platform-reqs
+docker compose run --rm app php artisan test
+```
+
+If you want Vite dev mode instead of a static build:
+
+```bash
+docker compose --profile frontend up -d node
+```
+
+Then keep the app running at `http://localhost:8000`.
+
+## Manual host setup
+
 1. Copy environment and set database credentials:
 
 ```bash

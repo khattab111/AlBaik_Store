@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ str_replace('_', '-', $currentLocale ?? app()->getLocale()) }}" dir="{{ $textDirection ?? 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'AlBaik Store')</title>
+    <title>@yield('title', __('AlBaik Store'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 text-gray-950">
     <header class="border-b bg-white">
         <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-            <a href="{{ route('home') }}" class="font-bold">AlBaik Store</a>
+            <a href="{{ route('home') }}" class="font-bold">{{ __('AlBaik Store') }}</a>
             <nav class="flex flex-wrap gap-4 text-sm">
                 <a href="{{ route('shop.index') }}">{{ __('Shop') }}</a>
                 <a href="{{ route('brands.index') }}">{{ __('Brands') }}</a>
@@ -26,9 +26,11 @@
                     <a href="{{ route('customer.login') }}">{{ __('Login') }}</a>
                     <a href="{{ route('customer.register') }}">{{ __('Register') }}</a>
                 @endauth
-                <a href="{{ route('locale.switch', app()->getLocale() === 'ar' ? 'en' : 'ar') }}">
-                    {{ app()->getLocale() === 'ar' ? 'English' : 'العربية' }}
-                </a>
+                @foreach (($supportedLocales ?? config('locales.supported', [])) as $localeCode => $localeConfig)
+                    @if (($currentLocale ?? app()->getLocale()) !== $localeCode)
+                        <a href="{{ route('locale.switch', $localeCode) }}">{{ $localeConfig['native'] }}</a>
+                    @endif
+                @endforeach
             </nav>
         </div>
     </header>

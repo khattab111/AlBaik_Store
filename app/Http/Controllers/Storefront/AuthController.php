@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Services\GuestCartService;
 use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
@@ -34,6 +35,7 @@ class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+        app(GuestCartService::class)->mergeToUser($request->user()->id);
 
         return redirect()->intended(route('account.dashboard'));
     }
@@ -57,6 +59,7 @@ class AuthController extends Controller
         $user->assignRole(Role::findOrCreate('Customer'));
         Auth::login($user);
         $request->session()->regenerate();
+        app(GuestCartService::class)->mergeToUser($user->id);
 
         return redirect()->route('account.dashboard');
     }

@@ -1,5 +1,36 @@
 @extends('layouts.app')
+
 @section('title', __('Wishlist'))
+
 @section('content')
-<section class="mx-auto max-w-7xl px-4 py-10"><h1 class="mb-6 text-3xl font-bold">{{ __('Wishlist') }}</h1><div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">@forelse($items as $item)<div>@include('partials.product-card',['product'=>$item->product])<form method="POST" action="{{ route('favorites.toggle',$item->product) }}" class="mt-2">@csrf<button class="w-full rounded-lg border bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">{{ __('Remove') }}</button></form></div>@empty<p>{{ __('No favorite products.') }}</p>@endforelse</div><div class="mt-8">{{ $items->links() }}</div></section>
+<section class="store-section">
+    <nav class="store-breadcrumb" aria-label="{{ __('Breadcrumb') }}">
+        <a href="{{ route('home') }}" class="transition hover:text-red-700">{{ __('Home') }}</a>
+        <span aria-hidden="true">›</span>
+        <span class="text-slate-950">{{ __('Wishlist') }}</span>
+    </nav>
+
+    <div class="store-page-hero mb-8">
+        <p class="store-eyebrow">{{ __('Saved products') }}</p>
+        <h1 class="mt-2 text-4xl font-black leading-tight sm:text-5xl">{{ __('Wishlist') }}</h1>
+        <p class="mt-3 max-w-2xl leading-7 text-slate-600">{{ __('Keep your preferred products close and move them to cart when you are ready.') }}</p>
+    </div>
+    <div class="store-product-grid">
+        @forelse($items as $item)
+            <div class="grid gap-3">
+                @include('partials.product-card', ['product' => $item->product])
+                <form method="POST" action="{{ route('favorites.toggle', $item->product) }}">
+                    @csrf
+                    <button class="store-button-secondary w-full">{{ __('Remove') }}</button>
+                </form>
+            </div>
+        @empty
+            <div class="store-panel col-span-full p-12 text-center">
+                <h2 class="text-2xl font-black">{{ __('No favorite products.') }}</h2>
+                <a href="{{ route('products.index') }}" class="store-button-primary mt-6">{{ __('Browse Products') }}</a>
+            </div>
+        @endforelse
+    </div>
+    <div class="mt-8">{{ $items->links() }}</div>
+</section>
 @endsection

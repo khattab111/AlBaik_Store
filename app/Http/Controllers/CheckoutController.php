@@ -45,6 +45,6 @@ class CheckoutController extends Controller
             paymentReceiptPath: $receiptPath,
         ));
 
-        return redirect()->route('orders.show', $order)->with('status', __('Order created successfully.'));
+        return redirect()->route('checkout.success', $order)->with('status', __('Order created successfully.'));
     }
 }

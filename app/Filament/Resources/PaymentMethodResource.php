@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentMethodResource\Pages;
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Models\PaymentMethod;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class PaymentMethodResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = PaymentMethod::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
@@ -23,14 +24,16 @@ class PaymentMethodResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->required(),
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required(),
+                Forms\Components\Textarea::make("description.{$code}")->label(__('Description'))->rows(3),
+            ]),
             Forms\Components\TextInput::make('slug')->required()->unique(PaymentMethod::class, 'slug', ignoreRecord: true),
             Forms\Components\Select::make('type')->options([
                 'cod' => __('Cash on Delivery'),
                 'bank_transfer' => __('Bank Transfer'),
                 'manual' => __('Manual'),
             ])->required(),
-            Forms\Components\Textarea::make('description')->rows(3),
             Forms\Components\FileUpload::make('image')
                 ->image()
                 ->imageEditor()

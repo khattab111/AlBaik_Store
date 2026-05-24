@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Models\Category;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class CategoryResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
@@ -23,10 +24,12 @@ class CategoryResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->required()->maxLength(255),
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required()->maxLength(255),
+                Forms\Components\Textarea::make("description.{$code}")->label(__('Description'))->rows(3),
+            ]),
             Forms\Components\TextInput::make('slug')->required()->unique(Category::class, 'slug', ignoreRecord: true),
-            Forms\Components\Textarea::make('description')->rows(3),
-            Forms\Components\Select::make('parent_id')->label(__('Parent Category'))->relationship('parent', 'name')->preload(),
+            Forms\Components\Select::make('parent_id')->label(__('Parent Category'))->options(fn () => Category::query()->get()->pluck('name', 'id'))->preload(),
             Forms\Components\Toggle::make('status')->default(true),
         ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BrandResource\Pages;
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Models\Brand;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class BrandResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = Brand::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
@@ -23,9 +24,11 @@ class BrandResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->required()->maxLength(255),
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required()->maxLength(255),
+                Forms\Components\Textarea::make("description.{$code}")->label(__('Description'))->rows(4),
+            ]),
             Forms\Components\TextInput::make('slug')->required()->unique(Brand::class, 'slug', ignoreRecord: true),
-            Forms\Components\Textarea::make('description')->rows(4),
             Forms\Components\FileUpload::make('logo')
                 ->image()
                 ->imageEditor()

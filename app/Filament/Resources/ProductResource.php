@@ -3,7 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
+use App\Filament\Resources\ProductResource\RelationManagers\PriceTiersRelationManager;
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Product;
+use App\Models\Tag;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -13,7 +18,7 @@ use Filament\Tables\Table;
 
 class ProductResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = Product::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
@@ -24,20 +29,35 @@ class ProductResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make(__('Product Information'))->schema([
-                Forms\Components\TextInput::make('name')->required()->maxLength(255),
-                Forms\Components\TextInput::make('slug')->required()->unique(Product::class, 'slug', ignoreRecord: true),
-                Forms\Components\TextInput::make('sku')->required()->unique(Product::class, 'sku', ignoreRecord: true),
-                Forms\Components\TextInput::make('barcode')->maxLength(255),
-                Forms\Components\Select::make('brand_id')->relationship('brand', 'name')->searchable(),
+                static::translatableTabs(fn (string $code): array => [
+                    Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required()->maxLength(255),
+                    Forms\Components\Textarea::make("short_description.{$code}")->label(__('Short description'))->rows(3),
+                    Forms\Components\RichEditor::make("description.{$code}")->label(__('Description')),
+                    Forms\Components\TextInput::make("seo_title.{$code}")->label(__('SEO Title'))->maxLength(80),
+                    Forms\Components\TextInput::make("seo_description.{$code}")->label(__('SEO Description'))->maxLength(160),
+                ]),
+                Forms\Components\TextInput::make('slug')
+                    ->label(__('Slug'))
+                    ->helperText(__('Unique URL-friendly product link, for example classic-chicken-sandwich.'))
+                    ->required()
+                    ->unique(Product::class, 'slug', ignoreRecord: true),
+                Forms\Components\TextInput::make('sku')
+                    ->label('SKU')
+                    ->helperText(__('Internal stock code used to identify the product in inventory and orders.'))
+                    ->required()
+                    ->unique(Product::class, 'sku', ignoreRecord: true),
+                Forms\Components\TextInput::make('barcode')
+                    ->label(__('Barcode'))
+                    ->helperText(__('Optional barcode printed on the physical product or scanned by warehouse devices.'))
+                    ->maxLength(255),
+                Forms\Components\Select::make('brand_id')->options(fn () => Brand::where('status', true)->get()->pluck('name', 'id'))->searchable(),
                 Forms\Components\Select::make('supplier_id')->relationship('supplier', 'name')->searchable(),
-                Forms\Components\Select::make('category_id')->relationship('category', 'name')->searchable(),
-                Forms\Components\Select::make('tags')->relationship('tags', 'name')->multiple()->preload(),
-                Forms\Components\TextInput::make('retail_price')->required()->numeric(),
-                Forms\Components\TextInput::make('wholesale_price')->numeric(),
-                Forms\Components\TextInput::make('wholesale_minimum_quantity')->numeric(),
-                Forms\Components\TextInput::make('stock_quantity')->numeric()->default(0),
-                Forms\Components\TextInput::make('low_stock_threshold')->numeric()->default(5),
-                Forms\Components\TextInput::make('weight')->numeric()->default(0),
+                Forms\Components\Select::make('category_id')->options(fn () => Category::where('status', true)->get()->pluck('name', 'id'))->searchable(),
+                Forms\Components\Select::make('tags')->relationship('tags', 'name')->getOptionLabelFromRecordUsing(fn (Tag $record): string => $record->name)->multiple()->preload(),
+                Forms\Components\TextInput::make('retail_price')->label(__('Retail Price'))->required()->numeric()->helperText(__('One shared price for all languages.')),
+                Forms\Components\TextInput::make('stock_quantity')->label(__('Stock Quantity'))->numeric()->default(0)->helperText(__('One shared stock quantity for all languages.')),
+                Forms\Components\TextInput::make('low_stock_threshold')->label(__('Low stock threshold'))->numeric()->default(5),
+                Forms\Components\TextInput::make('weight')->label(__('Weight'))->numeric()->default(0)->helperText(__('Used by shipping rules and is not language-specific.')),
                 Forms\Components\Toggle::make('is_featured'),
                 Forms\Components\Toggle::make('status')->default(true),
             ]),
@@ -45,13 +65,13 @@ class ProductResource extends Resource
                 Forms\Components\Repeater::make('variants')
                     ->relationship()
                     ->schema([
-                        Forms\Components\TextInput::make('sku')->required()->maxLength(255),
-                        Forms\Components\TextInput::make('barcode')->maxLength(255),
+                        Forms\Components\TextInput::make('sku')->label('SKU')->helperText(__('Variant-specific stock code.'))->required()->maxLength(255),
+                        Forms\Components\TextInput::make('barcode')->label(__('Barcode'))->helperText(__('Optional barcode for this variant.'))->maxLength(255),
                         Forms\Components\KeyValue::make('attributes')->keyLabel('Attribute')->valueLabel('Value'),
-                        Forms\Components\TextInput::make('stock')->numeric()->default(0),
-                        Forms\Components\TextInput::make('reserved_stock')->numeric()->default(0)->disabled()->dehydrated(false),
-                        Forms\Components\TextInput::make('low_stock_threshold')->numeric()->default(5),
-                        Forms\Components\TextInput::make('price')->numeric()->default(0),
+                        Forms\Components\TextInput::make('stock')->label(__('Stock'))->numeric()->default(0)->helperText(__('Variant stock is shared across all languages.')),
+                        Forms\Components\TextInput::make('reserved_stock')->label(__('Reserved Stock'))->numeric()->default(0)->disabled()->dehydrated(false),
+                        Forms\Components\TextInput::make('low_stock_threshold')->label(__('Low stock threshold'))->numeric()->default(5),
+                        Forms\Components\TextInput::make('price')->label(__('Price'))->numeric()->default(0)->helperText(__('Variant price is shared across all languages.')),
                     ])
                     ->columns(2),
             ])->collapsed(),
@@ -65,12 +85,8 @@ class ProductResource extends Resource
                     ])
                     ->columns(3),
             ])->collapsed(),
-            Forms\Components\Section::make(__('Description & SEO'))->schema([
-                Forms\Components\Textarea::make('short_description')->rows(3),
-                Forms\Components\RichEditor::make('description'),
+            Forms\Components\Section::make(__('Media'))->schema([
                 Forms\Components\TextInput::make('video_url')->url(),
-                Forms\Components\TextInput::make('seo_title')->maxLength(80),
-                Forms\Components\TextInput::make('seo_description')->maxLength(160),
             ]),
         ]);
     }
@@ -104,6 +120,13 @@ class ProductResource extends Resource
             'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            PriceTiersRelationManager::class,
         ];
     }
 }

@@ -13,7 +13,7 @@ class FavoriteController extends Controller
     public function index(Request $request): View
     {
         return view('favorites.index', [
-            'items' => $request->user()->wishlist()->with('product.images', 'product.brand')->latest()->paginate(24),
+            'items' => $request->user()->wishlist()->with('product.images', 'product.brand', 'product.reviews')->latest()->paginate(24),
         ]);
     }
 

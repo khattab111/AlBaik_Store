@@ -59,9 +59,15 @@ class AdminPanelProvider extends PanelProvider
             )
             ->userMenuItems([
                 MenuItem::make()
-                    ->label(fn (): string => app()->getLocale() === 'ar' ? __('admin.switch_to_english') : __('admin.switch_to_arabic'))
+                    ->label(fn (): string => __('Language'))
                     ->icon('heroicon-o-language')
-                    ->url(fn (): string => route('locale.switch', app()->getLocale() === 'ar' ? 'en' : 'ar')),
+                    ->url(function (): string {
+                        $locales = array_keys(config('locales.supported', []));
+                        $currentIndex = array_search(app()->getLocale(), $locales, true);
+                        $nextLocale = $locales[(($currentIndex === false ? 0 : $currentIndex) + 1) % max(1, count($locales))] ?? config('locales.fallback', 'en');
+
+                        return route('locale.switch', $nextLocale);
+                    }),
             ])
             ->middleware([
                 EncryptCookies::class,

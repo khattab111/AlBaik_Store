@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ShippingMethodResource\Pages;
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Models\ShippingMethod;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class ShippingMethodResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = ShippingMethod::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-map';
@@ -23,9 +24,11 @@ class ShippingMethodResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->required(),
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required(),
+                Forms\Components\Textarea::make("description.{$code}")->label(__('Description'))->rows(3),
+            ]),
             Forms\Components\TextInput::make('slug')->required()->unique(ShippingMethod::class, 'slug', ignoreRecord: true),
-            Forms\Components\Textarea::make('description')->rows(3),
             Forms\Components\TextInput::make('zone'),
             Forms\Components\Select::make('type')->options(['flat_rate' => __('Flat Rate'), 'rule_based' => __('Rule Based')])->required(),
             Forms\Components\TextInput::make('cost')->numeric()->default(0),

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Premium ecommerce product collage</title>
+  <desc id="desc">A local storefront hero illustration with premium product boxes, food packs, and shopping bags.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff5f5"/>
+      <stop offset=".48" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ef4444"/>
+      <stop offset="1" stop-color="#b91c1c"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e293b"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="26" stdDeviation="24" flood-color="#991b1b" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" rx="42" fill="url(#bg)"/>
+  <circle cx="930" cy="135" r="162" fill="#fee2e2" opacity=".9"/>
+  <circle cx="210" cy="585" r="130" fill="#fef3c7" opacity=".85"/>
+  <path d="M790 92c122 42 212 153 216 292 5 172-128 266-294 273-189 8-353-94-353-252 0-163 250-368 431-313z" fill="#fff" opacity=".68"/>
+
+  <g filter="url(#shadow)">
+    <rect x="525" y="134" width="240" height="380" rx="36" fill="#fff"/>
+    <rect x="548" y="160" width="194" height="208" rx="28" fill="#fee2e2"/>
+    <path d="M588 319c30-76 91-119 147-112 72 9 112 85 85 147-22 52-88 74-151 51-56-21-103-32-81-86z" fill="url(#red)"/>
+    <path d="M621 325c16-32 48-52 88-45 28 5 51 23 63 47-36 20-91 21-151-2z" fill="#fff" opacity=".22"/>
+    <rect x="574" y="400" width="142" height="18" rx="9" fill="#0f172a"/>
+    <rect x="574" y="432" width="104" height="13" rx="6.5" fill="#cbd5e1"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="760" y="242" width="258" height="270" rx="34" fill="url(#dark)"/>
+    <rect x="796" y="289" width="128" height="128" rx="34" fill="#fff"/>
+    <circle cx="860" cy="353" r="45" fill="#f59e0b"/>
+    <path d="M818 467h153" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+    <path d="M818 497h96" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M294 256h210l-29 262H324z" fill="#fff"/>
+    <path d="M331 256c7-63 43-96 89-96s82 33 89 96" fill="none" stroke="#b91c1c" stroke-width="24" stroke-linecap="round"/>
+    <rect x="337" y="305" width="124" height="34" rx="17" fill="#dc2626"/>
+    <rect x="337" y="363" width="94" height="14" rx="7" fill="#94a3b8"/>
+    <rect x="337" y="394" width="120" height="14" rx="7" fill="#cbd5e1"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="166" y="370" width="190" height="180" rx="32" fill="#fff7ed"/>
+    <circle cx="224" cy="433" r="36" fill="#ef4444"/>
+    <circle cx="289" cy="480" r="48" fill="#f59e0b"/>
+    <path d="M195 526c52-38 106-42 142-3" fill="none" stroke="#7f1d1d" stroke-width="16" stroke-linecap="round"/>
+  </g>
+</svg>

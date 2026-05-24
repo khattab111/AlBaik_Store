@@ -12,7 +12,8 @@ class OfferController extends Controller
 {
     public function index(Request $request): View
     {
-        $products = Product::with(['brand', 'category', 'images', 'flashSales'])
+        $locale = app()->getLocale();
+        $products = Product::with(['brand', 'category', 'images', 'reviews', 'flashSales'])
             ->where('status', true)
             ->whereHas('flashSales', fn ($sale) => $sale->where('is_active', true)
                 ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
@@ -29,8 +30,8 @@ class OfferController extends Controller
 
         return view('offers.index', [
             'products' => $products->paginate(12)->withQueryString(),
-            'categories' => Category::where('status', true)->orderBy('name')->get(),
-            'brands' => Brand::where('status', true)->orderBy('name')->get(),
+            'categories' => Category::where('status', true)->orderBy("name->{$locale}")->get(),
+            'brands' => Brand::where('status', true)->orderBy("name->{$locale}")->get(),
         ]);
     }
 }

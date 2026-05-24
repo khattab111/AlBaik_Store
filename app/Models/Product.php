@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasStoreTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, HasStoreTranslations, LogsActivity;
+
+    public array $translatable = ['name', 'short_description', 'description', 'seo_title', 'seo_description'];
 
     protected $fillable = [
         'name',
@@ -83,6 +86,11 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function priceTiers(): HasMany
+    {
+        return $this->hasMany(ProductPriceTier::class)->orderBy('sort_order')->orderBy('min_quantity');
     }
 
     public function getPriceForQuantity(int $quantity): float

@@ -16,12 +16,16 @@ class OrderItem extends Model
         'variant_id',
         'quantity',
         'unit_price',
+        'price_type',
+        'applied_tier_id',
+        'subtotal',
         'total_price',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
         'total_price' => 'decimal:2',
     ];
 
@@ -38,5 +42,10 @@ class OrderItem extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
+
+    public function appliedTier(): BelongsTo
+    {
+        return $this->belongsTo(ProductPriceTier::class, 'applied_tier_id');
     }
 }
