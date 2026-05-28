@@ -85,7 +85,7 @@ class ShopSeeder extends Seeder
     {
         $users = [
             'super_admin' => [
-                'email' => 'admin@albaikstore.local',
+                'email' => ' ',
                 'name' => 'Super Admin',
                 'mobile' => '+963900000000',
                 'type' => 'super_admin',
@@ -151,16 +151,16 @@ class ShopSeeder extends Seeder
     private function seedPaymentMethods(): array
     {
         return [
-            'cod' => PaymentMethod::updateOrCreate(['slug' => 'cod'], ['name' => 'Cash on Delivery', 'type' => 'cod', 'description' => 'Collect payment when the order is delivered.', 'image' => 'demo/payments/cod.png', 'wallet_url' => null, 'barcode_image' => null, 'settings' => [], 'fee' => 0, 'is_active' => true]),
-            'bank' => PaymentMethod::updateOrCreate(['slug' => 'bank-transfer'], ['name' => 'Bank Transfer', 'type' => 'bank_transfer', 'description' => 'Customer transfers to company bank account and uploads receipt.', 'image' => 'demo/payments/bank.png', 'wallet_url' => 'IBAN: TR00 0000 0000 0000 0000 0000 00', 'barcode_image' => 'demo/payments/bank-qr.png', 'settings' => ['bank_name' => 'Qarid Demo Bank', 'iban' => 'TR00 0000 0000 0000 0000 0000 00'], 'fee' => 0, 'is_active' => true]),
-            'manual' => PaymentMethod::updateOrCreate(['slug' => 'manual'], ['name' => 'Manual Wallet', 'type' => 'manual', 'description' => 'Customer pays to wallet, then uploads payment receipt for admin review.', 'image' => 'demo/payments/wallet.png', 'wallet_url' => 'https://wallet.example/pay/albaik-store', 'barcode_image' => 'demo/payments/wallet-qr.png', 'settings' => ['instructions' => 'Upload receipt or contact support.'], 'fee' => 1.50, 'is_active' => true]),
+            'cod' => PaymentMethod::updateOrCreate(['slug' => 'cod'], ['name' => $this->tr('Cash on Delivery', 'الدفع عند الاستلام'), 'type' => 'cod', 'description' => $this->tr('Collect payment when the order is delivered.', 'يتم تحصيل قيمة الطلب عند التسليم.'), 'image' => 'demo/payments/cod.png', 'wallet_url' => null, 'barcode_image' => null, 'settings' => [], 'fee' => 0, 'is_active' => true]),
+            'bank' => PaymentMethod::updateOrCreate(['slug' => 'bank-transfer'], ['name' => $this->tr('Bank Transfer', 'تحويل بنكي'), 'type' => 'bank_transfer', 'description' => $this->tr('Customer transfers to company bank account and uploads receipt.', 'يقوم العميل بالتحويل إلى حساب الشركة ثم يرفع إشعار الدفع.'), 'image' => 'demo/payments/bank.png', 'wallet_url' => 'IBAN: TR00 0000 0000 0000 0000 0000 00', 'barcode_image' => 'demo/payments/bank-qr.png', 'settings' => ['bank_name' => 'Qarid Demo Bank', 'iban' => 'TR00 0000 0000 0000 0000 0000 00'], 'fee' => 0, 'is_active' => true]),
+            'manual' => PaymentMethod::updateOrCreate(['slug' => 'manual'], ['name' => $this->tr('Manual Wallet', 'محفظة يدوية'), 'type' => 'manual', 'description' => $this->tr('Customer pays to wallet, then uploads payment receipt for admin review.', 'يدفع العميل إلى المحفظة ثم يرفع صورة الإشعار لمراجعة الإدارة.'), 'image' => 'demo/payments/wallet.png', 'wallet_url' => 'https://wallet.example/pay/albaik-store', 'barcode_image' => 'demo/payments/wallet-qr.png', 'settings' => ['instructions' => 'Upload receipt or contact support.'], 'fee' => 1.50, 'is_active' => true]),
         ];
     }
 
     private function seedShipping(): array
     {
-        $standard = ShippingMethod::updateOrCreate(['slug' => 'standard'], ['name' => 'Standard Shipping', 'type' => 'flat_rate', 'description' => 'Delivery within 5-7 business days.', 'zone' => 'global', 'cost' => 10.00, 'free_shipping_minimum' => 100.00, 'rules' => [], 'is_active' => true]);
-        $express = ShippingMethod::updateOrCreate(['slug' => 'express'], ['name' => 'Express Shipping', 'type' => 'rule_based', 'description' => 'Fast delivery for selected cities.', 'zone' => 'city', 'cost' => 18.00, 'free_shipping_minimum' => 200.00, 'rules' => [], 'is_active' => true]);
+        $standard = ShippingMethod::updateOrCreate(['slug' => 'standard'], ['name' => $this->tr('Standard Shipping', 'الشحن القياسي'), 'type' => 'flat_rate', 'description' => $this->tr('Delivery within 5-7 business days.', 'التوصيل خلال 5-7 أيام عمل.'), 'zone' => 'global', 'cost' => 10.00, 'free_shipping_minimum' => 100.00, 'rules' => [], 'is_active' => true]);
+        $express = ShippingMethod::updateOrCreate(['slug' => 'express'], ['name' => $this->tr('Express Shipping', 'الشحن السريع'), 'type' => 'rule_based', 'description' => $this->tr('Fast delivery for selected cities.', 'توصيل سريع للمدن المحددة.'), 'zone' => 'city', 'cost' => 18.00, 'free_shipping_minimum' => 200.00, 'rules' => [], 'is_active' => true]);
 
         $damascus = ShippingZone::updateOrCreate(['name' => 'Damascus - City Center'], ['country' => 'Syria', 'city' => 'Damascus', 'town' => 'City Center', 'is_active' => true]);
         $aleppo = ShippingZone::updateOrCreate(['name' => 'Aleppo - Industrial'], ['country' => 'Syria', 'city' => 'Aleppo', 'town' => 'Industrial', 'is_active' => true]);
@@ -197,9 +197,9 @@ class ShopSeeder extends Seeder
     private function seedCatalog(): array
     {
         $brands = [
-            'albaik' => Brand::updateOrCreate(['slug' => 'albaik'], ['name' => 'AlBaik', 'description' => 'Private label products.', 'logo' => 'demo/brands/albaik.png', 'status' => true]),
-            'qarid' => Brand::updateOrCreate(['slug' => 'qarid-select'], ['name' => 'Qarid Select', 'description' => 'Selected partner products.', 'logo' => 'demo/brands/qarid-select.png', 'status' => true]),
-            'levant' => Brand::updateOrCreate(['slug' => 'levant-foods'], ['name' => 'Levant Foods', 'description' => 'Regional food supplier brand.', 'logo' => 'demo/brands/levant-foods.png', 'status' => true]),
+            'albaik' => Brand::updateOrCreate(['slug' => 'albaik'], ['name' => $this->tr('AlBaik', 'البيك'), 'description' => $this->tr('Private label products.', 'منتجات العلامة الخاصة.'), 'logo' => 'demo/brands/albaik.png', 'status' => true]),
+            'qarid' => Brand::updateOrCreate(['slug' => 'qarid-select'], ['name' => $this->tr('Qarid Select', 'قريد سيلكت'), 'description' => $this->tr('Selected partner products.', 'منتجات مختارة من شركاء موثوقين.'), 'logo' => 'demo/brands/qarid-select.png', 'status' => true]),
+            'levant' => Brand::updateOrCreate(['slug' => 'levant-foods'], ['name' => $this->tr('Levant Foods', 'ليفانت فودز'), 'description' => $this->tr('Regional food supplier brand.', 'علامة إقليمية لتوريد المواد الغذائية.'), 'logo' => 'demo/brands/levant-foods.png', 'status' => true]),
         ];
 
         $suppliers = [
@@ -209,20 +209,20 @@ class ShopSeeder extends Seeder
         ];
 
         $categories = [
-            'food' => Category::updateOrCreate(['slug' => 'food'], ['name' => 'Food', 'description' => 'Premium food products.', 'parent_id' => null, 'status' => true]),
-            'electronics' => Category::updateOrCreate(['slug' => 'electronics'], ['name' => 'Electronics', 'description' => 'Smart devices and accessories.', 'parent_id' => null, 'status' => true]),
-            'bulk' => Category::updateOrCreate(['slug' => 'bulk-supplies'], ['name' => 'Bulk Supplies', 'description' => 'Wholesale packs and business supplies.', 'parent_id' => null, 'status' => true]),
+            'food' => Category::updateOrCreate(['slug' => 'food'], ['name' => $this->tr('Food', 'الأغذية'), 'description' => $this->tr('Premium food products.', 'منتجات غذائية مميزة.'), 'parent_id' => null, 'status' => true]),
+            'electronics' => Category::updateOrCreate(['slug' => 'electronics'], ['name' => $this->tr('Electronics', 'الإلكترونيات'), 'description' => $this->tr('Smart devices and accessories.', 'أجهزة ذكية وإكسسوارات.'), 'parent_id' => null, 'status' => true]),
+            'bulk' => Category::updateOrCreate(['slug' => 'bulk-supplies'], ['name' => $this->tr('Bulk Supplies', 'توريدات الجملة'), 'description' => $this->tr('Wholesale packs and business supplies.', 'عبوات جملة ومستلزمات تجارية.'), 'parent_id' => null, 'status' => true]),
         ];
 
-        $categories['sandwiches'] = Category::updateOrCreate(['slug' => 'sandwiches'], ['name' => 'Sandwiches', 'description' => 'Fresh and frozen sandwiches.', 'parent_id' => $categories['food']->id, 'status' => true]);
-        $categories['sauces'] = Category::updateOrCreate(['slug' => 'sauces'], ['name' => 'Sauces', 'description' => 'Signature sauces.', 'parent_id' => $categories['food']->id, 'status' => true]);
-        $categories['drinkware'] = Category::updateOrCreate(['slug' => 'drinkware'], ['name' => 'Drinkware', 'description' => 'Bottles and cups.', 'parent_id' => $categories['electronics']->id, 'status' => true]);
+        $categories['sandwiches'] = Category::updateOrCreate(['slug' => 'sandwiches'], ['name' => $this->tr('Sandwiches', 'السندويش'), 'description' => $this->tr('Fresh and frozen sandwiches.', 'سندويش طازج ومجمد.'), 'parent_id' => $categories['food']->id, 'status' => true]);
+        $categories['sauces'] = Category::updateOrCreate(['slug' => 'sauces'], ['name' => $this->tr('Sauces', 'الصلصات'), 'description' => $this->tr('Signature sauces.', 'صلصات مميزة.'), 'parent_id' => $categories['food']->id, 'status' => true]);
+        $categories['drinkware'] = Category::updateOrCreate(['slug' => 'drinkware'], ['name' => $this->tr('Drinkware', 'الأكواب والقوارير'), 'description' => $this->tr('Bottles and cups.', 'قوارير وأكواب.'), 'parent_id' => $categories['electronics']->id, 'status' => true]);
 
         $tags = [
-            'popular' => Tag::updateOrCreate(['slug' => 'popular'], ['name' => 'Popular', 'status' => true]),
-            'wholesale' => Tag::updateOrCreate(['slug' => 'wholesale'], ['name' => 'Wholesale', 'status' => true]),
-            'new' => Tag::updateOrCreate(['slug' => 'new-arrival'], ['name' => 'New Arrival', 'status' => true]),
-            'featured' => Tag::updateOrCreate(['slug' => 'featured'], ['name' => 'Featured', 'status' => true]),
+            'popular' => Tag::updateOrCreate(['slug' => 'popular'], ['name' => $this->tr('Popular', 'الأكثر طلباً'), 'status' => true]),
+            'wholesale' => Tag::updateOrCreate(['slug' => 'wholesale'], ['name' => $this->tr('Wholesale', 'الجملة'), 'status' => true]),
+            'new' => Tag::updateOrCreate(['slug' => 'new-arrival'], ['name' => $this->tr('New Arrival', 'وصل حديثاً'), 'status' => true]),
+            'featured' => Tag::updateOrCreate(['slug' => 'featured'], ['name' => $this->tr('Featured', 'مميز'), 'status' => true]),
         ];
 
         $warehouses = [
@@ -244,6 +244,7 @@ class ShopSeeder extends Seeder
                 'tags' => ['popular', 'wholesale', 'featured'],
                 'sku' => 'ALB-CHICKEN-001',
                 'name' => 'Classic Chicken Sandwich',
+                'name_ar' => 'ساندويش دجاج كلاسيك',
                 'slug' => 'classic-chicken-sandwich',
                 'retail_price' => 6.99,
                 'wholesale_price' => 5.49,
@@ -264,6 +265,7 @@ class ShopSeeder extends Seeder
                 'tags' => ['popular', 'new'],
                 'sku' => 'ALB-SAUCE-001',
                 'name' => 'Signature Garlic Sauce',
+                'name_ar' => 'صلصة الثوم المميزة',
                 'slug' => 'signature-garlic-sauce',
                 'retail_price' => 3.50,
                 'wholesale_price' => 2.75,
@@ -284,6 +286,7 @@ class ShopSeeder extends Seeder
                 'tags' => ['popular', 'featured'],
                 'sku' => 'ALB-TECH-001',
                 'name' => 'AlBaik Smart Bottle',
+                'name_ar' => 'قارورة البيك الذكية',
                 'slug' => 'albaik-smart-bottle',
                 'retail_price' => 34.99,
                 'wholesale_price' => 27.99,
@@ -304,6 +307,7 @@ class ShopSeeder extends Seeder
                 'tags' => ['wholesale'],
                 'sku' => 'LEV-RICE-025',
                 'name' => 'Premium Rice Bulk Bag',
+                'name_ar' => 'كيس أرز فاخر للجملة',
                 'slug' => 'premium-rice-bulk-bag',
                 'retail_price' => 29.00,
                 'wholesale_price' => 24.00,
@@ -323,6 +327,7 @@ class ShopSeeder extends Seeder
                 'tags' => ['new', 'wholesale'],
                 'sku' => 'LEV-SPICE-001',
                 'name' => 'Restaurant Spice Mix',
+                'name_ar' => 'خلطة بهارات المطاعم',
                 'slug' => 'restaurant-spice-mix',
                 'retail_price' => 12.00,
                 'wholesale_price' => 9.25,
@@ -339,13 +344,13 @@ class ShopSeeder extends Seeder
 
         foreach ($products as $data) {
             $product = Product::updateOrCreate(['sku' => $data['sku']], [
-                'name' => $data['name'],
+                'name' => $this->tr($data['name'], $data['name_ar']),
                 'slug' => $data['slug'],
                 'brand_id' => $catalog['brands'][$data['brand']]->id,
                 'supplier_id' => $catalog['suppliers'][$data['supplier']]->id,
                 'category_id' => $catalog['categories'][$data['category']]->id,
-                'short_description' => "Demo short description for {$data['name']}.",
-                'description' => "Detailed demo description for {$data['name']} with retail and wholesale use cases.",
+                'short_description' => $this->tr("Demo short description for {$data['name']}.", "وصف مختصر تجريبي لمنتج {$data['name_ar']}."),
+                'description' => $this->tr("Detailed demo description for {$data['name']} with retail and wholesale use cases.", "وصف تفصيلي تجريبي لمنتج {$data['name_ar']} مع سيناريوهات التجزئة والجملة."),
                 'retail_price' => $data['retail_price'],
                 'wholesale_price' => $data['wholesale_price'],
                 'wholesale_minimum_quantity' => $data['wholesale_minimum_quantity'],
@@ -354,14 +359,14 @@ class ShopSeeder extends Seeder
                 'low_stock_threshold' => 10,
                 'status' => true,
                 'is_featured' => $data['is_featured'],
-                'seo_title' => $data['name'].' | AlBaik Store',
-                'seo_description' => "Buy {$data['name']} from AlBaik Store.",
+                'seo_title' => $this->tr($data['name'].' | AlBaik Store', $data['name_ar'].' | متجر البيك'),
+                'seo_description' => $this->tr("Buy {$data['name']} from AlBaik Store.", "اشتر {$data['name_ar']} من متجر البيك."),
             ]);
 
             $product->tags()->sync(collect($data['tags'])->map(fn ($tag) => $catalog['tags'][$tag]->id)->all());
 
-            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-main.jpg"], ['alt_text' => $data['name'], 'is_primary' => true]);
-            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-gallery.jpg"], ['alt_text' => $data['name'].' gallery', 'is_primary' => false]);
+            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-main.jpg"], ['alt_text' => $data['name_ar'], 'is_primary' => true]);
+            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-gallery.jpg"], ['alt_text' => $data['name_ar'].' gallery', 'is_primary' => false]);
 
             ProductPriceTier::updateOrCreate([
                 'product_id' => $product->id,
@@ -438,7 +443,7 @@ class ShopSeeder extends Seeder
         Coupon::updateOrCreate(['code' => 'WHOLESALE25'], ['type' => 'fixed', 'value' => 25, 'minimum_order_amount' => 250, 'starts_at' => now()->subDay(), 'expires_at' => now()->addMonths(2), 'usage_limit' => 100, 'used_count' => 1, 'is_active' => true]);
         Coupon::updateOrCreate(['code' => 'EXPIRED5'], ['type' => 'fixed', 'value' => 5, 'minimum_order_amount' => 15, 'starts_at' => now()->subMonths(2), 'expires_at' => now()->subMonth(), 'usage_limit' => 50, 'used_count' => 12, 'is_active' => false]);
 
-        $launch = FlashSale::updateOrCreate(['slug' => 'launch-offers'], ['name' => 'Launch Offers', 'starts_at' => now()->subDay(), 'ends_at' => now()->addDays(14), 'is_active' => true]);
+        $launch = FlashSale::updateOrCreate(['slug' => 'launch-offers'], ['name' => $this->tr('Launch Offers', 'عروض الإطلاق'), 'starts_at' => now()->subDay(), 'ends_at' => now()->addDays(14), 'is_active' => true]);
         $launch->products()->sync([
             $products['sandwich']->id => ['discount_type' => 'percentage', 'discount_value' => 15, 'quantity_limit' => 200, 'sold_count' => 18],
             $products['bottle']->id => ['discount_type' => 'fixed', 'discount_value' => 5, 'quantity_limit' => 50, 'sold_count' => 6],
@@ -634,5 +639,13 @@ class ShopSeeder extends Seeder
             'is_active' => true,
         ]);
         Banner::updateOrCreate(['placement' => 'shop', 'sort_order' => 1], ['title' => ['ar' => 'توريدات الجملة', 'en' => 'Wholesale Supplies'], 'subtitle' => ['ar' => 'منتجات بكميات كبيرة وأسعار خاصة.', 'en' => 'Bulk products with special prices.'], 'image' => 'demo/banners/wholesale.jpg', 'url' => '/products', 'is_active' => true]);
+    }
+
+    private function tr(string $en, string $ar): array
+    {
+        return [
+            'ar' => $ar,
+            'en' => $en,
+        ];
     }
 }
