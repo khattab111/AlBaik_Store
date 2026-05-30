@@ -15,11 +15,22 @@
                     <option value="{{ $address->id }}">{{ $address->label }} - {{ $address->country }} / {{ $address->city }} / {{ $address->town }} / {{ $address->street }} - {{ __('Phone') }}: {{ $address->phone }} - {{ __('WhatsApp') }}: {{ $address->whatsapp }}</option>
                 @endforeach
             </select>
-            <select name="shipping_method_id" class="rounded border px-3 py-2">
-                @foreach ($shippingMethods as $method)
-                    <option value="{{ $method->id }}">{{ $method->name }} - {{ number_format((float) $method->cost, 2) }} USD</option>
+            <select name="shipping_city_id" class="rounded border px-3 py-2">
+                @foreach ($cities as $city)
+                    <option value="{{ $city->id }}">{{ $city->name }} - {{ $city->country }}</option>
                 @endforeach
             </select>
+            @if($requiresShipping)
+                <select name="shipping_carrier_id" class="rounded border px-3 py-2">
+                    @forelse ($availableCarriers as $carrier)
+                        <option value="{{ $carrier['id'] }}">{{ $carrier['name'] }} - {{ number_format((float) $carrier['cost'], 2) }} USD</option>
+                    @empty
+                        <option value="">{{ __('No shipping carriers are available for this city right now.') }}</option>
+                    @endforelse
+                </select>
+            @else
+                <p class="rounded bg-green-50 p-3 text-sm font-semibold text-green-700">{{ __('This cart does not require shipping.') }}</p>
+            @endif
             <select name="payment_method_id" id="payment_method_id" class="rounded border px-3 py-2">
                 @foreach ($paymentMethods as $method)
                     <option value="{{ $method->id }}">{{ $method->name }}</option>
@@ -44,7 +55,7 @@
             </section>
             <label class="grid gap-2">
                 <span>{{ __('Payment Receipt') }}</span>
-                <input type="file" name="payment_receipt" accept="image/*" class="rounded border px-3 py-2">
+                <input type="file" name="payment_receipt" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="rounded border px-3 py-2">
             </label>
             <input name="coupon_code" placeholder="{{ __('Coupon Code') }}" class="rounded border px-3 py-2">
             <textarea name="notes" rows="3" placeholder="{{ __('Notes') }}" class="rounded border px-3 py-2"></textarea>

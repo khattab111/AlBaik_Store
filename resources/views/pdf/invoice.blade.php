@@ -34,7 +34,7 @@
         <strong>Customer:</strong> {{ $order->user?->name }}<br>
         <strong>Email:</strong> {{ $order->user?->email }}<br>
         <strong>Payment:</strong> {{ $order->paymentMethod?->name ?? 'N/A' }}<br>
-        <strong>Shipping:</strong> {{ $order->shippingMethod?->name ?? 'N/A' }}
+        <strong>Shipping:</strong> {{ $order->shipping_carrier_name ?? 'N/A' }}
     </p>
 
     <table>

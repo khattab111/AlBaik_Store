@@ -9,7 +9,7 @@ class InvoiceService
 {
     public function stream(Order $order)
     {
-        $order->load(['user', 'items.product', 'items.variant', 'paymentMethod', 'shippingMethod']);
+        $order->load(['user', 'items.product', 'items.variant', 'paymentMethod', 'shippingCarrier']);
 
         return Pdf::loadView('pdf.invoice', ['order' => $order])
             ->setPaper('a4')

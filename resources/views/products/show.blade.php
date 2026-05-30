@@ -79,47 +79,74 @@
                 <span class="sr-only">{{ __('Rating: :rating out of 5 from :count reviews', ['rating' => $rating ?: '0.0', 'count' => $product->reviews->count()]) }}</span>
             </div>
             <div class="mt-6 grid gap-3">
+                @if($pricing->originalPrice && $pricing->originalPrice > $pricing->price)
+                    <p class="text-base font-bold text-slate-400 line-through">USD {{ number_format((float) $pricing->originalPrice, 2) }}</p>
+                @endif
                 <p class="text-4xl font-black text-red-700">USD {{ number_format((float) $pricing->price, 2) }}</p>
-                <p class="text-sm font-bold text-slate-500">{{ $pricing->priceType === 'wholesale' ? __('Wholesale price applied for this quantity.') : __('Retail price') }}</p>
+                <p class="text-sm font-bold text-slate-500">
+                    @if($pricing->flashOffer)
+                        {{ __('Flash offer price') }}
+                    @else
+                        {{ $pricing->priceType === 'wholesale' ? __('Wholesale price applied for this quantity.') : __('Retail price') }}
+                    @endif
+                </p>
+                @if($pricing->flashOffer)
+                    <div class="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <span>{{ __('Flash Offer') }}: {{ $pricing->flashOffer->title }}</span>
+                            @if($pricing->flashOffer->ends_at)
+                                <span>{{ __('Ends at') }} {{ $pricing->flashOffer->ends_at->format('Y-m-d H:i') }}</span>
+                            @endif
+                        </div>
+                        @if($pricing->flashOffer->max_quantity)
+                            <p class="mt-2">{{ __('Remaining quantity') }}: {{ $pricing->flashOffer->remainingQuantity() }}</p>
+                        @endif
+                    </div>
+                @endif
             </div>
             <p class="mt-5 text-lg leading-8 text-slate-600">{{ $product->short_description }}</p>
 
-            <div class="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h2 class="text-lg font-black">{{ __('Wholesale Pricing') }}</h2>
-                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ __('Quantity tiers are calculated again on the server when cart and order totals are saved.') }}</p>
+            @if($isWholesaleCustomer)
+                <div class="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-black">{{ __('Wholesale Pricing') }}</h2>
+                            <p class="mt-1 text-sm font-semibold text-slate-500">{{ __('Choose a quantity tier, then add it to cart. The final price is recalculated on the server.') }}</p>
+                        </div>
                     </div>
-                    @unless($isWholesaleCustomer)
-                        <a href="{{ route('join-us.create') }}" class="rounded-2xl px-4 py-3 text-sm font-black text-white" style="background-color: var(--store-primary)">{{ __('Join us for wholesale prices') }}</a>
-                    @endunless
-                </div>
 
-                @if($isWholesaleCustomer && $wholesaleTiers->isNotEmpty())
+                    @if($wholesaleTiers->isNotEmpty())
                     <div class="mt-5 grid gap-3 sm:grid-cols-3">
                         @foreach($wholesaleTiers as $tier)
-                            <div class="rounded-2xl bg-emerald-50 p-4 text-center">
+                            <button type="button" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center transition hover:-translate-y-1 hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                data-wholesale-tier
+                                data-quantity="{{ $tier->min_quantity }}"
+                                data-price="{{ number_format((float) $tier->price, 2, '.', '') }}"
+                                aria-label="{{ __('Choose wholesale tier :quantity pieces', ['quantity' => $tier->min_quantity]) }}">
                                 <p class="text-sm font-black text-emerald-700">{{ $tier->min_quantity }}+ {{ __('pieces') }}</p>
                                 <p class="mt-1 text-xl font-black text-slate-950">USD {{ number_format((float) $tier->price, 2) }}</p>
-                            </div>
+                                <p class="mt-2 text-xs font-bold text-emerald-700">{{ __('Select this tier') }}</p>
+                            </button>
                         @endforeach
                     </div>
-                @elseif($isWholesaleCustomer)
-                    <p class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-600">{{ __('No active wholesale tiers are available for this product yet.') }}</p>
-                @else
-                    <p class="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800">{{ __('Wholesale price is available only for approved partners.') }}</p>
-                @endif
-            </div>
+                    @else
+                        <p class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-600">{{ __('No active wholesale tiers are available for this product yet.') }}</p>
+                    @endif
+                </div>
+            @endif
 
             <div class="mt-6 grid gap-3 sm:grid-cols-3">
                 <div class="rounded-2xl bg-white p-4 text-center shadow-sm"><p class="font-black">{{ __('Original') }}</p><p class="text-xs text-slate-500">{{ __('Verified catalog') }}</p></div>
                 <div class="rounded-2xl bg-white p-4 text-center shadow-sm"><p class="font-black">{{ __('Stock') }}</p><p id="product-stock-help" class="text-xs text-slate-500">{{ $product->stock_quantity }} {{ __('Available') }}</p></div>
-                <div class="rounded-2xl bg-white p-4 text-center shadow-sm"><p class="font-black">{{ __('Wholesale') }}</p><p class="text-xs text-slate-500">{{ __('Supported') }}</p></div>
+                <div class="rounded-2xl bg-white p-4 text-center shadow-sm">
+                    <p class="font-black">{{ $isWholesaleCustomer ? __('Wholesale') : __('Availability') }}</p>
+                    <p class="text-xs text-slate-500">{{ $isWholesaleCustomer ? __('Tier pricing enabled') : __('Ready to order') }}</p>
+                </div>
             </div>
 
             <div class="mt-7 store-panel p-5">
                 @auth
-                    <form method="POST" action="{{ route('cart.add', $product) }}" class="grid gap-4" aria-label="{{ __('Add :product to cart', ['product' => $product->name]) }}">
+                    <form method="POST" action="{{ route('cart.add', $product) }}" class="grid gap-4" data-ajax-store-action aria-label="{{ __('Add :product to cart', ['product' => $product->name]) }}">
                         @csrf
                         @if($product->variants->isNotEmpty())
                             <label for="product-variant" class="text-sm font-black">{{ __('Variant') }}</label>
@@ -133,17 +160,17 @@
                         <div class="grid gap-3 sm:grid-cols-[120px_1fr]">
                             <div>
                                 <label for="product-quantity" class="sr-only">{{ __('Quantity') }}</label>
-                                <input id="product-quantity" type="number" name="quantity" value="1" min="1" class="store-field" aria-describedby="product-stock-help">
+                                <input id="product-quantity" type="number" name="quantity" value="1" min="1" class="store-field" aria-describedby="product-stock-help" data-product-quantity>
                             </div>
                             <button class="store-button-primary" aria-label="{{ __('Add :product to cart', ['product' => $product->name]) }}" @disabled($product->stock_quantity <= 0)>{{ __('Add to Cart') }}</button>
                         </div>
                     </form>
-                    <form method="POST" action="{{ route('favorites.toggle', $product) }}" class="mt-3">
+                    <form method="POST" action="{{ route('favorites.toggle', $product) }}" class="mt-3" data-ajax-store-action>
                         @csrf
                         <button class="store-button-secondary w-full" aria-label="{{ __('Add :product to wishlist', ['product' => $product->name]) }}">{{ __('Add to Wishlist') }}</button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('cart.add', $product) }}" class="grid gap-4" aria-label="{{ __('Add :product to cart', ['product' => $product->name]) }}">
+                    <form method="POST" action="{{ route('cart.add', $product) }}" class="grid gap-4" data-ajax-store-action aria-label="{{ __('Add :product to cart', ['product' => $product->name]) }}">
                         @csrf
                         @if($product->variants->isNotEmpty())
                             <label for="product-variant-guest" class="text-sm font-black">{{ __('Variant') }}</label>
@@ -170,7 +197,7 @@
     <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div class="store-panel p-6">
             <h2 class="text-2xl font-black">{{ __('Product Details') }}</h2>
-            <div class="prose mt-5 max-w-none text-slate-700">{!! $product->description !!}</div>
+            <div class="prose mt-5 max-w-none whitespace-pre-line text-slate-700">{{ $product->description }}</div>
         </div>
         <aside class="store-panel p-6" aria-labelledby="purchase-confidence-heading">
             <h2 id="purchase-confidence-heading" class="text-xl font-black">{{ __('Purchase Confidence') }}</h2>

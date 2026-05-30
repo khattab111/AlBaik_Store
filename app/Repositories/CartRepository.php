@@ -40,6 +40,7 @@ class CartRepository
                 'unit_price' => $unitPrice,
                 'price_type' => $price->priceType,
                 'applied_tier_id' => $price->appliedTierId,
+                'applied_flash_offer_id' => $price->appliedFlashOfferId,
             ]
         );
     }

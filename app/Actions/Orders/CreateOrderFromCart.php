@@ -6,16 +6,18 @@ use App\Data\CheckoutData;
 use App\Events\OrderPlaced;
 use App\Models\Address;
 use App\Models\CartItem;
+use App\Models\City;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\PaymentMethod;
-use App\Models\ShippingMethod;
+use App\Models\ShippingCarrier;
 use App\Models\User;
 use App\Repositories\CartRepository;
 use App\Services\InventoryService;
 use App\Services\PaymentService;
+use App\Services\FlashOfferService;
 use App\Services\ProductPricingService;
 use App\Services\ShippingService;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,7 @@ class CreateOrderFromCart
         private readonly ShippingService $shipping,
         private readonly PaymentService $payments,
         private readonly ProductPricingService $pricing,
+        private readonly FlashOfferService $flashOffers,
     ) {}
 
     public function handle(CheckoutData $data): Order
@@ -42,11 +45,17 @@ class CreateOrderFromCart
             }
 
             $paymentMethod = PaymentMethod::where('is_active', true)->findOrFail($data->paymentMethodId);
-            $shippingMethod = ShippingMethod::where('is_active', true)->findOrFail($data->shippingMethodId);
             $shippingAddress = Address::where('user_id', $data->userId)->findOrFail($data->shippingAddressId);
+            $city = City::where('is_active', true)->findOrFail($data->shippingCityId);
+
+            if ((int) $shippingAddress->city_id !== $city->id) {
+                throw ValidationException::withMessages([
+                    'shipping_city_id' => __('The selected city does not match the selected address.'),
+                ]);
+            }
 
             foreach ($cart->items as $item) {
-                $this->inventory->assertAvailable($item->product, $item->quantity, $item->variant_id);
+                $this->inventory->assertAvailableForUpdate($item->product, $item->quantity, $item->variant_id);
             }
 
             $pricedItems = $cart->items->map(function (CartItem $item) use ($user): array {
@@ -63,7 +72,29 @@ class CreateOrderFromCart
             $quantity = $cart->items->sum('quantity');
             $weight = $cart->items->sum(fn (CartItem $item) => $item->quantity * (float) $item->product->weight);
             $discount = $this->discountAmount($data->couponCode, $subtotal);
-            $shippingCost = $this->shipping->calculate($shippingMethod, $subtotal, $quantity, $weight, $shippingAddress->country, $shippingAddress->city, $shippingAddress->town);
+            $hasFreeShippingOffer = $pricedItems->contains(fn (array $pricedItem): bool => (bool) $pricedItem['price']->freeShipping);
+            $carrier = null;
+
+            if ($this->shipping->requiresShipping($cart)) {
+                if (! $data->shippingCarrierId) {
+                    throw ValidationException::withMessages([
+                        'shipping_carrier_id' => __('Please choose a shipping carrier.'),
+                    ]);
+                }
+
+                $carrier = ShippingCarrier::where('status', ShippingCarrier::STATUS_ACTIVE)->findOrFail($data->shippingCarrierId);
+                $shippingQuote = $this->shipping->calculateShippingCost($city, $carrier, $cart, $subtotal, $hasFreeShippingOffer);
+            } else {
+                $shippingQuote = [
+                    'cost' => 0.0,
+                    'weight' => 0.0,
+                    'estimated_delivery_time' => null,
+                    'is_free_shipping' => true,
+                    'no_shipping_required' => true,
+                ];
+            }
+
+            $shippingCost = (float) $shippingQuote['cost'];
             $paymentFee = (float) $paymentMethod->fee;
             $total = max(0, $subtotal + $shippingCost + $paymentFee - $discount);
 
@@ -71,12 +102,19 @@ class CreateOrderFromCart
                 'order_number' => $this->nextOrderNumber(),
                 'user_id' => $data->userId,
                 'currency_id' => $cart->currency_id,
-                'shipping_method_id' => $shippingMethod->id,
                 'payment_method_id' => $paymentMethod->id,
                 'shipping_address_id' => $data->shippingAddressId,
                 'billing_address_id' => $data->billingAddressId ?? $data->shippingAddressId,
+                'shipping_city_id' => $city->id,
+                'shipping_city_name' => $city->name,
+                'shipping_carrier_id' => $carrier?->id,
+                'shipping_carrier_name' => $carrier?->name,
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
+                'shipping_weight' => $shippingQuote['weight'],
+                'shipping_delivery_time' => $shippingQuote['estimated_delivery_time'],
+                'shipping_address_text' => $this->addressText($shippingAddress),
+                'is_free_shipping' => $shippingQuote['is_free_shipping'],
                 'discount_amount' => $discount,
                 'payment_fee' => $paymentFee,
                 'total' => $total,
@@ -84,8 +122,8 @@ class CreateOrderFromCart
                 'notes' => $data->notes,
                 'customer_phone' => $shippingAddress->phone,
                 'customer_whatsapp' => $shippingAddress->whatsapp,
-                'shipping_country' => $shippingAddress->country,
-                'shipping_city' => $shippingAddress->city,
+                'shipping_country' => $city->country,
+                'shipping_city' => $city->name,
                 'shipping_town' => $shippingAddress->town,
                 'shipping_street' => $shippingAddress->street,
             ]);
@@ -103,9 +141,14 @@ class CreateOrderFromCart
                     'unit_price' => $price->price,
                     'price_type' => $price->priceType,
                     'applied_tier_id' => $price->appliedTierId,
+                    'applied_flash_offer_id' => $price->appliedFlashOfferId,
                     'subtotal' => $pricedItem['subtotal'],
                     'total_price' => $pricedItem['subtotal'],
                 ]);
+
+                if ($price->flashOffer) {
+                    $this->flashOffers->reserveOfferQuantity($price->flashOffer, $item->quantity);
+                }
             }
 
             OrderStatusHistory::create([
@@ -133,7 +176,7 @@ class CreateOrderFromCart
 
             event(new OrderPlaced($order));
 
-            return $order->load(['items.product', 'paymentMethod', 'shippingMethod', 'payments', 'timeline']);
+            return $order->load(['items.product', 'paymentMethod', 'shippingCarrier', 'payments', 'timeline']);
         });
     }
 
@@ -143,7 +186,7 @@ class CreateOrderFromCart
             return 0.0;
         }
 
-        $coupon = Coupon::where('code', $couponCode)->where('is_active', true)->first();
+        $coupon = Coupon::where('code', $couponCode)->where('is_active', true)->lockForUpdate()->first();
 
         if (! $coupon || $subtotal < (float) $coupon->minimum_order_amount) {
             return 0.0;
@@ -171,5 +214,16 @@ class CreateOrderFromCart
     private function nextOrderNumber(): string
     {
         return 'ORD-'.now()->format('Ymd').'-'.str_pad((string) (Order::whereDate('created_at', today())->count() + 1), 5, '0', STR_PAD_LEFT);
+    }
+
+    private function addressText(Address $address): string
+    {
+        return collect([
+            $address->country,
+            $address->city,
+            $address->town,
+            $address->street,
+            $address->postal_code,
+        ])->filter()->implode(' / ');
     }
 }

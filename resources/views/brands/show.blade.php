@@ -35,6 +35,8 @@
         </div>
     </div>
 
+    @include('partials.banner-strip', ['banners' => $pageBanners ?? collect()])
+
     <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
         <div>
             <p class="store-eyebrow">{{ __('Brand products') }}</p>

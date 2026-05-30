@@ -23,6 +23,8 @@
         </form>
     </div>
 
+    @include('partials.banner-strip', ['banners' => $pageBanners ?? collect()])
+
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         @forelse($brands as $brand)
             @php

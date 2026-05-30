@@ -22,7 +22,7 @@ class OrderResource extends JsonResource
             'notes' => $this->notes,
             'items' => $this->whenLoaded('items'),
             'payment_method' => $this->whenLoaded('paymentMethod'),
-            'shipping_method' => $this->whenLoaded('shippingMethod'),
+            'shipping_carrier' => $this->whenLoaded('shippingCarrier'),
             'payments' => $this->whenLoaded('payments'),
             'timeline' => $this->whenLoaded('timeline'),
             'created_at' => $this->created_at,

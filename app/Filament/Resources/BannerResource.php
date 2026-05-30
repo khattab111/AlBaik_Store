@@ -47,7 +47,18 @@ class BannerResource extends Resource
                     Forms\Components\Tabs\Tab::make(__('Display'))
                         ->schema([
                             Forms\Components\Grid::make(2)->schema([
-                                Forms\Components\TextInput::make('placement')->required()->default('home'),
+                                Forms\Components\TextInput::make('slug')
+                                    ->helperText(__('Generated automatically when the banner is created and kept stable after that.'))
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->visible(fn ($record): bool => $record !== null),
+                                Forms\Components\Select::make('placement')
+                                    ->label(__('Display placement'))
+                                    ->options(Banner::placementOptions())
+                                    ->native(false)
+                                    ->required()
+                                    ->default(Banner::PLACEMENT_HOME_AFTER_HERO)
+                                    ->helperText(__('Choose where this banner appears in the storefront template.')),
                                 Forms\Components\TextInput::make('sort_order')->numeric()->default(0),
                                 Forms\Components\ColorPicker::make('background_color')->label(__('Background color')),
                                 Forms\Components\ColorPicker::make('text_color')->label(__('Text color')),
@@ -65,7 +76,11 @@ class BannerResource extends Resource
         return $table->columns([
             Tables\Columns\ImageColumn::make('image'),
             Tables\Columns\TextColumn::make('title')->searchable()->sortable(),
-            Tables\Columns\TextColumn::make('placement')->sortable(),
+            Tables\Columns\TextColumn::make('placement')
+                ->label(__('Placement'))
+                ->formatStateUsing(fn (?string $state): string => Banner::placementOptions()[$state] ?? (string) $state)
+                ->badge()
+                ->sortable(),
             Tables\Columns\TextColumn::make('sort_order')->sortable(),
             Tables\Columns\IconColumn::make('is_active')->boolean(),
         ])->actions([Tables\Actions\EditAction::make()]);

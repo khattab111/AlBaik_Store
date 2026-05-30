@@ -14,7 +14,7 @@
             <p class="mt-2 text-gray-600">{{ $product->brand?->name }} / {{ $product->category?->name }}</p>
             <p class="mt-4 text-2xl font-bold">{{ number_format((float) $product->retail_price, 2) }} USD</p>
             <p class="mt-4">{{ $product->short_description }}</p>
-            <div class="prose mt-4">{!! $product->description !!}</div>
+            <div class="prose mt-4 whitespace-pre-line">{{ $product->description }}</div>
 
             @auth
                 <form method="POST" action="{{ route('cart.items.store') }}" class="mt-6 grid gap-3 rounded border bg-white p-4">

@@ -38,9 +38,10 @@ class ProductResource extends Resource
                 ]),
                 Forms\Components\TextInput::make('slug')
                     ->label(__('Slug'))
-                    ->helperText(__('Unique URL-friendly product link, for example classic-chicken-sandwich.'))
-                    ->required()
-                    ->unique(Product::class, 'slug', ignoreRecord: true),
+                    ->helperText(__('Generated automatically when the product is created and kept stable after that.'))
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->visible(fn ($record): bool => $record !== null),
                 Forms\Components\TextInput::make('sku')
                     ->label('SKU')
                     ->helperText(__('Internal stock code used to identify the product in inventory and orders.'))
@@ -58,6 +59,11 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('stock_quantity')->label(__('Stock Quantity'))->numeric()->default(0)->helperText(__('One shared stock quantity for all languages.')),
                 Forms\Components\TextInput::make('low_stock_threshold')->label(__('Low stock threshold'))->numeric()->default(5),
                 Forms\Components\TextInput::make('weight')->label(__('Weight'))->numeric()->default(0)->helperText(__('Used by shipping rules and is not language-specific.')),
+                Forms\Components\TextInput::make('length')->label(__('Length'))->numeric(),
+                Forms\Components\TextInput::make('width')->label(__('Width'))->numeric(),
+                Forms\Components\TextInput::make('height')->label(__('Height'))->numeric(),
+                Forms\Components\Toggle::make('requires_shipping')->label(__('Requires Shipping'))->default(true),
+                Forms\Components\Toggle::make('free_shipping')->label(__('Free Shipping'))->default(false),
                 Forms\Components\Toggle::make('is_featured'),
                 Forms\Components\Toggle::make('status')->default(true),
             ]),

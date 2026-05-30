@@ -19,11 +19,22 @@ class CheckoutRequest extends FormRequest
         return [
             'shipping_address_id' => ['required', Rule::exists('addresses', 'id')->where('user_id', $this->user()?->id)],
             'billing_address_id' => ['nullable', Rule::exists('addresses', 'id')->where('user_id', $this->user()?->id)],
-            'shipping_method_id' => ['required', Rule::exists('shipping_methods', 'id')->where('is_active', true)],
+            'shipping_city_id' => ['required', Rule::exists('cities', 'id')->where('is_active', true)],
+            'shipping_carrier_id' => ['nullable', Rule::exists('shipping_carriers', 'id')->where('status', 'active')],
             'payment_method_id' => ['required', Rule::exists('payment_methods', 'id')->where('is_active', true)],
-            'payment_receipt' => ['nullable', 'image', 'max:4096'],
+            'payment_receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:4096'],
             'coupon_code' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'price' => ['prohibited'],
+            'unit_price' => ['prohibited'],
+            'retail_price' => ['prohibited'],
+            'wholesale_price' => ['prohibited'],
+            'subtotal' => ['prohibited'],
+            'shipping_cost' => ['prohibited'],
+            'shipping_method_id' => ['prohibited'],
+            'payment_fee' => ['prohibited'],
+            'discount_amount' => ['prohibited'],
+            'total' => ['prohibited'],
         ];
     }
 

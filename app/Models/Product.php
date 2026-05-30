@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasStoreTranslations;
+use App\Models\Concerns\HasAutoSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,9 +14,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends Model
 {
-    use HasFactory, HasStoreTranslations, LogsActivity;
+    use HasAutoSlug, HasFactory, HasStoreTranslations, LogsActivity;
 
     public array $translatable = ['name', 'short_description', 'description', 'seo_title', 'seo_description'];
+
+    protected string $slugSourceField = 'name';
 
     protected $fillable = [
         'name',
@@ -37,6 +40,11 @@ class Product extends Model
         'wholesale_minimum_quantity',
         'stock_quantity',
         'weight',
+        'length',
+        'width',
+        'height',
+        'requires_shipping',
+        'free_shipping',
         'low_stock_threshold',
     ];
 
@@ -46,6 +54,11 @@ class Product extends Model
         'retail_price' => 'decimal:2',
         'wholesale_price' => 'decimal:2',
         'weight' => 'decimal:3',
+        'length' => 'decimal:3',
+        'width' => 'decimal:3',
+        'height' => 'decimal:3',
+        'requires_shipping' => 'boolean',
+        'free_shipping' => 'boolean',
     ];
 
     public function brand(): BelongsTo
@@ -102,10 +115,9 @@ class Product extends Model
         return (float) $this->retail_price;
     }
 
-    public function flashSales(): BelongsToMany
+    public function flashOfferItems(): HasMany
     {
-        return $this->belongsToMany(FlashSale::class)
-            ->withPivot(['discount_type', 'discount_value', 'quantity_limit', 'sold_count']);
+        return $this->hasMany(FlashOfferItem::class);
     }
 
     public function getActivitylogOptions(): LogOptions

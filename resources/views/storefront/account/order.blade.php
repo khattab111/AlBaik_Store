@@ -8,7 +8,7 @@
         <p>{{ __('Status') }}: {{ $order->status }}</p>
         <p>{{ __('Total') }}: {{ number_format((float) $order->total, 2) }} USD</p>
         <p>{{ __('Payment method') }}: {{ $order->paymentMethod?->name }}</p>
-        <p>{{ __('Shipping method') }}: {{ $order->shippingMethod?->name }}</p>
+        <p>{{ __('Shipping carrier') }}: {{ $order->shipping_carrier_name ?? __('No shipping required') }}</p>
         <p>{{ __('Phone') }}: {{ $order->customer_phone }}</p>
         <p>{{ __('WhatsApp') }}: {{ $order->customer_whatsapp }}</p>
         <p>{{ __('Shipping Address') }}: {{ $order->shipping_country }} / {{ $order->shipping_city }} / {{ $order->shipping_town }} / {{ $order->shipping_street }}</p>

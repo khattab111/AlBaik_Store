@@ -19,6 +19,7 @@
         <h1 class="mt-2 text-4xl font-black leading-tight sm:text-5xl">{{ $category->name }}</h1>
         <p class="mt-3 max-w-3xl leading-7 text-slate-600">{{ $category->description }}</p>
     </div>
+    @include('partials.banner-strip', ['banners' => $pageBanners ?? collect()])
     <div class="store-product-grid">
         @forelse($products as $product)
             @include('partials.product-card', ['product' => $product])

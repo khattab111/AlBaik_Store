@@ -231,6 +231,14 @@
         white-space: normal;
     }
 
+    .store-toast {
+        @apply pointer-events-none fixed end-4 top-24 z-[90] max-w-sm translate-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800 opacity-0 shadow-xl transition;
+    }
+
+    .store-toast.is-visible {
+        @apply translate-y-0 opacity-100;
+    }
+
     .store-icon-button {
         @apply relative inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-white text-lg shadow-sm transition hover:-translate-y-0.5 hover:shadow-md;
         border-color: var(--store-border, #e2e8f0);
@@ -240,27 +248,52 @@
 
     .store-icon-button:hover {
         transform: translateY(-2px) scale(1.03);
-        border-color: color-mix(in srgb, var(--store-primary, #b91c1c) 28%, white);
-        color: var(--store-primary, #b91c1c);
+        border-color: color-mix(in srgb, var(--store-accent, #d99a16) 42%, white);
+        color: var(--store-accent, #d99a16);
     }
 
     .store-badge {
-        @apply absolute -top-2 -end-2 min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-black leading-5 text-white;
-        background-color: var(--store-primary, #b91c1c);
+        @apply absolute -top-2 -end-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-center text-[11px] font-black leading-none text-white;
+        background-color: var(--store-accent, #d99a16);
         animation: store-soft-pop 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+    }
+
+    .store-count-pop {
+        animation: store-soft-pop 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+    }
+
+    .store-language-menu {
+        @apply relative shrink-0;
+    }
+
+    .store-language-dropdown {
+        @apply invisible absolute end-0 top-[calc(100%+.5rem)] z-50 grid min-w-44 translate-y-2 gap-1 rounded-2xl border bg-white p-2 text-sm font-bold opacity-0 shadow-xl shadow-slate-950/10 transition;
+        border-color: var(--store-border, #e2e8f0);
+    }
+
+    .store-language-menu.is-open .store-language-dropdown {
+        @apply visible translate-y-0 opacity-100;
+    }
+
+    .store-language-dropdown a {
+        @apply flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-slate-600 transition hover:bg-amber-50 hover:text-amber-700;
+    }
+
+    .store-language-dropdown a.is-active {
+        @apply bg-amber-50 text-amber-700;
     }
 
     .store-nav-pill {
         @apply inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-white shadow-sm;
-        background-color: var(--store-primary, #b91c1c);
-        box-shadow: 0 10px 20px color-mix(in srgb, var(--store-primary, #b91c1c) 20%, transparent);
+        background-color: var(--store-primary, #111111);
+        box-shadow: 0 10px 20px rgb(17 17 17 / 0.14);
         transition: transform 220ms ease, box-shadow 220ms ease, background-color 220ms ease;
     }
 
     .store-nav-pill:hover {
         transform: translateY(-2px);
         background-color: var(--store-primary-hover, #991b1b);
-        box-shadow: 0 14px 28px color-mix(in srgb, var(--store-primary, #b91c1c) 24%, transparent);
+        box-shadow: 0 14px 28px rgb(17 17 17 / 0.18);
     }
 
     .store-nav-link {
@@ -270,12 +303,113 @@
     }
 
     .store-nav-link:hover {
-        background-color: color-mix(in srgb, var(--store-primary, #b91c1c) 8%, white);
-        color: var(--store-primary, #b91c1c);
+        background-color: color-mix(in srgb, var(--store-accent, #d99a16) 12%, white);
+        color: var(--store-primary, #111111);
     }
 
     .store-nav-link:hover {
         transform: translateY(-1px);
+    }
+
+    .store-mobile-menu {
+        @apply fixed inset-0 z-[70] pointer-events-none;
+    }
+
+    .store-mobile-menu__backdrop {
+        @apply absolute inset-0 bg-slate-950/40 opacity-0 transition;
+    }
+
+    .store-mobile-menu__panel {
+        @apply absolute top-0 h-full w-[min(86vw,360px)] overflow-y-auto bg-white shadow-2xl transition;
+        inset-inline-start: 0;
+        transform: translateX(-105%);
+    }
+
+    [dir="rtl"] .store-mobile-menu__panel {
+        transform: translateX(105%);
+    }
+
+    .store-mobile-menu.is-open {
+        @apply pointer-events-auto;
+    }
+
+    .store-mobile-menu.is-open .store-mobile-menu__backdrop {
+        @apply opacity-100;
+    }
+
+    .store-mobile-menu.is-open .store-mobile-menu__panel {
+        transform: translateX(0);
+    }
+
+    .store-documentation-content {
+        @apply text-slate-700;
+    }
+
+    .store-documentation-sidebar {
+        @apply sticky max-h-[calc(100vh-8rem)] overflow-y-auto;
+        top: 7rem;
+    }
+
+    .store-documentation-nav-link {
+        @apply block rounded-2xl px-3 py-2 text-sm font-bold leading-6 text-slate-600 transition hover:bg-red-50 hover:text-red-700;
+    }
+
+    .store-documentation-nav-link--level-1 {
+        @apply text-slate-950;
+    }
+
+    .store-documentation-nav-link--level-2 {
+        @apply ps-5;
+    }
+
+    .store-documentation-nav-link--level-3 {
+        @apply ps-8 text-xs text-slate-500;
+    }
+
+    .store-documentation-mobile-nav select {
+        @apply outline-none;
+    }
+
+    .store-documentation-content h1,
+    .store-documentation-content h2,
+    .store-documentation-content h3 {
+        scroll-margin-top: 9rem;
+    }
+
+    .store-documentation-content h1 {
+        @apply mb-6 text-3xl font-black text-slate-950;
+    }
+
+    .store-documentation-content h2 {
+        @apply mb-4 mt-10 border-b border-slate-200 pb-3 text-2xl font-black text-slate-950;
+    }
+
+    .store-documentation-content h3 {
+        @apply mb-3 mt-7 text-xl font-black text-slate-900;
+    }
+
+    .store-documentation-content p {
+        @apply my-3 leading-8;
+    }
+
+    .store-documentation-content ul {
+        @apply my-4 list-disc space-y-2 ps-6;
+    }
+
+    .store-documentation-content ol {
+        @apply my-4 list-decimal space-y-2 ps-6;
+    }
+
+    .store-documentation-content code {
+        @apply rounded bg-slate-100 px-1.5 py-0.5 text-sm font-bold text-red-700;
+    }
+
+    .store-documentation-content pre {
+        @apply my-4 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm text-slate-100;
+    }
+
+    .store-documentation-content pre code {
+        @apply bg-transparent p-0 text-slate-100;
     }
 
     .store-section {
@@ -289,7 +423,7 @@
 
     .store-eyebrow {
         @apply text-sm font-black uppercase tracking-normal;
-        color: var(--store-primary, #b91c1c);
+        color: var(--store-accent, #d99a16);
     }
 
     .store-panel {
@@ -359,7 +493,7 @@
 
     .store-price {
         @apply text-xl font-black;
-        color: var(--store-primary, #b91c1c);
+        color: var(--store-primary, #111111);
     }
 
     .store-icon-pill {
@@ -375,20 +509,21 @@
     }
 
     .store-field:hover {
-        border-color: color-mix(in srgb, var(--store-primary, #b91c1c) 32%, white);
+        border-color: color-mix(in srgb, var(--store-accent, #d99a16) 42%, white);
     }
 
     .store-button-primary {
         @apply inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl;
-        background-color: var(--store-primary, #b91c1c);
-        box-shadow: 0 18px 32px color-mix(in srgb, var(--store-primary, #b91c1c) 20%, transparent);
+        background: linear-gradient(135deg, var(--store-accent, #d99a16), #f3c34d);
+        color: #111111;
+        box-shadow: 0 18px 32px color-mix(in srgb, var(--store-accent, #d99a16) 22%, transparent);
         position: relative;
         overflow: hidden;
         transition-duration: 240ms;
     }
 
     .store-button-primary:hover {
-        background-color: var(--store-primary-hover, #991b1b);
+        background: linear-gradient(135deg, #f3c34d, var(--store-accent, #d99a16));
     }
 
     .store-button-primary::after {
@@ -414,8 +549,8 @@
     }
 
     .store-button-secondary:hover {
-        border-color: color-mix(in srgb, var(--store-primary, #b91c1c) 28%, white);
-        color: var(--store-primary, #b91c1c);
+        border-color: color-mix(in srgb, var(--store-accent, #d99a16) 44%, white);
+        color: var(--store-primary, #111111);
     }
 
     .store-product-grid {

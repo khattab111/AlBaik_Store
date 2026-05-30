@@ -26,7 +26,10 @@
             <a href="{{ route('account.addresses.index') }}" class="store-button-primary mt-6">{{ __('Addresses') }}</a>
         </div>
     @else
-        <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" class="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" class="grid gap-8 lg:grid-cols-[1fr_360px]"
+            data-checkout-shipping
+            data-carriers-url="{{ route('checkout.shipping-carriers') }}"
+            data-quote-url="{{ route('checkout.shipping-quote') }}">
             @csrf
             <div class="grid gap-6">
                 <section class="store-panel p-6">
@@ -34,7 +37,7 @@
                     <div class="mt-5 grid gap-3">
                         @foreach($addresses as $address)
                             <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
-                                <input type="radio" name="shipping_address_id" value="{{ $address->id }}" class="sr-only" @checked($loop->first)>
+                                <input type="radio" name="shipping_address_id" value="{{ $address->id }}" data-address-city-id="{{ $address->city_id }}" class="sr-only" @checked($loop->first)>
                                 <span class="block font-black">{{ $address->label ?: __('Address') }}</span>
                                 <span class="mt-1 block text-sm text-slate-600">{{ $address->country }} / {{ $address->city }} / {{ $address->town }} / {{ $address->street }} - {{ $address->phone }}</span>
                             </label>
@@ -43,16 +46,34 @@
                 </section>
 
                 <section class="store-panel p-6">
-                    <h2 class="text-2xl font-black">{{ __('Shipping Method') }}</h2>
-                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                        @foreach($shippingMethods as $method)
-                            <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
-                                <input type="radio" name="shipping_method_id" value="{{ $method->id }}" class="sr-only" @checked($loop->first)>
-                                <span class="block font-black">{{ $method->name }}</span>
-                                <span class="mt-1 block text-sm text-slate-600">{{ $method->description }}</span>
-                                <span class="mt-3 block text-lg font-black text-red-700">USD {{ number_format((float)$method->cost, 2) }}</span>
-                            </label>
-                        @endforeach
+                    <h2 class="text-2xl font-black">{{ __('Shipping') }}</h2>
+                    <div class="mt-5 grid gap-4">
+                        <label class="grid gap-2">
+                            <span class="text-sm font-black">{{ __('City') }}</span>
+                            <select name="shipping_city_id" class="store-field" data-shipping-city @disabled(! $requiresShipping)>
+                                <option value="">{{ __('Choose city') }}</option>
+                                @foreach($cities as $city)
+                                    <option value="{{ $city->id }}">{{ $city->name }} - {{ $city->country }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        @if(! $requiresShipping)
+                            <div class="rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">{{ __('This cart does not require shipping.') }}</div>
+                        @endif
+
+                        <div class="grid gap-3 sm:grid-cols-2" data-shipping-carriers>
+                            @forelse($availableCarriers as $carrier)
+                                <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+                                    <input type="radio" name="shipping_carrier_id" value="{{ $carrier['id'] }}" data-shipping-cost="{{ $carrier['cost'] }}" class="sr-only" @checked($loop->first) @disabled(! $requiresShipping)>
+                                    <span class="block font-black">{{ $carrier['name'] }}</span>
+                                    <span class="mt-1 block text-sm text-slate-600">{{ $carrier['estimated_delivery_time'] ?: __('Delivery time will be confirmed.') }}</span>
+                                    <span class="mt-3 block text-lg font-black text-red-700">USD {{ number_format((float)$carrier['cost'], 2) }}</span>
+                                </label>
+                            @empty
+                                <div class="rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800" data-no-carriers>{{ __('No shipping carriers are available for this city right now.') }}</div>
+                            @endforelse
+                        </div>
                     </div>
                 </section>
 
@@ -77,7 +98,7 @@
 
                 <section class="store-panel grid gap-4 p-6">
                     <h2 class="text-2xl font-black">{{ __('Order Notes') }}</h2>
-                    <input type="file" name="payment_receipt" accept="image/*" class="store-field">
+                    <input type="file" name="payment_receipt" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="store-field">
                     <input name="coupon_code" placeholder="{{ __('Coupon Code') }}" class="store-field">
                     <textarea name="notes" rows="4" placeholder="{{ __('Notes') }}" class="store-field"></textarea>
                 </section>
@@ -96,7 +117,15 @@
                 <div class="mt-6 border-t border-slate-100 pt-5">
                     <div class="flex justify-between text-lg font-black">
                         <span>{{ __('Subtotal') }}</span>
-                        <span class="text-red-700">USD {{ number_format($subtotal, 2) }}</span>
+                        <span class="text-red-700">USD <span data-checkout-subtotal="{{ number_format($subtotal, 2, '.', '') }}">{{ number_format($subtotal, 2) }}</span></span>
+                    </div>
+                    <div class="mt-3 flex justify-between text-sm font-bold text-slate-600">
+                        <span>{{ __('Shipping') }}</span>
+                        <span>USD <span data-checkout-shipping-cost>0.00</span></span>
+                    </div>
+                    <div class="mt-3 flex justify-between text-xl font-black">
+                        <span>{{ __('Total') }}</span>
+                        <span class="text-red-700">USD <span data-checkout-total>{{ number_format($subtotal, 2) }}</span></span>
                     </div>
                 </div>
                 <button class="store-button-primary mt-6 w-full">{{ __('Place Order') }}</button>

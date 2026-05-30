@@ -17,12 +17,19 @@ class Order extends Model
         'user_id',
         'order_number',
         'currency_id',
-        'shipping_method_id',
         'payment_method_id',
         'shipping_address_id',
         'billing_address_id',
+        'shipping_city_id',
+        'shipping_city_name',
+        'shipping_carrier_id',
+        'shipping_carrier_name',
         'subtotal',
         'shipping_cost',
+        'shipping_weight',
+        'shipping_delivery_time',
+        'shipping_address_text',
+        'is_free_shipping',
         'discount_amount',
         'payment_fee',
         'total',
@@ -47,6 +54,8 @@ class Order extends Model
         'discount_amount' => 'decimal:2',
         'payment_fee' => 'decimal:2',
         'total' => 'decimal:2',
+        'shipping_weight' => 'decimal:3',
+        'is_free_shipping' => 'boolean',
         'paid_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -68,9 +77,14 @@ class Order extends Model
         return $this->belongsTo(PaymentMethod::class);
     }
 
-    public function shippingMethod(): BelongsTo
+    public function shippingCarrier(): BelongsTo
     {
-        return $this->belongsTo(ShippingMethod::class);
+        return $this->belongsTo(ShippingCarrier::class);
+    }
+
+    public function shippingCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'shipping_city_id');
     }
 
     public function payments(): HasMany

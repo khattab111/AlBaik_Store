@@ -17,9 +17,9 @@
     </div>
     <div class="store-product-grid">
         @forelse($items as $item)
-            <div class="grid gap-3">
+            <div class="grid gap-3" data-favorite-item>
                 @include('partials.product-card', ['product' => $item->product])
-                <form method="POST" action="{{ route('favorites.toggle', $item->product) }}">
+                <form method="POST" action="{{ route('favorites.toggle', $item->product) }}" data-ajax-store-action>
                     @csrf
                     <button class="store-button-secondary w-full">{{ __('Remove') }}</button>
                 </form>

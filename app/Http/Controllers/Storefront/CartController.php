@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\AddCartItemRequest;
+use App\Http\Requests\Storefront\UpdateCartItemRequest;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Repositories\CartRepository;
-use App\Services\DiscountService;
+use App\Services\ProductPricingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,20 +41,20 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('status', __('Product added to cart.'));
     }
 
-    public function update(Request $request, CartItem $item, DiscountService $discounts): RedirectResponse
+    public function update(UpdateCartItemRequest $request, CartItem $item, ProductPricingService $pricing): RedirectResponse
     {
         abort_unless($item->cart->user_id === $request->user()->id, 403);
 
-        $data = $request->validate(['quantity' => ['required', 'integer', 'min:1', 'max:999']]);
-        $item->load(['product', 'variant']);
+        $data = $request->validated();
+        $item->load(['product.priceTiers', 'variant']);
+        $price = $pricing->getPriceForUser($item->product, $request->user(), (int) $data['quantity']);
 
         $item->update([
             'quantity' => $data['quantity'],
-            'unit_price' => $discounts->productPrice(
-                $item->product,
-                (int) $data['quantity'],
-                $item->variant && (float) $item->variant->price > 0 ? (float) $item->variant->price : null,
-            ),
+            'unit_price' => $price->price,
+            'price_type' => $price->priceType,
+            'applied_tier_id' => $price->appliedTierId,
+            'applied_flash_offer_id' => $price->appliedFlashOfferId,
         ]);
 
         return back()->with('status', __('Cart updated.'));

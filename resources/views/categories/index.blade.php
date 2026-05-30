@@ -16,6 +16,8 @@
         <p class="mt-3 max-w-2xl leading-7 text-slate-600">{{ __('Move quickly between product families with visual category cards.') }}</p>
     </div>
 
+    @include('partials.banner-strip', ['banners' => $pageBanners ?? collect()])
+
     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         @forelse($categories as $category)
             @php

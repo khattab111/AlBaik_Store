@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\OrderInvoiceController;
+use App\Http\Controllers\Admin\DocumentationController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Storefront\Account\AddressController;
 use App\Http\Controllers\Storefront\Account\DashboardController;
 use App\Http\Controllers\Storefront\Account\ProfileController;
 use App\Http\Controllers\Storefront\AuthController;
+use App\Http\Controllers\Storefront\PasswordResetController;
 use App\Http\Controllers\Storefront\ReviewController;
 use App\Http\Controllers\WholesaleApplicationController;
 use Illuminate\Support\Facades\Route;
@@ -62,7 +64,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/account/login', [AuthController::class, 'login'])->name('customer.login.store')->middleware('throttle:10,1');
     Route::get('/account/register', [AuthController::class, 'registerForm'])->name('customer.register');
     Route::post('/account/register', [AuthController::class, 'register'])->name('customer.register.store')->middleware('throttle:10,1');
+    Route::get('/account/forgot-password', [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/account/forgot-password', [PasswordResetController::class, 'email'])->name('password.email')->middleware('throttle:5,1');
 });
+
+Route::get('/account/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
+Route::post('/account/reset-password', [PasswordResetController::class, 'update'])->name('password.update')->middleware('throttle:5,1');
 
 Route::post('/account/logout', [AuthController::class, 'logout'])->name('customer.logout')->middleware('auth');
 
@@ -79,7 +86,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/favorites/toggle/{product}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
 
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::get('/checkout/shipping-carriers', [CheckoutController::class, 'carriers'])->name('checkout.shipping-carriers');
+    Route::get('/checkout/shipping-quote', [CheckoutController::class, 'quote'])->name('checkout.shipping-quote');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store')->middleware('throttle:5,1');
     Route::get('/checkout/success/{order}', [OrderController::class, 'success'])->name('checkout.success');
 
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
@@ -105,5 +114,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/documentation', DocumentationController::class)->name('documentation');
     Route::get('/orders/{order}/invoice', OrderInvoiceController::class)->name('orders.invoice');
 });

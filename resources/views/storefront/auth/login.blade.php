@@ -14,7 +14,10 @@
             @csrf
             <input name="email" type="email" value="{{ old('email') }}" placeholder="{{ __('Email') }}" class="store-field">
             <input name="password" type="password" placeholder="{{ __('Password') }}" class="store-field">
-            <label class="flex gap-2 text-sm font-bold"><input type="checkbox" name="remember" value="1"> {{ __('Remember me') }}</label>
+            <div class="flex flex-wrap items-center justify-between gap-3 text-sm font-bold">
+                <label class="flex gap-2"><input type="checkbox" name="remember" value="1"> {{ __('Remember me') }}</label>
+                <a href="{{ route('password.request') }}" class="text-red-700">{{ __('Forgot password?') }}</a>
+            </div>
             <button class="store-button-primary">{{ __('Login') }}</button>
             <a href="{{ route('customer.register') }}" class="text-center text-sm font-black text-red-700">{{ __('Create Account') }}</a>
         </form>

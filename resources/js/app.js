@@ -238,11 +238,307 @@ const initializeHeroSliders = () => {
     });
 };
 
+const initializeHeaderNavigation = () => {
+    const menu = document.querySelector('[data-mobile-menu]');
+    const languageMenu = document.querySelector('.store-language-menu');
+    const languageToggle = document.querySelector('[data-language-toggle]');
+
+    document.querySelectorAll('[data-mobile-menu-open]').forEach((button) => {
+        button.addEventListener('click', () => {
+            menu?.classList.add('is-open');
+            menu?.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+        });
+    });
+
+    document.querySelectorAll('[data-mobile-menu-close]').forEach((button) => {
+        button.addEventListener('click', () => {
+            menu?.classList.remove('is-open');
+            menu?.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overflow-hidden');
+        });
+    });
+
+    languageToggle?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = languageMenu?.classList.toggle('is-open') || false;
+        languageToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!languageMenu || languageMenu.contains(event.target)) {
+            return;
+        }
+
+        languageMenu.classList.remove('is-open');
+        languageToggle?.setAttribute('aria-expanded', 'false');
+    });
+};
+
+const updateCount = (selector, value) => {
+    if (value === undefined || value === null) {
+        return;
+    }
+
+    document.querySelectorAll(selector).forEach((element) => {
+        element.textContent = String(value);
+        element.classList.remove('store-count-pop');
+        window.requestAnimationFrame(() => element.classList.add('store-count-pop'));
+    });
+};
+
+const initializeAsyncStoreActions = () => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    document.querySelectorAll('[data-ajax-store-action]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const button = form.querySelector('button[type="submit"], button:not([type])');
+
+            button?.setAttribute('disabled', 'disabled');
+            form.classList.add('is-submitting');
+
+            try {
+                const response = await window.fetch(form.action, {
+                    method: form.method || 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token || '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: new FormData(form),
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+
+                const payload = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(payload.message || 'Request failed.');
+                }
+
+                updateCount('[data-cart-count]', payload.cart_count);
+                updateCount('[data-wishlist-count]', payload.wishlist_count);
+
+                if (payload.action === 'removed') {
+                    form.closest('[data-favorite-item]')?.remove();
+                }
+
+                window.dispatchEvent(new CustomEvent('store:notice', {
+                    detail: { message: payload.message || '' },
+                }));
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('store:notice', {
+                    detail: { message: error.message || 'Unable to complete the request.' },
+                }));
+            } finally {
+                button?.removeAttribute('disabled');
+                form.classList.remove('is-submitting');
+            }
+        });
+    });
+};
+
+const initializeStoreNotices = () => {
+    const toast = document.querySelector('[data-store-toast]');
+    let timer = null;
+
+    window.addEventListener('store:notice', (event) => {
+        if (!toast || !event.detail?.message) {
+            return;
+        }
+
+        toast.textContent = event.detail.message;
+        toast.classList.add('is-visible');
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => toast.classList.remove('is-visible'), 2600);
+    });
+};
+
+const initializeDocumentationNavigation = () => {
+    document.querySelectorAll('[data-documentation-jump]').forEach((select) => {
+        select.addEventListener('change', () => {
+            if (select.value) {
+                window.location.hash = select.value;
+            }
+        });
+    });
+};
+
+const initializeWholesaleTierPicker = () => {
+    const quantityInput = document.querySelector('[data-product-quantity]');
+
+    if (!quantityInput) {
+        return;
+    }
+
+    document.querySelectorAll('[data-wholesale-tier]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const quantity = Number(button.dataset.quantity || 1);
+
+            quantityInput.value = String(Math.max(1, quantity));
+            quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            document.querySelectorAll('[data-wholesale-tier]').forEach((tierButton) => {
+                tierButton.dataset.selected = 'false';
+                tierButton.classList.remove('ring-2', 'ring-emerald-500');
+            });
+
+            button.dataset.selected = 'true';
+            button.classList.add('ring-2', 'ring-emerald-500');
+            quantityInput.focus({ preventScroll: true });
+        });
+    });
+};
+
+const initializeCheckoutShipping = () => {
+    const form = document.querySelector('[data-checkout-shipping]');
+
+    if (!form) {
+        return;
+    }
+
+    const citySelect = form.querySelector('[data-shipping-city]');
+    const carrierContainer = form.querySelector('[data-shipping-carriers]');
+    const subtotalElement = form.querySelector('[data-checkout-subtotal]');
+    const shippingCostElement = form.querySelector('[data-checkout-shipping-cost]');
+    const totalElement = form.querySelector('[data-checkout-total]');
+    const carriersUrl = form.dataset.carriersUrl;
+    const quoteUrl = form.dataset.quoteUrl;
+    const subtotal = Number(subtotalElement?.dataset.checkoutSubtotal || 0);
+
+    const money = (value) => Number(value || 0).toFixed(2);
+
+    const updateTotals = (shippingCost) => {
+        if (shippingCostElement) {
+            shippingCostElement.textContent = money(shippingCost);
+        }
+
+        if (totalElement) {
+            totalElement.textContent = money(subtotal + Number(shippingCost || 0));
+        }
+    };
+
+    const carrierMarkup = (carrier, checked = false) => `
+        <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+            <input type="radio" name="shipping_carrier_id" value="${carrier.id}" data-shipping-cost="${carrier.cost}" class="sr-only" ${checked ? 'checked' : ''}>
+            <span class="block font-black">${carrier.name}</span>
+            <span class="mt-1 block text-sm text-slate-600">${carrier.estimated_delivery_time || ''}</span>
+            <span class="mt-3 block text-lg font-black text-red-700">USD ${money(carrier.cost)}</span>
+        </label>
+    `;
+
+    const loadQuote = async () => {
+        const carrier = form.querySelector('input[name="shipping_carrier_id"]:checked');
+
+        if (!quoteUrl || !citySelect?.value || !carrier?.value) {
+            updateTotals(0);
+            return;
+        }
+
+        const url = new URL(quoteUrl, window.location.origin);
+        url.searchParams.set('city_id', citySelect.value);
+        url.searchParams.set('shipping_carrier_id', carrier.value);
+
+        const response = await window.fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.message || 'Unable to calculate shipping.');
+        }
+
+        updateTotals(payload.cost || 0);
+    };
+
+    const loadCarriers = async () => {
+        if (!carriersUrl || !citySelect?.value || !carrierContainer) {
+            return;
+        }
+
+        const url = new URL(carriersUrl, window.location.origin);
+        url.searchParams.set('city_id', citySelect.value);
+
+        const response = await window.fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.message || 'Unable to load shipping carriers.');
+        }
+
+        if (!payload.requires_shipping) {
+            carrierContainer.innerHTML = `<div class="rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">${window.storeTranslations?.noShippingRequired || 'This cart does not require shipping.'}</div>`;
+            updateTotals(0);
+            return;
+        }
+
+        if (!payload.carriers || payload.carriers.length === 0) {
+            carrierContainer.innerHTML = `<div class="rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800">${window.storeTranslations?.noCarriers || 'No shipping carriers are available for this city right now.'}</div>`;
+            updateTotals(0);
+            return;
+        }
+
+        carrierContainer.innerHTML = payload.carriers.map((carrier, index) => carrierMarkup(carrier, index === 0)).join('');
+        updateTotals(payload.carriers[0]?.cost || 0);
+        await loadQuote();
+    };
+
+    form.querySelectorAll('input[name="shipping_address_id"]').forEach((input) => {
+        input.addEventListener('change', async () => {
+            if (input.checked && input.dataset.addressCityId && citySelect) {
+                citySelect.value = input.dataset.addressCityId;
+                await loadCarriers();
+            }
+        });
+    });
+
+    citySelect?.addEventListener('change', loadCarriers);
+    carrierContainer?.addEventListener('change', (event) => {
+        if (event.target?.matches('input[name="shipping_carrier_id"]')) {
+            loadQuote().catch((error) => {
+                window.dispatchEvent(new CustomEvent('store:notice', {
+                    detail: { message: error.message },
+                }));
+            });
+        }
+    });
+
+    const checkedAddress = form.querySelector('input[name="shipping_address_id"]:checked');
+
+    if (checkedAddress?.dataset.addressCityId && citySelect) {
+        citySelect.value = checkedAddress.dataset.addressCityId;
+        loadCarriers().catch(() => updateTotals(0));
+    } else {
+        updateTotals(0);
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     applyTheme(getPreferredTheme(), false);
     initializeStorefrontMotion();
     initializeStorefrontEffects();
     initializeHeroSliders();
+    initializeHeaderNavigation();
+    initializeStoreNotices();
+    initializeAsyncStoreActions();
+    initializeDocumentationNavigation();
+    initializeWholesaleTierPicker();
+    initializeCheckoutShipping();
 
     document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
         button.addEventListener('click', () => {

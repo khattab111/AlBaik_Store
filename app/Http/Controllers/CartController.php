@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Storefront\AddCartItemRequest;
+use App\Http\Requests\Storefront\UpdateCartItemRequest;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Repositories\CartRepository;
 use App\Services\GuestCartService;
 use App\Services\ProductPricingService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -40,7 +42,7 @@ class CartController extends Controller
         ]);
     }
 
-    public function add(AddCartItemRequest $request, Product $product): RedirectResponse
+    public function add(AddCartItemRequest $request, Product $product): RedirectResponse|JsonResponse
     {
         abort_unless($product->status, 404);
 
@@ -49,24 +51,39 @@ class CartController extends Controller
         if (! $request->user()) {
             $this->guestCart->add($product->load('variants'), $request->integer('quantity', 1), $variantId);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => __('Product added to cart.'),
+                    'cart_count' => $this->guestCart->count(),
+                ]);
+            }
+
             return back()->with('status', __('Product added to cart.'));
         }
 
         $this->carts->addItem($this->carts->findForUser($request->user()->id), $product->load('variants'), $request->integer('quantity', 1), $variantId);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => __('Product added to cart.'),
+                'cart_count' => $this->carts->findForUser($request->user()->id)->items()->sum('quantity'),
+                'wishlist_count' => $request->user()->wishlist()->count(),
+            ]);
+        }
+
         return back()->with('status', __('Product added to cart.'));
     }
 
-    public function store(AddCartItemRequest $request): RedirectResponse
+    public function store(AddCartItemRequest $request): RedirectResponse|JsonResponse
     {
         $product = Product::where('status', true)->findOrFail($request->integer('product_id'));
 
         return $this->add($request, $product);
     }
 
-    public function update(Request $request, Product $product, ProductPricingService $pricing): RedirectResponse
+    public function update(UpdateCartItemRequest $request, Product $product, ProductPricingService $pricing): RedirectResponse
     {
-        $data = $request->validate(['quantity' => ['required', 'integer', 'min:1', 'max:999']]);
+        $data = $request->validated();
         if (! $request->user()) {
             $this->guestCart->update($product, (int) $data['quantity']);
 
@@ -82,6 +99,7 @@ class CartController extends Controller
             'unit_price' => $price->price,
             'price_type' => $price->priceType,
             'applied_tier_id' => $price->appliedTierId,
+            'applied_flash_offer_id' => $price->appliedFlashOfferId,
         ]);
 
         return back()->with('status', __('Cart updated.'));

@@ -23,8 +23,12 @@
             @csrf
             <h2 class="text-2xl font-black">{{ __('Add Address') }}</h2>
             <input name="label" placeholder="{{ __('Label') }}" class="store-field">
-            <input name="country" placeholder="{{ __('Country') }}" class="store-field">
-            <input name="city" placeholder="{{ __('City') }}" class="store-field">
+            <select name="city_id" class="store-field" required>
+                <option value="">{{ __('Choose city') }}</option>
+                @foreach($cities as $city)
+                    <option value="{{ $city->id }}">{{ $city->name }} - {{ $city->country }}</option>
+                @endforeach
+            </select>
             <input name="town" placeholder="{{ __('Town') }}" class="store-field">
             <input name="state" placeholder="{{ __('State') }}" class="store-field">
             <input name="street" placeholder="{{ __('Street') }}" class="store-field">

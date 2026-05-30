@@ -59,7 +59,7 @@ class GuestCartService
     public function items(): Collection
     {
         $rawItems = collect($this->rawItems());
-        $products = Product::with(['brand', 'images', 'variants', 'flashSales'])
+        $products = Product::with(['brand', 'images', 'variants', 'priceTiers'])
             ->whereIn('id', $rawItems->pluck('product_id')->all())
             ->get()
             ->keyBy('id');
@@ -82,6 +82,7 @@ class GuestCartService
                     'unit_price' => $price->price,
                     'price_type' => $price->priceType,
                     'applied_tier_id' => $price->appliedTierId,
+                    'applied_flash_offer_id' => $price->appliedFlashOfferId,
                 ];
             })
             ->filter()

@@ -11,11 +11,18 @@ class CustomerLoginRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'email' => mb_strtolower(trim((string) $this->input('email'))),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
+            'email' => ['required', 'email:rfc', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
             'remember' => ['nullable', 'boolean'],
         ];
     }

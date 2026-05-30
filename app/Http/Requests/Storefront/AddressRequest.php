@@ -15,8 +15,9 @@ class AddressRequest extends FormRequest
     {
         return [
             'label' => ['nullable', 'string', 'max:100'],
-            'country' => ['required', 'string', 'max:100'],
-            'city' => ['required', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'city_id' => ['required', 'exists:cities,id'],
+            'city' => ['nullable', 'string', 'max:100'],
             'town' => ['nullable', 'string', 'max:100'],
             'state' => ['nullable', 'string', 'max:100'],
             'street' => ['required', 'string', 'max:255'],

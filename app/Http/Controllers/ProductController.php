@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Storefront\ProductFilterRequest;
+use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -11,25 +13,24 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request): View
+    public function index(ProductFilterRequest $request): View
     {
         $locale = app()->getLocale();
-        $displayMode = in_array($request->query('view'), ['grid', 'list'], true)
-            ? $request->query('view')
-            : 'grid';
+        $filters = $request->filters();
+        $displayMode = $filters['view'] ?? 'grid';
 
-        $query = Product::with(['brand', 'category', 'images', 'reviews', 'flashSales'])
+        $query = Product::with(['brand', 'category', 'images', 'reviews', 'priceTiers'])
             ->where('status', true);
 
-        $query->when($request->filled('search'), fn ($builder) => $builder->where("name->{$locale}", 'like', '%'.$request->string('search').'%'));
-        $query->when($request->filled('category'), fn ($builder) => $builder->whereHas('category', fn ($category) => $category->where('slug', $request->input('category'))));
-        $query->when($request->filled('brand'), fn ($builder) => $builder->whereHas('brand', fn ($brand) => $brand->where('slug', $request->input('brand'))));
-        $query->when($request->filled('min_price'), fn ($builder) => $builder->where('retail_price', '>=', (float) $request->input('min_price')));
-        $query->when($request->filled('max_price'), fn ($builder) => $builder->where('retail_price', '<=', (float) $request->input('max_price')));
+        $query->when($filters['search'] ?? null, fn ($builder, $search) => $builder->where("name->{$locale}", 'like', '%'.$search.'%'));
+        $query->when($filters['category'] ?? null, fn ($builder, $categorySlug) => $builder->whereHas('category', fn ($category) => $category->where('slug', $categorySlug)));
+        $query->when($filters['brand'] ?? null, fn ($builder, $brandSlug) => $builder->whereHas('brand', fn ($brand) => $brand->where('slug', $brandSlug)));
+        $query->when($filters['min_price'] ?? null, fn ($builder, $price) => $builder->where('retail_price', '>=', (float) $price));
+        $query->when($filters['max_price'] ?? null, fn ($builder, $price) => $builder->where('retail_price', '<=', (float) $price));
         $query->when($request->boolean('in_stock'), fn ($builder) => $builder->where('stock_quantity', '>', 0));
-        $query->when($request->boolean('on_sale'), fn ($builder) => $builder->whereHas('flashSales', fn ($sale) => $sale->where('is_active', true)));
+        $query->when($request->boolean('on_sale'), fn ($builder) => $builder->whereHas('flashOfferItems.flashOffer', fn ($offer) => $offer->currentlyValid()));
 
-        match ($request->input('sort', 'latest')) {
+        match ($filters['sort'] ?? 'latest') {
             'price_desc' => $query->orderByDesc('retail_price'),
             'price_asc' => $query->orderBy('retail_price'),
             'best_selling' => $query->withCount('orderItems')->orderByDesc('order_items_count'),
@@ -41,8 +42,9 @@ class ProductController extends Controller
             'products' => $query->paginate(12)->withQueryString(),
             'categories' => Category::where('status', true)->orderBy("name->{$locale}")->get(),
             'brands' => Brand::where('status', true)->orderBy("name->{$locale}")->get(),
-            'filters' => $request->query(),
+            'filters' => $filters,
             'displayMode' => $displayMode,
+            'pageBanners' => Banner::activeNow()->forPlacement(['shop', Banner::PLACEMENT_PRODUCTS_TOP])->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -57,7 +59,7 @@ class ProductController extends Controller
     {
         abort_unless($product->status, 404);
 
-        $product->load(['brand', 'category', 'images', 'variants', 'reviews.user', 'flashSales', 'priceTiers']);
+        $product->load(['brand', 'category', 'images', 'variants', 'reviews.user', 'priceTiers']);
         $isWholesaleCustomer = (bool) $request->user()?->isWholesaleCustomer();
 
         return view('products.show', [

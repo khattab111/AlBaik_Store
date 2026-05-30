@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Banner;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
@@ -14,6 +15,7 @@ class CategoryController extends Controller
 
         return view('categories.index', [
             'categories' => Category::where('status', true)->withCount('products')->orderBy("name->{$locale}")->paginate(24),
+            'pageBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_CATEGORIES_TOP)->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -25,6 +27,7 @@ class CategoryController extends Controller
         return view('categories.show', [
             'category' => $category,
             'products' => $category->products()->with(['images', 'brand', 'category', 'reviews'])->where('status', true)->latest()->paginate(12),
+            'pageBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_CATEGORIES_TOP)->orderBy('sort_order')->get(),
         ]);
     }
 }

@@ -28,7 +28,11 @@ class CategoryResource extends Resource
                 Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required()->maxLength(255),
                 Forms\Components\Textarea::make("description.{$code}")->label(__('Description'))->rows(3),
             ]),
-            Forms\Components\TextInput::make('slug')->required()->unique(Category::class, 'slug', ignoreRecord: true),
+            Forms\Components\TextInput::make('slug')
+                ->helperText(__('Generated automatically when the category is created and kept stable after that.'))
+                ->disabled()
+                ->dehydrated(false)
+                ->visible(fn ($record): bool => $record !== null),
             Forms\Components\Select::make('parent_id')->label(__('Parent Category'))->options(fn () => Category::query()->get()->pluck('name', 'id'))->preload(),
             Forms\Components\Toggle::make('status')->default(true),
         ]);

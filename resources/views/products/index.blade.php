@@ -34,6 +34,8 @@
         </div>
     </div>
 
+    @include('partials.banner-strip', ['banners' => $pageBanners ?? collect()])
+
     <div class="grid gap-8 lg:grid-cols-[340px_minmax(0,1fr)]">
         <aside>
             <form method="GET" class="store-filter-panel" aria-label="{{ __('Filter products') }}">
@@ -87,11 +89,11 @@
                 </div>
 
                 <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold">
-                    <input type="checkbox" name="in_stock" value="1" @checked(request()->boolean('in_stock'))>
+                    <input type="checkbox" name="in_stock" value="1" @checked((bool) ($filters['in_stock'] ?? false))>
                     {{ __('In Stock') }}
                 </label>
                 <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold">
-                    <input type="checkbox" name="on_sale" value="1" @checked(request()->boolean('on_sale'))>
+                    <input type="checkbox" name="on_sale" value="1" @checked((bool) ($filters['on_sale'] ?? false))>
                     {{ __('Offers') }}
                 </label>
 

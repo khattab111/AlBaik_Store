@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" role="img" aria-labelledby="title desc">
+  <title id="title">Premium smartphones</title>
+  <desc id="desc">A clean promotional smartphone illustration for the store hero.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#e8edf5"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0" stop-color="#f6c453"/>
+      <stop offset="1" stop-color="#d99813"/>
+    </linearGradient>
+    <linearGradient id="phone" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f7f2e9"/>
+      <stop offset=".5" stop-color="#c9c2b7"/>
+      <stop offset="1" stop-color="#8f887d"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#111827" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="900" height="620" rx="38" fill="url(#bg)"/>
+  <circle cx="180" cy="120" r="74" fill="#fff" opacity=".7"/>
+  <circle cx="700" cy="470" r="140" fill="#fff" opacity=".8"/>
+  <circle cx="760" cy="120" r="84" fill="#e7edf5"/>
+  <g filter="url(#shadow)">
+    <rect x="420" y="78" width="210" height="430" rx="38" fill="#111827"/>
+    <rect x="438" y="104" width="174" height="380" rx="28" fill="#242833"/>
+    <ellipse cx="525" cy="148" rx="34" ry="8" fill="#020617"/>
+    <circle cx="527" cy="298" r="92" fill="#ffffff" opacity=".06"/>
+  </g>
+  <g filter="url(#shadow)" transform="rotate(-5 355 310)">
+    <rect x="260" y="102" width="220" height="430" rx="42" fill="url(#phone)"/>
+    <rect x="284" y="132" width="78" height="92" rx="26" fill="#ece7de"/>
+    <circle cx="313" cy="164" r="20" fill="#171923"/>
+    <circle cx="347" cy="190" r="17" fill="#171923"/>
+    <circle cx="314" cy="212" r="15" fill="#171923"/>
+    <circle cx="345" cy="152" r="6" fill="url(#gold)"/>
+    <path d="M374 327c22 0 38 17 38 40s-16 39-38 39-38-16-38-39 16-40 38-40z" fill="#9b958b" opacity=".45"/>
+  </g>
+  <g transform="translate(118 405)">
+    <rect width="178" height="100" rx="28" fill="#fff" filter="url(#shadow)"/>
+    <text x="89" y="40" text-anchor="middle" font-family="Arial" font-size="17" font-weight="700" fill="#111827">وصل حديثاً</text>
+    <rect x="44" y="58" width="90" height="10" rx="5" fill="url(#gold)"/>
+  </g>
+</svg>

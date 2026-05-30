@@ -32,6 +32,32 @@ class InventoryService
         }
     }
 
+    public function assertAvailableForUpdate(Product $product, int $quantity, ?int $variantId = null): void
+    {
+        if ($variantId) {
+            $variant = ProductVariant::where('product_id', $product->id)
+                ->whereKey($variantId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($variant->available_stock < $quantity) {
+                throw ValidationException::withMessages([
+                    'quantity' => "Insufficient stock for {$product->name}. Available: {$variant->available_stock}.",
+                ]);
+            }
+
+            return;
+        }
+
+        $lockedProduct = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+        if ($lockedProduct->stock_quantity < $quantity) {
+            throw ValidationException::withMessages([
+                'quantity' => "Insufficient stock for {$lockedProduct->name}. Available: {$lockedProduct->stock_quantity}.",
+            ]);
+        }
+    }
+
     public function reserve(Product $product, int $quantity, ?int $variantId = null): void
     {
         $this->assertAvailable($product, $quantity, $variantId);

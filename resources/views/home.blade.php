@@ -17,62 +17,61 @@
             ]]);
     @endphp
 
-    <section class="relative overflow-hidden bg-slate-950" data-hero-slider>
-        <div class="relative min-h-[680px]">
+    <section class="store-section pt-6" data-hero-slider>
+        <div class="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 shadow-sm">
             @foreach ($heroSlides as $index => $slide)
                 @php
                     $heroImage = $slide->image && file_exists(public_path('storage/'.$slide->image))
                         ? asset('storage/'.$slide->image)
-                        : asset('images/storefront/hero-market.svg');
+                        : asset('images/storefront/hero-phone.svg');
                     $title = method_exists($slide, 'localized') ? $slide->localized('title', __('Discounts up to 70% on original products')) : __('Discounts up to 70% on original products');
                     $subtitle = method_exists($slide, 'localized') ? $slide->localized('subtitle', __('Shop curated retail and wholesale products with competitive prices, reliable delivery, and secure manual payment.')) : __('Shop curated retail and wholesale products with competitive prices, reliable delivery, and secure manual payment.');
                     $eyebrow = method_exists($slide, 'localized') ? $slide->localized('eyebrow', __('Premium online store')) : __('Premium online store');
                     $primaryText = method_exists($slide, 'localized') ? $slide->localized('primary_button_text', __('Shop Now')) : __('Shop Now');
                     $secondaryText = method_exists($slide, 'localized') ? $slide->localized('secondary_button_text', __('View Offers')) : __('View Offers');
-                    $featuredSale = $flashSales->first();
+                    $featuredOffer = $flashOffers->first();
                 @endphp
-                <article class="{{ $index === 0 ? 'relative opacity-100' : 'absolute inset-0 opacity-0' }} isolate min-h-[680px] overflow-hidden transition-opacity duration-700" data-hero-slide aria-hidden="{{ $index === 0 ? 'false' : 'true' }}" style="background-color: {{ $slide->background_color ?: '#020617' }}; color: {{ $slide->text_color ?: 'inherit' }}">
-                    <img src="{{ $heroImage }}" alt="" class="absolute inset-0 -z-20 h-full w-full object-cover opacity-35" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async">
-                    <div class="absolute inset-0 -z-10" style="background: linear-gradient(90deg, var(--store-hero-overlay-from), color-mix(in srgb, var(--store-hero-overlay-from) 76%, transparent), var(--store-hero-overlay-to))"></div>
-                    <div class="mx-auto grid min-h-[680px] max-w-7xl items-center gap-12 px-4 py-16 lg:grid-cols-[0.95fr_1.05fr] lg:py-20">
+                <article class="{{ $index === 0 ? 'relative opacity-100' : 'absolute inset-0 opacity-0' }} isolate min-h-[520px] overflow-hidden transition-opacity duration-700" data-hero-slide aria-hidden="{{ $index === 0 ? 'false' : 'true' }}">
+                    <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(217,154,22,.14),transparent_28%),linear-gradient(135deg,#fff,#f5f7fb)]"></div>
+                    <div class="mx-auto grid min-h-[520px] max-w-7xl items-center gap-8 px-5 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-12">
                         <div class="relative z-10 max-w-3xl">
-                            <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black shadow-2xl shadow-slate-950/20 backdrop-blur" style="color: var(--store-accent)">
+                            <div class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 shadow-sm">
                                 <span aria-hidden="true">●</span>
                                 {{ $eyebrow }}
                             </div>
-                            <h1 class="mt-6 text-4xl font-black leading-tight text-white sm:text-6xl lg:text-7xl">
+                            <h1 class="mt-6 text-4xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
                                 {{ $title }}
                             </h1>
-                            <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-200 sm:text-xl">
+                            <p class="mt-5 max-w-2xl text-base font-bold leading-8 text-slate-600 sm:text-lg">
                                 {{ $subtitle }}
                             </p>
                             <div class="mt-8 flex flex-wrap gap-3">
-                                <a href="{{ $slide->url ?: route('products.index') }}" class="rounded-2xl px-7 py-4 text-sm font-black text-white shadow-2xl transition hover:-translate-y-0.5 hover:opacity-95" style="background-color: var(--store-primary); box-shadow: 0 24px 45px color-mix(in srgb, var(--store-primary) 28%, transparent)">{{ $primaryText }}</a>
-                                <a href="{{ $slide->secondary_url ?: route('offers.index') }}" class="rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-sm font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">{{ $secondaryText }}</a>
+                                <a href="{{ $slide->url ?: route('products.index') }}" class="store-button-primary">{{ $primaryText }} <span aria-hidden="true">←</span></a>
+                                <a href="{{ $slide->secondary_url ?: route('offers.index') }}" class="store-button-secondary">{{ $secondaryText }}</a>
                             </div>
                             <div class="mt-10 grid max-w-xl grid-cols-3 gap-3 text-center">
-                                <div class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur">
-                                    <p class="text-2xl font-black" style="color: var(--store-accent)">15k+</p>
-                                    <p class="text-xs font-bold text-slate-200">{{ __('Customers') }}</p>
+                                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <p class="text-2xl font-black text-amber-600">15k+</p>
+                                    <p class="text-xs font-bold text-slate-500">{{ __('Customers') }}</p>
                                 </div>
-                                <div class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur">
-                                    <p class="text-2xl font-black" style="color: var(--store-accent)">24h</p>
-                                    <p class="text-xs font-bold text-slate-200">{{ __('Support') }}</p>
+                                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <p class="text-2xl font-black text-amber-600">24h</p>
+                                    <p class="text-xs font-bold text-slate-500">{{ __('Support') }}</p>
                                 </div>
-                                <div class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur">
-                                    <p class="text-2xl font-black" style="color: var(--store-accent)">99%</p>
-                                    <p class="text-xs font-bold text-slate-200">{{ __('Trust') }}</p>
+                                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <p class="text-2xl font-black text-amber-600">99%</p>
+                                    <p class="text-xs font-bold text-slate-500">{{ __('Trust') }}</p>
                                 </div>
                             </div>
                         </div>
                         <div class="relative z-10">
-                            <div class="overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-slate-950/40 backdrop-blur">
-                                <img src="{{ $heroImage }}" class="aspect-[5/4] w-full rounded-[1.5rem] object-cover" alt="{{ $title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async">
+                            <div class="overflow-hidden rounded-[2rem] bg-transparent p-2">
+                                <img src="{{ $heroImage }}" class="aspect-[5/4] w-full rounded-[1.5rem] object-contain" alt="{{ $title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async">
                             </div>
-                            @if ($featuredSale)
-                                <a href="{{ route('offers.index') }}" class="absolute bottom-6 right-6 max-w-xs rounded-3xl border border-white/15 bg-white p-5 text-slate-950 shadow-2xl transition hover:-translate-y-1 rtl:left-6 rtl:right-auto">
-                                    <p class="text-xs font-black uppercase tracking-normal" style="color: var(--store-primary)">{{ __('Limited deals') }}</p>
-                                    <h2 class="mt-1 text-xl font-black">{{ $featuredSale->name }}</h2>
+                            @if ($featuredOffer)
+                                <a href="{{ route('offers.index') }}" class="absolute bottom-6 right-6 max-w-xs rounded-3xl border border-slate-200 bg-white p-5 text-slate-950 shadow-2xl transition hover:-translate-y-1 rtl:left-6 rtl:right-auto">
+                                    <p class="text-xs font-black uppercase tracking-normal text-amber-600">{{ __('Limited deals') }}</p>
+                                    <h2 class="mt-1 text-xl font-black">{{ $featuredOffer->title }}</h2>
                                     <p class="mt-2 text-sm font-bold text-slate-500">{{ __('View Offers') }}</p>
                                 </a>
                             @endif
@@ -81,14 +80,16 @@
                 </article>
             @endforeach
             @if ($heroSlides->count() > 1)
-                <div class="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2" data-hero-dots>
+                <div class="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2" data-hero-dots>
                     @foreach ($heroSlides as $index => $slide)
-                        <button type="button" class="h-2.5 w-9 rounded-full bg-white/35 transition data-[active=true]:bg-[var(--store-accent)]" data-hero-dot data-index="{{ $index }}" data-active="{{ $index === 0 ? 'true' : 'false' }}" aria-label="{{ __('Show slide :number', ['number' => $index + 1]) }}"></button>
+                        <button type="button" class="h-2.5 w-9 rounded-full bg-slate-300 transition data-[active=true]:bg-[var(--store-accent)]" data-hero-dot data-index="{{ $index }}" data-active="{{ $index === 0 ? 'true' : 'false' }}" aria-label="{{ __('Show slide :number', ['number' => $index + 1]) }}"></button>
                     @endforeach
                 </div>
             @endif
         </div>
     </section>
+
+    @include('partials.banner-strip', ['banners' => $homeAfterHeroBanners ?? collect()])
 
     <section class="store-section">
         <div class="grid gap-4 md:grid-cols-4">
@@ -138,19 +139,19 @@
         </div>
     </section>
 
-    @if ($flashSales->isNotEmpty())
+    @if ($flashOffers->isNotEmpty())
         <section class="store-section">
             <div class="mb-7 flex items-end justify-between gap-4">
                 <div>
                     <p class="store-eyebrow">{{ __('Limited deals') }}</p>
-                    <h2 class="store-section-title">{{ __('Flash Sale') }}</h2>
+                    <h2 class="store-section-title">{{ __('Flash Offers') }}</h2>
                 </div>
                 <a href="{{ route('offers.index') }}" class="store-button-secondary">{{ __('All Offers') }}</a>
             </div>
             <div class="store-scroll-row">
-                @foreach ($flashSales as $sale)
+                @foreach ($flashOffers as $offer)
                     @php
-                        $seconds = $sale->ends_at ? max(0, now()->diffInSeconds($sale->ends_at, false)) : null;
+                        $seconds = $offer->ends_at ? max(0, now()->diffInSeconds($offer->ends_at, false)) : null;
                         $days = $seconds !== null ? floor($seconds / 86400) : 0;
                         $hours = $seconds !== null ? floor(($seconds % 86400) / 3600) : 0;
                         $minutes = $seconds !== null ? floor(($seconds % 3600) / 60) : 0;
@@ -158,8 +159,8 @@
                     <article class="min-w-[320px] max-w-sm snap-start rounded-3xl bg-slate-950 p-5 text-white shadow-xl shadow-slate-950/10">
                         <div class="flex items-center justify-between gap-4">
                             <div>
-                                <p class="text-sm font-black text-amber-300">{{ __('Flash Sale') }}</p>
-                                <h3 class="mt-1 text-xl font-black">{{ $sale->name }}</h3>
+                                <p class="text-sm font-black text-amber-300">{{ __('Flash Offer') }}</p>
+                                <h3 class="mt-1 text-xl font-black">{{ $offer->title }}</h3>
                             </div>
                             <div class="rounded-2xl bg-white/10 px-4 py-3 text-center">
                                 <p class="text-lg font-black">{{ sprintf('%02d:%02d:%02d', $days * 24 + $hours, $minutes, 0) }}</p>
@@ -167,7 +168,7 @@
                             </div>
                         </div>
                         <div class="mt-5 grid grid-cols-3 gap-3">
-                            @foreach ($sale->products->take(3) as $product)
+                            @foreach ($offer->items->pluck('product')->filter()->take(3) as $product)
                                 @php
                                     $image = $product->images->first()?->path;
                                     $imageUrl = $image && file_exists(public_path('storage/'.$image))
@@ -184,6 +185,8 @@
             </div>
         </section>
     @endif
+
+    @include('partials.banner-strip', ['banners' => $homeBeforeProductsBanners ?? collect()])
 
     <section class="store-section">
         <div class="store-panel p-5 sm:p-7">
@@ -272,12 +275,12 @@
     </section>
 
     <section class="store-section">
-        <div class="overflow-hidden rounded-[2rem] bg-red-900 bg-cover bg-center p-6 text-white shadow-2xl shadow-red-950/10 sm:p-10" style="background-image: linear-gradient(90deg, rgba(127,29,29,.95), rgba(127,29,29,.76)), url('{{ asset('images/storefront/newsletter-pattern.svg') }}')">
+        <div class="overflow-hidden rounded-[2rem] bg-slate-950 bg-cover bg-center p-6 text-white shadow-2xl shadow-slate-950/10 sm:p-10" style="background-image: linear-gradient(90deg, rgba(17,17,17,.96), rgba(17,17,17,.82)), url('{{ asset('images/storefront/newsletter-pattern.svg') }}')">
             <div class="grid items-center gap-6 lg:grid-cols-[1fr_auto]">
                 <div>
                     <p class="text-sm font-black text-amber-300">{{ __('Newsletter') }}</p>
                     <h2 class="mt-2 text-3xl font-black">{{ __('Subscribe to receive the latest offers') }}</h2>
-                    <p class="mt-3 max-w-2xl text-sm leading-7 text-red-50">{{ __('Get launch offers, restock alerts, and wholesale updates directly in your inbox.') }}</p>
+                    <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-200">{{ __('Get launch offers, restock alerts, and wholesale updates directly in your inbox.') }}</p>
                 </div>
                 <form method="POST" action="{{ route('newsletter.store') }}" class="flex w-full max-w-xl flex-col gap-3 sm:flex-row">
                     @csrf

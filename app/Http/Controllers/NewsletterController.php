@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Storefront\NewsletterRequest;
 use App\Models\NewsletterSubscriber;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class NewsletterController extends Controller
 {
-    public function store(Request $request): RedirectResponse
+    public function store(NewsletterRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         $subscriber = NewsletterSubscriber::firstOrCreate(
-            ['email' => mb_strtolower($data['email'])],
+            ['email' => $data['email']],
             ['locale' => app()->getLocale()]
         );
 

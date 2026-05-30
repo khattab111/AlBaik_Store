@@ -10,7 +10,7 @@ class CartItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['cart_id', 'product_id', 'variant_id', 'quantity', 'unit_price', 'price_type', 'applied_tier_id'];
+    protected $fillable = ['cart_id', 'product_id', 'variant_id', 'quantity', 'unit_price', 'price_type', 'applied_tier_id', 'applied_flash_offer_id'];
 
     protected $casts = ['quantity' => 'integer', 'unit_price' => 'decimal:2'];
 
@@ -32,5 +32,10 @@ class CartItem extends Model
     public function appliedTier(): BelongsTo
     {
         return $this->belongsTo(ProductPriceTier::class, 'applied_tier_id');
+    }
+
+    public function appliedFlashOffer(): BelongsTo
+    {
+        return $this->belongsTo(FlashOffer::class, 'applied_flash_offer_id');
     }
 }

@@ -2,26 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Storefront\BrandFilterRequest;
+use App\Models\Banner;
 use App\Models\Brand;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class BrandController extends Controller
 {
-    public function index(Request $request): View
+    public function index(BrandFilterRequest $request): View
     {
         $locale = app()->getLocale();
+        $filters = $request->filters();
         $brands = Brand::where('status', true)
             ->withCount(['products' => fn ($query) => $query->where('status', true)])
-            ->when($request->filled('search'), fn ($query) => $query->where("name->{$locale}", 'like', '%'.$request->string('search').'%'))
+            ->when($filters['search'] ?? null, fn ($query, $search) => $query->where("name->{$locale}", 'like', '%'.$search.'%'))
             ->orderBy("name->{$locale}")
             ->paginate(24)
             ->withQueryString();
 
         return view('brands.index', [
             'brands' => $brands,
-            'filters' => $request->query(),
+            'filters' => $filters,
+            'pageBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_BRANDS_TOP)->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -33,6 +36,7 @@ class BrandController extends Controller
         return view('brands.show', [
             'brand' => $brand,
             'products' => $brand->products()->with(['images', 'brand', 'category', 'reviews'])->where('status', true)->latest()->paginate(12),
+            'pageBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_BRANDS_TOP)->orderBy('sort_order')->get(),
         ]);
     }
 }

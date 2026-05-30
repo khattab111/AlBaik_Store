@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\WholesaleApplicationResource\Pages;
 use App\Models\User;
 use App\Models\WholesaleApplication;
+use App\Notifications\WholesaleAccountApprovedNotification;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -115,17 +116,29 @@ class WholesaleApplicationResource extends Resource
 
     private static function approve(WholesaleApplication $application): void
     {
-        $user = User::firstOrCreate(
-            ['email' => $application->email],
-            [
+        $user = User::where('email', $application->email)->first();
+
+        if ($user && (int) $application->user_id !== $user->id) {
+            Notification::make()
+                ->title(__('Existing user requires confirmation'))
+                ->body(__('A user already exists with this email. Link the application to that user first, then approve it.'))
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $user) {
+            $user = User::create([
+                'email' => $application->email,
                 'name' => $application->full_name,
                 'mobile' => $application->phone,
                 'password' => Hash::make(Str::random(48)),
                 'type' => 'wholesale_customer',
                 'status' => true,
                 'email_verified_at' => now(),
-            ]
-        );
+            ]);
+        }
 
         $user->forceFill([
             'type' => 'wholesale_customer',
@@ -143,9 +156,16 @@ class WholesaleApplicationResource extends Resource
         ]);
 
         try {
-            Password::sendResetLink(['email' => $user->email]);
-        } catch (Throwable) {
-            // Email configuration may not exist in local development.
+            $token = Password::broker()->createToken($user);
+            $user->notify(new WholesaleAccountApprovedNotification($token));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title(__('Application approved, but email was not sent'))
+                ->body(__('Please check mail configuration and resend a password reset link manually.'))
+                ->warning()
+                ->send();
         }
 
         Notification::make()

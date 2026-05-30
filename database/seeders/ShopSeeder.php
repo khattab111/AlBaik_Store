@@ -8,9 +8,11 @@ use App\Models\Brand;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Coupon;
 use App\Models\Currency;
-use App\Models\FlashSale;
+use App\Models\FlashOffer;
+use App\Models\FlashOfferItem;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -23,9 +25,8 @@ use App\Models\ProductPriceTier;
 use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Models\Setting;
-use App\Models\ShippingMethod;
-use App\Models\ShippingRule;
-use App\Models\ShippingZone;
+use App\Models\ShippingCarrier;
+use App\Models\ShippingRate;
 use App\Models\Supplier;
 use App\Models\Tag;
 use App\Models\User;
@@ -159,39 +160,39 @@ class ShopSeeder extends Seeder
 
     private function seedShipping(): array
     {
-        $standard = ShippingMethod::updateOrCreate(['slug' => 'standard'], ['name' => $this->tr('Standard Shipping', 'الشحن القياسي'), 'type' => 'flat_rate', 'description' => $this->tr('Delivery within 5-7 business days.', 'التوصيل خلال 5-7 أيام عمل.'), 'zone' => 'global', 'cost' => 10.00, 'free_shipping_minimum' => 100.00, 'rules' => [], 'is_active' => true]);
-        $express = ShippingMethod::updateOrCreate(['slug' => 'express'], ['name' => $this->tr('Express Shipping', 'الشحن السريع'), 'type' => 'rule_based', 'description' => $this->tr('Fast delivery for selected cities.', 'توصيل سريع للمدن المحددة.'), 'zone' => 'city', 'cost' => 18.00, 'free_shipping_minimum' => 200.00, 'rules' => [], 'is_active' => true]);
+        $damascus = City::updateOrCreate(['slug' => 'damascus'], ['name' => $this->tr('Damascus', 'دمشق'), 'country' => 'Syria', 'code' => 'DAM', 'is_active' => true, 'sort_order' => 1]);
+        $aleppo = City::updateOrCreate(['slug' => 'aleppo'], ['name' => $this->tr('Aleppo', 'حلب'), 'country' => 'Syria', 'code' => 'ALP', 'is_active' => true, 'sort_order' => 2]);
+        $idlib = City::updateOrCreate(['slug' => 'idlib'], ['name' => $this->tr('Idlib', 'إدلب'), 'country' => 'Syria', 'code' => 'IDL', 'is_active' => true, 'sort_order' => 3]);
 
-        $damascus = ShippingZone::updateOrCreate(['name' => 'Damascus - City Center'], ['country' => 'Syria', 'city' => 'Damascus', 'town' => 'City Center', 'is_active' => true]);
-        $aleppo = ShippingZone::updateOrCreate(['name' => 'Aleppo - Industrial'], ['country' => 'Syria', 'city' => 'Aleppo', 'town' => 'Industrial', 'is_active' => true]);
-        $turkey = ShippingZone::updateOrCreate(['name' => 'Turkey'], ['country' => 'Turkey', 'city' => null, 'town' => null, 'is_active' => true]);
+        $alharam = ShippingCarrier::updateOrCreate(['slug' => 'alharam'], ['name' => $this->tr('Al Haram Shipping', 'الهرم للشحن'), 'tracking_url' => 'https://tracking.example/alharam/{tracking}', 'status' => 'active', 'sort_order' => 1]);
+        $express = ShippingCarrier::updateOrCreate(['slug' => 'express-courier'], ['name' => $this->tr('Express Courier', 'الشحن السريع'), 'tracking_url' => 'https://tracking.example/express/{tracking}', 'status' => 'active', 'sort_order' => 2]);
 
-        $rules = [
-            [$standard, $damascus, 0, null, null, 5, 5],
-            [$standard, $aleppo, 0, null, null, 5, 8],
-            [$express, $damascus, 0, null, null, 3, 12],
-            [$express, $turkey, 100, null, null, 10, 24],
+        $rates = [
+            [$alharam, $damascus, 3.00, 0.50, null, null, 150.00, '24-48h', 0],
+            [$alharam, $aleppo, 4.00, 0.65, null, null, 180.00, '2-4 days', 0],
+            [$alharam, $idlib, 3.00, 0.50, null, null, 120.00, '2-3 days', 0],
+            [$express, $damascus, 6.00, 1.25, null, 20, 250.00, 'Same day', 0],
+            [$express, $aleppo, 7.00, 1.50, null, 15, 300.00, '24-48h', 1.50],
         ];
 
-        foreach ($rules as [$method, $zone, $subtotal, $minQuantity, $maxQuantity, $maxWeight, $cost]) {
-            ShippingRule::updateOrCreate([
-                'shipping_method_id' => $method->id,
-                'shipping_zone_id' => $zone->id,
-                'min_subtotal' => $subtotal,
+        foreach ($rates as [$carrier, $city, $base, $perKg, $minWeight, $maxWeight, $threshold, $delivery, $remoteFee]) {
+            ShippingRate::updateOrCreate([
+                'shipping_carrier_id' => $carrier->id,
+                'city_id' => $city->id,
             ], [
-                'min_quantity' => $minQuantity,
-                'max_quantity' => $maxQuantity,
-                'min_weight' => null,
-                'max_weight' => $maxWeight,
-                'calculation_type' => $method->slug === 'express' ? 'weight' : 'fixed',
-                'cost' => $cost,
-                'cost_per_kg' => $method->slug === 'express' ? 2.50 : 0,
-                'is_free' => false,
                 'is_active' => true,
+                'base_cost' => $base,
+                'cost_per_kg' => $perKg,
+                'min_weight' => $minWeight,
+                'max_weight' => $maxWeight,
+                'free_shipping_threshold' => $threshold,
+                'estimated_delivery_time' => $delivery,
+                'remote_area_fee' => $remoteFee,
+                'sort_order' => 1,
             ]);
         }
 
-        return compact('standard', 'express', 'damascus', 'aleppo', 'turkey');
+        return compact('damascus', 'aleppo', 'idlib', 'alharam', 'express');
     }
 
     private function seedCatalog(): array
@@ -200,6 +201,9 @@ class ShopSeeder extends Seeder
             'albaik' => Brand::updateOrCreate(['slug' => 'albaik'], ['name' => $this->tr('AlBaik', 'البيك'), 'description' => $this->tr('Private label products.', 'منتجات العلامة الخاصة.'), 'logo' => 'demo/brands/albaik.png', 'status' => true]),
             'qarid' => Brand::updateOrCreate(['slug' => 'qarid-select'], ['name' => $this->tr('Qarid Select', 'قريد سيلكت'), 'description' => $this->tr('Selected partner products.', 'منتجات مختارة من شركاء موثوقين.'), 'logo' => 'demo/brands/qarid-select.png', 'status' => true]),
             'levant' => Brand::updateOrCreate(['slug' => 'levant-foods'], ['name' => $this->tr('Levant Foods', 'ليفانت فودز'), 'description' => $this->tr('Regional food supplier brand.', 'علامة إقليمية لتوريد المواد الغذائية.'), 'logo' => 'demo/brands/levant-foods.png', 'status' => true]),
+            'apple' => Brand::updateOrCreate(['slug' => 'apple'], ['name' => $this->tr('Apple', 'آبل'), 'description' => $this->tr('Premium smartphones and accessories.', 'هواتف وإكسسوارات فاخرة.'), 'logo' => 'demo/brands/apple.png', 'status' => true]),
+            'samsung' => Brand::updateOrCreate(['slug' => 'samsung'], ['name' => $this->tr('Samsung', 'سامسونج'), 'description' => $this->tr('Android smartphones for retail and business customers.', 'هواتف أندرويد لعملاء التجزئة والشركات.'), 'logo' => 'demo/brands/samsung.png', 'status' => true]),
+            'xiaomi' => Brand::updateOrCreate(['slug' => 'xiaomi'], ['name' => $this->tr('Xiaomi', 'شاومي'), 'description' => $this->tr('Value smartphones with strong specifications.', 'هواتف اقتصادية بمواصفات قوية.'), 'logo' => 'demo/brands/xiaomi.png', 'status' => true]),
         ];
 
         $suppliers = [
@@ -217,12 +221,15 @@ class ShopSeeder extends Seeder
         $categories['sandwiches'] = Category::updateOrCreate(['slug' => 'sandwiches'], ['name' => $this->tr('Sandwiches', 'السندويش'), 'description' => $this->tr('Fresh and frozen sandwiches.', 'سندويش طازج ومجمد.'), 'parent_id' => $categories['food']->id, 'status' => true]);
         $categories['sauces'] = Category::updateOrCreate(['slug' => 'sauces'], ['name' => $this->tr('Sauces', 'الصلصات'), 'description' => $this->tr('Signature sauces.', 'صلصات مميزة.'), 'parent_id' => $categories['food']->id, 'status' => true]);
         $categories['drinkware'] = Category::updateOrCreate(['slug' => 'drinkware'], ['name' => $this->tr('Drinkware', 'الأكواب والقوارير'), 'description' => $this->tr('Bottles and cups.', 'قوارير وأكواب.'), 'parent_id' => $categories['electronics']->id, 'status' => true]);
+        $categories['smartphones'] = Category::updateOrCreate(['slug' => 'smartphones'], ['name' => $this->tr('Smartphones', 'الهواتف الذكية'), 'description' => $this->tr('Latest original smartphones with warranty.', 'أحدث الهواتف الأصلية مع ضمان.'), 'parent_id' => $categories['electronics']->id, 'status' => true]);
+        $categories['phone-accessories'] = Category::updateOrCreate(['slug' => 'phone-accessories'], ['name' => $this->tr('Phone Accessories', 'إكسسوارات الهواتف'), 'description' => $this->tr('Chargers, covers, and essential phone accessories.', 'شواحن وأغطية وإكسسوارات أساسية للهواتف.'), 'parent_id' => $categories['electronics']->id, 'status' => true]);
 
         $tags = [
             'popular' => Tag::updateOrCreate(['slug' => 'popular'], ['name' => $this->tr('Popular', 'الأكثر طلباً'), 'status' => true]),
             'wholesale' => Tag::updateOrCreate(['slug' => 'wholesale'], ['name' => $this->tr('Wholesale', 'الجملة'), 'status' => true]),
             'new' => Tag::updateOrCreate(['slug' => 'new-arrival'], ['name' => $this->tr('New Arrival', 'وصل حديثاً'), 'status' => true]),
             'featured' => Tag::updateOrCreate(['slug' => 'featured'], ['name' => $this->tr('Featured', 'مميز'), 'status' => true]),
+            'phones' => Tag::updateOrCreate(['slug' => 'phones'], ['name' => $this->tr('Phones', 'هواتف'), 'status' => true]),
         ];
 
         $warehouses = [
@@ -340,6 +347,111 @@ class ShopSeeder extends Seeder
                     ['sku' => 'LEV-SPICE-001-HOT', 'attributes' => ['flavor' => 'Hot'], 'stock' => 55, 'price' => 12.50],
                 ],
             ],
+            [
+                'key' => 'iphone-15-pro',
+                'category' => 'smartphones',
+                'brand' => 'apple',
+                'supplier' => 'tech',
+                'tags' => ['new', 'featured', 'phones'],
+                'sku' => 'PHN-APL-15PRO-128',
+                'name' => 'iPhone 15 Pro 128GB',
+                'name_ar' => 'آيفون 15 برو 128GB',
+                'slug' => 'iphone-15-pro-128gb',
+                'retail_price' => 999.00,
+                'wholesale_price' => 949.00,
+                'wholesale_minimum_quantity' => 5,
+                'stock_quantity' => 28,
+                'weight' => 0.221,
+                'is_featured' => true,
+                'variants' => [
+                    ['sku' => 'PHN-APL-15PRO-128-BLK', 'attributes' => ['color' => 'Black Titanium', 'storage' => '128GB'], 'stock' => 12, 'price' => 999.00],
+                    ['sku' => 'PHN-APL-15PRO-128-NAT', 'attributes' => ['color' => 'Natural Titanium', 'storage' => '128GB'], 'stock' => 16, 'price' => 999.00],
+                ],
+            ],
+            [
+                'key' => 'galaxy-s24-ultra',
+                'category' => 'smartphones',
+                'brand' => 'samsung',
+                'supplier' => 'tech',
+                'tags' => ['popular', 'featured', 'phones', 'wholesale'],
+                'sku' => 'PHN-SAM-S24U-256',
+                'name' => 'Samsung Galaxy S24 Ultra 256GB',
+                'name_ar' => 'سامسونج جالكسي S24 ألترا 256GB',
+                'slug' => 'samsung-galaxy-s24-ultra-256gb',
+                'retail_price' => 1099.00,
+                'wholesale_price' => 1025.00,
+                'wholesale_minimum_quantity' => 4,
+                'stock_quantity' => 35,
+                'weight' => 0.232,
+                'is_featured' => true,
+                'variants' => [
+                    ['sku' => 'PHN-SAM-S24U-256-BLK', 'attributes' => ['color' => 'Titanium Black', 'storage' => '256GB'], 'stock' => 18, 'price' => 1099.00],
+                    ['sku' => 'PHN-SAM-S24U-256-GRY', 'attributes' => ['color' => 'Titanium Gray', 'storage' => '256GB'], 'stock' => 17, 'price' => 1099.00],
+                ],
+            ],
+            [
+                'key' => 'galaxy-a55',
+                'category' => 'smartphones',
+                'brand' => 'samsung',
+                'supplier' => 'tech',
+                'tags' => ['popular', 'phones', 'wholesale'],
+                'sku' => 'PHN-SAM-A55-128',
+                'name' => 'Samsung Galaxy A55 128GB',
+                'name_ar' => 'سامسونج جالكسي A55 128GB',
+                'slug' => 'samsung-galaxy-a55-128gb',
+                'retail_price' => 379.00,
+                'wholesale_price' => 345.00,
+                'wholesale_minimum_quantity' => 8,
+                'stock_quantity' => 64,
+                'weight' => 0.213,
+                'is_featured' => false,
+                'variants' => [
+                    ['sku' => 'PHN-SAM-A55-128-NVY', 'attributes' => ['color' => 'Navy', 'storage' => '128GB'], 'stock' => 34, 'price' => 379.00],
+                    ['sku' => 'PHN-SAM-A55-128-LIL', 'attributes' => ['color' => 'Lilac', 'storage' => '128GB'], 'stock' => 30, 'price' => 379.00],
+                ],
+            ],
+            [
+                'key' => 'redmi-note-13-pro',
+                'category' => 'smartphones',
+                'brand' => 'xiaomi',
+                'supplier' => 'tech',
+                'tags' => ['new', 'phones', 'wholesale'],
+                'sku' => 'PHN-XIA-RN13P-256',
+                'name' => 'Xiaomi Redmi Note 13 Pro 256GB',
+                'name_ar' => 'شاومي ريدمي نوت 13 برو 256GB',
+                'slug' => 'xiaomi-redmi-note-13-pro-256gb',
+                'retail_price' => 299.00,
+                'wholesale_price' => 269.00,
+                'wholesale_minimum_quantity' => 10,
+                'stock_quantity' => 92,
+                'weight' => 0.187,
+                'is_featured' => false,
+                'variants' => [
+                    ['sku' => 'PHN-XIA-RN13P-256-BLK', 'attributes' => ['color' => 'Midnight Black', 'storage' => '256GB'], 'stock' => 45, 'price' => 299.00],
+                    ['sku' => 'PHN-XIA-RN13P-256-BLU', 'attributes' => ['color' => 'Ocean Blue', 'storage' => '256GB'], 'stock' => 47, 'price' => 299.00],
+                ],
+            ],
+            [
+                'key' => 'iphone-14',
+                'category' => 'smartphones',
+                'brand' => 'apple',
+                'supplier' => 'tech',
+                'tags' => ['phones', 'wholesale'],
+                'sku' => 'PHN-APL-14-128',
+                'name' => 'iPhone 14 128GB',
+                'name_ar' => 'آيفون 14 128GB',
+                'slug' => 'iphone-14-128gb',
+                'retail_price' => 699.00,
+                'wholesale_price' => 655.00,
+                'wholesale_minimum_quantity' => 6,
+                'stock_quantity' => 42,
+                'weight' => 0.172,
+                'is_featured' => false,
+                'variants' => [
+                    ['sku' => 'PHN-APL-14-128-BLK', 'attributes' => ['color' => 'Midnight', 'storage' => '128GB'], 'stock' => 22, 'price' => 699.00],
+                    ['sku' => 'PHN-APL-14-128-BLU', 'attributes' => ['color' => 'Blue', 'storage' => '128GB'], 'stock' => 20, 'price' => 699.00],
+                ],
+            ],
         ];
 
         foreach ($products as $data) {
@@ -443,18 +555,80 @@ class ShopSeeder extends Seeder
         Coupon::updateOrCreate(['code' => 'WHOLESALE25'], ['type' => 'fixed', 'value' => 25, 'minimum_order_amount' => 250, 'starts_at' => now()->subDay(), 'expires_at' => now()->addMonths(2), 'usage_limit' => 100, 'used_count' => 1, 'is_active' => true]);
         Coupon::updateOrCreate(['code' => 'EXPIRED5'], ['type' => 'fixed', 'value' => 5, 'minimum_order_amount' => 15, 'starts_at' => now()->subMonths(2), 'expires_at' => now()->subMonth(), 'usage_limit' => 50, 'used_count' => 12, 'is_active' => false]);
 
-        $launch = FlashSale::updateOrCreate(['slug' => 'launch-offers'], ['name' => $this->tr('Launch Offers', 'عروض الإطلاق'), 'starts_at' => now()->subDay(), 'ends_at' => now()->addDays(14), 'is_active' => true]);
-        $launch->products()->sync([
-            $products['sandwich']->id => ['discount_type' => 'percentage', 'discount_value' => 15, 'quantity_limit' => 200, 'sold_count' => 18],
-            $products['bottle']->id => ['discount_type' => 'fixed', 'discount_value' => 5, 'quantity_limit' => 50, 'sold_count' => 6],
-            $products['sauce']->id => ['discount_type' => 'percentage', 'discount_value' => 10, 'quantity_limit' => 300, 'sold_count' => 44],
-        ]);
+        $launch = FlashOffer::updateOrCreate(
+            ['slug' => 'launch-offers-20'],
+            [
+                'title' => $this->tr('Launch Offers 20%', 'عروض الإطلاق 20%'),
+                'description' => $this->tr('Limited percentage discount on selected products.', 'خصم نسبة محدود على منتجات مختارة.'),
+                'type' => FlashOffer::TYPE_PERCENTAGE_DISCOUNT,
+                'status' => FlashOffer::STATUS_ACTIVE,
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addDays(14),
+                'priority' => 20,
+                'discount_type' => 'percentage',
+                'discount_value' => 20,
+                'max_quantity' => 300,
+                'sold_quantity' => 44,
+            ]
+        );
+        FlashOfferItem::updateOrCreate(['flash_offer_id' => $launch->id, 'product_id' => $products['sauce']->id], ['quantity' => 1, 'original_price' => 3.50, 'offer_price' => null, 'is_free_item' => false]);
+
+        $fixedPrice = FlashOffer::updateOrCreate(
+            ['slug' => 'smart-bottle-fixed-price'],
+            [
+                'title' => $this->tr('Smart Bottle Fixed Price', 'سعر ثابت للزجاجة الذكية'),
+                'description' => $this->tr('A fixed price for a limited quantity.', 'سعر محدد لكمية محدودة.'),
+                'type' => FlashOffer::TYPE_FIXED_PRICE_QUANTITY,
+                'status' => FlashOffer::STATUS_ACTIVE,
+                'starts_at' => now()->subHours(6),
+                'ends_at' => now()->addDays(7),
+                'priority' => 30,
+                'fixed_price' => 29.99,
+                'max_quantity' => 50,
+                'sold_quantity' => 6,
+            ]
+        );
+        FlashOfferItem::updateOrCreate(['flash_offer_id' => $fixedPrice->id, 'product_id' => $products['bottle']->id], ['quantity' => 1, 'original_price' => 34.99, 'offer_price' => 29.99, 'is_free_item' => false]);
+
+        $bundle = FlashOffer::updateOrCreate(
+            ['slug' => 'family-food-bundle'],
+            [
+                'title' => $this->tr('Family Food Bundle', 'حزمة العائلة الغذائية'),
+                'description' => $this->tr('Bundle multiple products at a fixed total price.', 'حزمة منتجات متعددة بسعر إجمالي محدد.'),
+                'type' => FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
+                'status' => FlashOffer::STATUS_ACTIVE,
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addDays(10),
+                'priority' => 10,
+                'fixed_price' => 39.00,
+                'max_quantity' => 100,
+                'free_shipping' => false,
+            ]
+        );
+        FlashOfferItem::updateOrCreate(['flash_offer_id' => $bundle->id, 'product_id' => $products['sandwich']->id], ['quantity' => 2, 'original_price' => 6.99, 'offer_price' => 5.99, 'is_free_item' => false]);
+        FlashOfferItem::updateOrCreate(['flash_offer_id' => $bundle->id, 'product_id' => $products['sauce']->id], ['quantity' => 2, 'original_price' => 3.50, 'offer_price' => 3.00, 'is_free_item' => false]);
+
+        $freeShipping = FlashOffer::updateOrCreate(
+            ['slug' => 'bulk-rice-free-shipping'],
+            [
+                'title' => $this->tr('Bulk Rice Free Shipping', 'شحن مجاني لأكياس الرز'),
+                'description' => $this->tr('Buy the selected bulk product with free shipping.', 'اشتر المنتج المحدد مع شحن مجاني.'),
+                'type' => FlashOffer::TYPE_FREE_SHIPPING_PRODUCT,
+                'status' => FlashOffer::STATUS_ACTIVE,
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addDays(21),
+                'priority' => 5,
+                'free_shipping' => true,
+                'max_quantity' => 120,
+            ]
+        );
+        FlashOfferItem::updateOrCreate(['flash_offer_id' => $freeShipping->id, 'product_id' => $products['bulk-rice']->id], ['quantity' => 1, 'original_price' => 29.00, 'offer_price' => null, 'is_free_item' => false]);
     }
 
     private function seedCustomerData(array $users, array $currencies, array $payments, array $shipping, array $products): void
     {
-        $customerAddress = Address::updateOrCreate(['user_id' => $users['customer']->id, 'label' => 'Home'], ['country' => 'Syria', 'city' => 'Damascus', 'town' => 'City Center', 'state' => 'Damascus', 'street' => 'Al Hamra Street', 'postal_code' => '00000', 'phone' => '+963900000002', 'whatsapp' => '+963900000002', 'is_default' => true]);
-        $wholesaleAddress = Address::updateOrCreate(['user_id' => $users['wholesale']->id, 'label' => 'Warehouse'], ['country' => 'Syria', 'city' => 'Aleppo', 'town' => 'Industrial', 'state' => 'Aleppo', 'street' => 'Industrial Market', 'postal_code' => '00000', 'phone' => '+963900000003', 'whatsapp' => '+963900000003', 'is_default' => true]);
+        $customerAddress = Address::updateOrCreate(['user_id' => $users['customer']->id, 'label' => 'Home'], ['country' => 'Syria', 'city_id' => $shipping['damascus']->id, 'city' => $shipping['damascus']->name, 'town' => 'City Center', 'state' => 'Damascus', 'street' => 'Al Hamra Street', 'postal_code' => '00000', 'phone' => '+963900000002', 'whatsapp' => '+963900000002', 'is_default' => true]);
+        $wholesaleAddress = Address::updateOrCreate(['user_id' => $users['wholesale']->id, 'label' => 'Warehouse'], ['country' => 'Syria', 'city_id' => $shipping['aleppo']->id, 'city' => $shipping['aleppo']->name, 'town' => 'Industrial', 'state' => 'Aleppo', 'street' => 'Industrial Market', 'postal_code' => '00000', 'phone' => '+963900000003', 'whatsapp' => '+963900000003', 'is_default' => true]);
 
         Wishlist::updateOrCreate(['user_id' => $users['customer']->id, 'product_id' => $products['bottle']->id]);
         Wishlist::updateOrCreate(['user_id' => $users['wholesale']->id, 'product_id' => $products['bulk-rice']->id]);
@@ -482,11 +656,11 @@ class ShopSeeder extends Seeder
         Review::updateOrCreate(['product_id' => $products['bottle']->id, 'user_id' => $users['wholesale']->id], ['rating' => 4, 'title' => 'Good wholesale option', 'comment' => 'Useful item for business gifting.', 'images' => [], 'is_published' => false]);
 
         $orders = [
-            ['number' => 'ORD-DEMO-00001', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['cod'], 'shipping' => $shipping['standard'], 'status' => 'pending', 'tracking' => null, 'items' => [['product' => 'sandwich', 'qty' => 2, 'unit' => 6.99]], 'shipping_cost' => 5],
-            ['number' => 'ORD-DEMO-00002', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['bank'], 'shipping' => $shipping['express'], 'status' => 'processing', 'tracking' => null, 'items' => [['product' => 'bottle', 'qty' => 1, 'unit' => 34.99], ['product' => 'sauce', 'qty' => 4, 'unit' => 3.50]], 'shipping_cost' => 12],
-            ['number' => 'ORD-DEMO-00003', 'user' => $users['wholesale'], 'address' => $wholesaleAddress, 'payment' => $payments['manual'], 'shipping' => $shipping['standard'], 'status' => 'shipped', 'tracking' => 'TRK-DEMO-00003', 'items' => [['product' => 'bulk-rice', 'qty' => 10, 'unit' => 24.00], ['product' => 'spices', 'qty' => 25, 'unit' => 9.25]], 'shipping_cost' => 8],
-            ['number' => 'ORD-DEMO-00004', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['cod'], 'shipping' => $shipping['standard'], 'status' => 'delivered', 'tracking' => 'TRK-DEMO-00004', 'items' => [['product' => 'sandwich', 'qty' => 1, 'unit' => 6.99], ['product' => 'sauce', 'qty' => 2, 'unit' => 3.50]], 'shipping_cost' => 5],
-            ['number' => 'ORD-DEMO-00005', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['manual'], 'shipping' => $shipping['standard'], 'status' => 'cancelled', 'tracking' => null, 'items' => [['product' => 'bottle', 'qty' => 1, 'unit' => 34.99]], 'shipping_cost' => 5],
+            ['number' => 'ORD-DEMO-00001', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['cod'], 'carrier' => $shipping['alharam'], 'city' => $shipping['damascus'], 'status' => 'pending', 'tracking' => null, 'items' => [['product' => 'sandwich', 'qty' => 2, 'unit' => 6.99]], 'shipping_cost' => 5],
+            ['number' => 'ORD-DEMO-00002', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['bank'], 'carrier' => $shipping['express'], 'city' => $shipping['damascus'], 'status' => 'processing', 'tracking' => null, 'items' => [['product' => 'bottle', 'qty' => 1, 'unit' => 34.99], ['product' => 'sauce', 'qty' => 4, 'unit' => 3.50]], 'shipping_cost' => 12],
+            ['number' => 'ORD-DEMO-00003', 'user' => $users['wholesale'], 'address' => $wholesaleAddress, 'payment' => $payments['manual'], 'carrier' => $shipping['alharam'], 'city' => $shipping['aleppo'], 'status' => 'shipped', 'tracking' => 'TRK-DEMO-00003', 'items' => [['product' => 'bulk-rice', 'qty' => 10, 'unit' => 24.00], ['product' => 'spices', 'qty' => 25, 'unit' => 9.25]], 'shipping_cost' => 8],
+            ['number' => 'ORD-DEMO-00004', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['cod'], 'carrier' => $shipping['alharam'], 'city' => $shipping['damascus'], 'status' => 'delivered', 'tracking' => 'TRK-DEMO-00004', 'items' => [['product' => 'sandwich', 'qty' => 1, 'unit' => 6.99], ['product' => 'sauce', 'qty' => 2, 'unit' => 3.50]], 'shipping_cost' => 5],
+            ['number' => 'ORD-DEMO-00005', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['manual'], 'carrier' => $shipping['alharam'], 'city' => $shipping['damascus'], 'status' => 'cancelled', 'tracking' => null, 'items' => [['product' => 'bottle', 'qty' => 1, 'unit' => 34.99]], 'shipping_cost' => 5],
         ];
 
         foreach ($orders as $data) {
@@ -498,12 +672,19 @@ class ShopSeeder extends Seeder
             $order = Order::updateOrCreate(['order_number' => $data['number']], [
                 'user_id' => $data['user']->id,
                 'currency_id' => $currencies['USD']->id,
-                'shipping_method_id' => $data['shipping']->id,
                 'payment_method_id' => $data['payment']->id,
                 'shipping_address_id' => $data['address']->id,
                 'billing_address_id' => $data['address']->id,
+                'shipping_city_id' => $data['city']->id,
+                'shipping_city_name' => $data['city']->name,
+                'shipping_carrier_id' => $data['carrier']->id,
+                'shipping_carrier_name' => $data['carrier']->name,
                 'subtotal' => $subtotal,
                 'shipping_cost' => $data['shipping_cost'],
+                'shipping_weight' => collect($data['items'])->sum(fn ($item) => $item['qty'] * (float) $products[$item['product']]->weight),
+                'shipping_delivery_time' => '24-48h',
+                'shipping_address_text' => $data['address']->country.' / '.$data['address']->city.' / '.$data['address']->town.' / '.$data['address']->street,
+                'is_free_shipping' => false,
                 'discount_amount' => $discount,
                 'payment_fee' => $paymentFee,
                 'total' => $total,
@@ -512,8 +693,8 @@ class ShopSeeder extends Seeder
                 'notes' => 'Seeded demo order for admin testing.',
                 'customer_phone' => $data['address']->phone,
                 'customer_whatsapp' => $data['address']->whatsapp,
-                'shipping_country' => $data['address']->country,
-                'shipping_city' => $data['address']->city,
+                'shipping_country' => $data['city']->country,
+                'shipping_city' => $data['city']->name,
                 'shipping_town' => $data['address']->town,
                 'shipping_street' => $data['address']->street,
                 'paid_at' => in_array($data['status'], ['processing', 'shipped', 'delivered'], true) ? now()->subDays(2) : null,
@@ -565,22 +746,26 @@ class ShopSeeder extends Seeder
         Setting::updateOrCreate(['key' => 'store.logo'], ['group' => 'identity', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.favicon'], ['group' => 'identity', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.default_product_image'], ['group' => 'identity', 'value' => ['value' => null], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.primary_color'], ['group' => 'identity', 'value' => ['value' => '#b91c1c'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.primary_hover_color'], ['group' => 'identity', 'value' => ['value' => '#991b1b'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.accent_color'], ['group' => 'identity', 'value' => ['value' => '#f59e0b'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.topbar_color'], ['group' => 'identity', 'value' => ['value' => '#020617'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.primary_color'], ['group' => 'identity', 'value' => ['value' => '#111111'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.primary_hover_color'], ['group' => 'identity', 'value' => ['value' => '#2a2a2a'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.accent_color'], ['group' => 'identity', 'value' => ['value' => '#d99a16'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.topbar_color'], ['group' => 'identity', 'value' => ['value' => '#111111'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.header_bg_color'], ['group' => 'identity', 'value' => ['value' => '#ffffff'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.nav_bg_color'], ['group' => 'identity', 'value' => ['value' => '#ffffff'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.body_bg_color'], ['group' => 'identity', 'value' => ['value' => '#f8fafc'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.body_bg_color'], ['group' => 'identity', 'value' => ['value' => '#fafafa'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.surface_color'], ['group' => 'identity', 'value' => ['value' => '#ffffff'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.surface_tint_color'], ['group' => 'identity', 'value' => ['value' => '#fff5f5'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.text_color'], ['group' => 'identity', 'value' => ['value' => '#0f172a'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.muted_text_color'], ['group' => 'identity', 'value' => ['value' => '#64748b'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.border_color'], ['group' => 'identity', 'value' => ['value' => '#e2e8f0'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.hero_overlay_from'], ['group' => 'identity', 'value' => ['value' => 'rgba(2,6,23,.96)'], 'type' => 'string', 'is_public' => true]);
-        Setting::updateOrCreate(['key' => 'store.hero_overlay_to'], ['group' => 'identity', 'value' => ['value' => 'rgba(185,28,28,.52)'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.surface_tint_color'], ['group' => 'identity', 'value' => ['value' => '#f5f6f8'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.text_color'], ['group' => 'identity', 'value' => ['value' => '#111111'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.muted_text_color'], ['group' => 'identity', 'value' => ['value' => '#6b7280'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.border_color'], ['group' => 'identity', 'value' => ['value' => '#e5e7eb'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.hero_overlay_from'], ['group' => 'identity', 'value' => ['value' => 'rgba(255,255,255,.06)'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'store.hero_overlay_to'], ['group' => 'identity', 'value' => ['value' => 'rgba(255,255,255,.42)'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.default_locale'], ['group' => 'localization', 'value' => ['value' => 'ar'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'store.support_email'], ['group' => 'support', 'value' => ['value' => 'support@albaikstore.local'], 'type' => 'string', 'is_public' => true]);
+        Setting::updateOrCreate(['key' => 'shipping.default_product_weight'], ['group' => 'shipping', 'value' => ['value' => '0.5'], 'type' => 'number', 'is_public' => false]);
+        Setting::updateOrCreate(['key' => 'shipping.enable_free_shipping'], ['group' => 'shipping', 'value' => ['value' => false], 'type' => 'boolean', 'is_public' => false]);
+        Setting::updateOrCreate(['key' => 'shipping.global_free_shipping_threshold'], ['group' => 'shipping', 'value' => ['value' => '250'], 'type' => 'number', 'is_public' => false]);
+        Setting::updateOrCreate(['key' => 'shipping.calculation_mode'], ['group' => 'shipping', 'value' => ['value' => 'carrier_city_weight'], 'type' => 'string', 'is_public' => false]);
         Setting::updateOrCreate(['key' => 'contact.email'], ['group' => 'contact', 'value' => ['value' => 'support@albaikstore.local'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'contact.phone'], ['group' => 'contact', 'value' => ['value' => '+963 900 000 000'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'contact.whatsapp'], ['group' => 'contact', 'value' => ['value' => '+963 900 000 000'], 'type' => 'string', 'is_public' => true]);
@@ -638,7 +823,56 @@ class ShopSeeder extends Seeder
             'text_color' => null,
             'is_active' => true,
         ]);
-        Banner::updateOrCreate(['placement' => 'shop', 'sort_order' => 1], ['title' => ['ar' => 'توريدات الجملة', 'en' => 'Wholesale Supplies'], 'subtitle' => ['ar' => 'منتجات بكميات كبيرة وأسعار خاصة.', 'en' => 'Bulk products with special prices.'], 'image' => 'demo/banners/wholesale.jpg', 'url' => '/products', 'is_active' => true]);
+        Banner::updateOrCreate(['placement' => Banner::PLACEMENT_HOME_AFTER_HERO, 'sort_order' => 1], [
+            'title' => ['ar' => 'تسوق أحدث الأجهزة بثقة', 'en' => 'Shop the latest devices with confidence'],
+            'subtitle' => ['ar' => 'بنر تسويقي يظهر بعد القسم الرئيسي ويمكن تغييره من لوحة التحكم.', 'en' => 'A marketing banner displayed after the hero and managed from the admin panel.'],
+            'eyebrow' => ['ar' => 'مختارات المتجر', 'en' => 'Store picks'],
+            'primary_button_text' => ['ar' => 'تصفح المنتجات', 'en' => 'Browse Products'],
+            'secondary_button_text' => ['ar' => 'العروض', 'en' => 'Offers'],
+            'image' => null,
+            'url' => '/products',
+            'secondary_url' => '/offers',
+            'background_color' => '#ffffff',
+            'is_active' => true,
+        ]);
+        Banner::updateOrCreate(['placement' => Banner::PLACEMENT_PRODUCTS_TOP, 'sort_order' => 1], [
+            'title' => ['ar' => 'توريدات الجملة', 'en' => 'Wholesale Supplies'],
+            'subtitle' => ['ar' => 'منتجات بكميات كبيرة وأسعار خاصة.', 'en' => 'Bulk products with special prices.'],
+            'eyebrow' => ['ar' => 'صفحة المنتجات', 'en' => 'Products page'],
+            'primary_button_text' => ['ar' => 'تسوق الآن', 'en' => 'Shop Now'],
+            'image' => 'demo/banners/wholesale.jpg',
+            'url' => '/products',
+            'background_color' => '#f5f6f8',
+            'is_active' => true,
+        ]);
+        Banner::updateOrCreate(['placement' => Banner::PLACEMENT_OFFERS_TOP, 'sort_order' => 1], [
+            'title' => ['ar' => 'عروض مميزة لفترة محدودة', 'en' => 'Limited-time featured offers'],
+            'subtitle' => ['ar' => 'استخدم البنرات لإبراز الحملات والعروض الخاصة.', 'en' => 'Use banners to highlight campaigns and special deals.'],
+            'eyebrow' => ['ar' => 'صفحة العروض', 'en' => 'Offers page'],
+            'primary_button_text' => ['ar' => 'مشاهدة العروض', 'en' => 'View Offers'],
+            'url' => '/offers',
+            'background_color' => '#111111',
+            'text_color' => '#ffffff',
+            'is_active' => true,
+        ]);
+        Banner::updateOrCreate(['placement' => Banner::PLACEMENT_CATEGORIES_TOP, 'sort_order' => 1], [
+            'title' => ['ar' => 'اختر القسم المناسب بسرعة', 'en' => 'Find the right category faster'],
+            'subtitle' => ['ar' => 'بنر خاص بصفحات التصنيفات.', 'en' => 'A banner dedicated to category pages.'],
+            'eyebrow' => ['ar' => 'التصنيفات', 'en' => 'Categories'],
+            'primary_button_text' => ['ar' => 'كل المنتجات', 'en' => 'All Products'],
+            'url' => '/products',
+            'background_color' => '#ffffff',
+            'is_active' => true,
+        ]);
+        Banner::updateOrCreate(['placement' => Banner::PLACEMENT_BRANDS_TOP, 'sort_order' => 1], [
+            'title' => ['ar' => 'علامات تجارية موثوقة', 'en' => 'Trusted brands'],
+            'subtitle' => ['ar' => 'اعرض رسالة تسويقية أعلى صفحات العلامات التجارية.', 'en' => 'Display a marketing message above brand pages.'],
+            'eyebrow' => ['ar' => 'العلامات التجارية', 'en' => 'Brands'],
+            'primary_button_text' => ['ar' => 'استعرض العلامات', 'en' => 'Browse Brands'],
+            'url' => '/brands',
+            'background_color' => '#f5f6f8',
+            'is_active' => true,
+        ]);
     }
 
     private function tr(string $en, string $ar): array

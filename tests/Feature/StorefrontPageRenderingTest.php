@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use App\Models\Address;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Currency;
 use App\Models\PaymentMethod;
 use App\Models\Product;
-use App\Models\ShippingMethod;
+use App\Models\ShippingCarrier;
+use App\Models\ShippingRate;
 use App\Models\User;
 use App\Repositories\CartRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,9 +62,11 @@ class StorefrontPageRenderingTest extends TestCase
     {
         $user = User::factory()->create(['status' => true]);
         Currency::create(['code' => 'USD', 'symbol' => '$', 'name' => 'US Dollar', 'rate' => 1, 'is_default' => true, 'status' => true]);
-        Address::create(['user_id' => $user->id, 'country' => 'Syria', 'city' => 'Damascus', 'street' => 'Main Street']);
+        $city = City::create(['name' => ['en' => 'Damascus', 'ar' => 'دمشق'], 'slug' => 'damascus', 'country' => 'Syria', 'is_active' => true]);
+        Address::create(['user_id' => $user->id, 'country' => 'Syria', 'city_id' => $city->id, 'city' => 'Damascus', 'street' => 'Main Street']);
         PaymentMethod::create(['name' => 'Cash on Delivery', 'slug' => 'cod', 'type' => 'cod', 'fee' => 0, 'is_active' => true]);
-        ShippingMethod::create(['name' => 'Standard', 'slug' => 'standard', 'type' => 'flat_rate', 'cost' => 5, 'is_active' => true]);
+        $carrier = ShippingCarrier::create(['name' => ['en' => 'Standard', 'ar' => 'قياسي'], 'slug' => 'standard', 'status' => 'active']);
+        ShippingRate::create(['shipping_carrier_id' => $carrier->id, 'city_id' => $city->id, 'base_cost' => 5, 'cost_per_kg' => 0, 'is_active' => true]);
 
         $product = Product::create([
             'name' => 'Cart Product',

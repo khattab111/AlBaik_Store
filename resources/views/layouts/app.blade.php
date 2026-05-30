@@ -9,26 +9,27 @@
     $siteLogoUrl = $siteLogo && file_exists(public_path('storage/'.$siteLogo)) ? asset('storage/'.$siteLogo) : null;
     $siteFavicon = $siteIdentity['favicon'] ?? null;
     $siteFaviconUrl = $siteFavicon && file_exists(public_path('storage/'.$siteFavicon)) ? asset('storage/'.$siteFavicon) : null;
-    $primaryColor = $siteIdentity['primary_color'] ?? '#b91c1c';
-    $primaryHoverColor = $siteIdentity['primary_hover_color'] ?? '#991b1b';
-    $accentColor = $siteIdentity['accent_color'] ?? '#f59e0b';
-    $topbarColor = $siteIdentity['topbar_color'] ?? '#020617';
+    $primaryColor = $siteIdentity['primary_color'] ?? '#111111';
+    $primaryHoverColor = $siteIdentity['primary_hover_color'] ?? '#2a2a2a';
+    $accentColor = $siteIdentity['accent_color'] ?? '#d99a16';
+    $topbarColor = $siteIdentity['topbar_color'] ?? '#111111';
     $headerBgColor = $siteIdentity['header_bg_color'] ?? '#ffffff';
     $navBgColor = $siteIdentity['nav_bg_color'] ?? '#ffffff';
-    $bodyBgColor = $siteIdentity['body_bg_color'] ?? '#f8fafc';
+    $bodyBgColor = $siteIdentity['body_bg_color'] ?? '#fafafa';
     $surfaceColor = $siteIdentity['surface_color'] ?? '#ffffff';
-    $surfaceTintColor = $siteIdentity['surface_tint_color'] ?? '#fff5f5';
-    $textColor = $siteIdentity['text_color'] ?? '#0f172a';
-    $mutedTextColor = $siteIdentity['muted_text_color'] ?? '#64748b';
-    $borderColor = $siteIdentity['border_color'] ?? '#e2e8f0';
-    $heroOverlayFrom = $siteIdentity['hero_overlay_from'] ?? 'rgba(2,6,23,.96)';
-    $heroOverlayTo = $siteIdentity['hero_overlay_to'] ?? 'rgba(185,28,28,.52)';
+    $surfaceTintColor = $siteIdentity['surface_tint_color'] ?? '#f5f6f8';
+    $textColor = $siteIdentity['text_color'] ?? '#111111';
+    $mutedTextColor = $siteIdentity['muted_text_color'] ?? '#6b7280';
+    $borderColor = $siteIdentity['border_color'] ?? '#e5e7eb';
+    $heroOverlayFrom = $siteIdentity['hero_overlay_from'] ?? 'rgba(255,255,255,.06)';
+    $heroOverlayTo = $siteIdentity['hero_overlay_to'] ?? 'rgba(255,255,255,.42)';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', $currentLocale ?? app()->getLocale()) }}" dir="{{ $textDirection ?? 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', $siteName)</title>
     <meta name="description" content="@yield('meta_description', $siteDescription)">
     <link rel="canonical" href="@yield('canonical', url()->current())">
@@ -82,29 +83,28 @@
 </head>
 <body class="min-h-screen bg-[#f8fafc] text-slate-950 antialiased" style="background-color: var(--store-body-bg); color: var(--store-text)">
     <div class="store-progress" aria-hidden="true"><span data-scroll-progress></span></div>
+    <div class="store-toast" data-store-toast role="status" aria-live="polite"></div>
     <a href="#main-content" class="skip-link">{{ __('Skip to main content') }}</a>
 
     <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur" style="background-color: color-mix(in srgb, var(--store-header-bg) 95%, transparent); border-color: var(--store-border)" role="banner" data-store-header>
-        <div class="border-b border-slate-100 text-white" style="background-color: var(--store-topbar)">
-            <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs font-semibold sm:text-sm">
-                <span class="inline-flex items-center gap-2"><span aria-hidden="true">🚚</span>{{ __('Fast delivery, secure payment, and original products.') }}</span>
-                <div class="flex items-center gap-4">
-                    <a href="{{ route('offers.index') }}" class="inline-flex items-center gap-1 text-amber-300"><span aria-hidden="true">🔥</span>{{ __('Daily Offers') }}</a>
-                    @foreach (($supportedLocales ?? config('locales.supported', [])) as $localeCode => $localeConfig)
-                        @if (($currentLocale ?? app()->getLocale()) !== $localeCode)
-                            <a href="{{ route('locale.switch', $localeCode) }}" class="inline-flex items-center gap-1"><span aria-hidden="true">🌐</span>{{ $localeConfig['native'] }}</a>
-                        @endif
-                    @endforeach
+        <div class="hidden bg-[#111] text-white md:block">
+            <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 text-xs font-black">
+                <div class="flex items-center gap-6">
+                    <span class="inline-flex items-center gap-2"><span class="text-amber-400">◎</span>{{ __('Track order') }}</span>
+                    <span class="inline-flex items-center gap-2"><span class="text-amber-400">◎</span>{{ __('Help') }}</span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="inline-flex items-center gap-2"><span class="text-amber-400">◎</span>{{ __('Fast delivery and easy returns') }}</span>
+                    <a href="{{ route('locale.switch', ($currentLocale ?? app()->getLocale()) === 'ar' ? 'en' : 'ar') }}" class="inline-flex items-center gap-2 text-white/90 hover:text-amber-300">{{ ($currentLocale ?? app()->getLocale()) === 'ar' ? 'English' : 'العربية' }}</a>
                 </div>
             </div>
         </div>
-
-        <div class="mx-auto grid max-w-7xl items-center gap-4 px-4 py-4 lg:grid-cols-[auto_minmax(280px,1fr)_auto]">
+        <div class="mx-auto grid max-w-7xl items-center gap-3 px-4 py-3 lg:grid-cols-[auto_minmax(280px,1fr)_auto]">
             <a href="{{ route('home') }}" class="flex items-center gap-3" aria-label="{{ __(':name home', ['name' => $siteName]) }}">
                 @if ($siteLogoUrl)
                     <img src="{{ $siteLogoUrl }}" alt="{{ $siteName }}" class="h-12 w-12 rounded-2xl object-contain shadow-lg">
                 @else
-                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-black text-white shadow-lg shadow-red-700/20" style="background-color: var(--store-primary)" aria-hidden="true">{{ mb_substr($siteName, 0, 1) }}</span>
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-300 bg-white text-xl font-black text-amber-500 shadow-lg shadow-slate-950/10" aria-hidden="true">B</span>
                 @endif
                 <span class="grid leading-tight">
                     <span class="text-lg font-black" style="color: var(--store-primary)">{{ $siteName }}</span>
@@ -119,18 +119,34 @@
             </form>
 
             <nav class="flex items-center justify-end gap-2 text-sm font-bold" aria-label="{{ __('Account navigation') }}">
+                <button type="button" class="store-icon-button lg:hidden" data-mobile-menu-open aria-label="{{ __('Open menu') }}">
+                    <span aria-hidden="true">☰</span>
+                </button>
                 <button type="button" class="store-icon-button" data-theme-toggle data-light-label="{{ __('Switch to light mode') }}" data-dark-label="{{ __('Switch to dark mode') }}" aria-label="{{ __('Switch to dark mode') }}" aria-pressed="false">
                     <span data-theme-icon-light aria-hidden="true">☀</span>
                     <span data-theme-icon-dark aria-hidden="true" hidden>☾</span>
                 </button>
+                <div class="store-language-menu">
+                    <button type="button" class="store-icon-button" data-language-toggle aria-label="{{ __('Change language') }}" aria-expanded="false">
+                        <span class="text-sm font-black">{{ strtoupper($currentLocale ?? app()->getLocale()) }}</span>
+                    </button>
+                    <div class="store-language-dropdown" data-language-dropdown>
+                        @foreach (($supportedLocales ?? config('locales.supported', [])) as $localeCode => $localeConfig)
+                            <a href="{{ route('locale.switch', $localeCode) }}" class="{{ ($currentLocale ?? app()->getLocale()) === $localeCode ? 'is-active' : '' }}">
+                                <span>{{ $localeConfig['native'] }}</span>
+                                <span class="text-xs uppercase text-slate-400">{{ $localeCode }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
                 @auth
                     <a href="{{ route('favorites.index') }}" class="store-icon-button" aria-label="{{ __('Wishlist, :count items', ['count' => $wishlistCount ?? 0]) }}">
                         <span aria-hidden="true">♡</span>
-                        <span class="store-badge" aria-hidden="true">{{ $wishlistCount ?? 0 }}</span>
+                        <span class="store-badge" data-wishlist-count aria-hidden="true">{{ $wishlistCount ?? 0 }}</span>
                     </a>
                     <a href="{{ route('cart.index') }}" class="store-icon-button" aria-label="{{ __('Cart, :count items', ['count' => $cartCount ?? 0]) }}">
                         <span aria-hidden="true">🛒</span>
-                        <span class="store-badge" aria-hidden="true">{{ $cartCount ?? 0 }}</span>
+                        <span class="store-badge" data-cart-count aria-hidden="true">{{ $cartCount ?? 0 }}</span>
                     </a>
                     <a href="{{ route('account.dashboard') }}" class="hidden rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-red-200 hover:text-red-700 sm:inline-flex">{{ __('Account') }}</a>
                 @else
@@ -140,7 +156,7 @@
                     </a>
                     <a href="{{ route('cart.index') }}" class="store-icon-button" aria-label="{{ __('Cart, :count items', ['count' => $cartCount ?? 0]) }}">
                         <span aria-hidden="true">🛒</span>
-                        <span class="store-badge" aria-hidden="true">{{ $cartCount ?? 0 }}</span>
+                        <span class="store-badge" data-cart-count aria-hidden="true">{{ $cartCount ?? 0 }}</span>
                     </a>
                     <a href="{{ route('customer.login') }}" class="rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-red-200 hover:text-red-700">{{ __('Login') }}</a>
                     <a href="{{ route('customer.register') }}" class="hidden rounded-2xl bg-slate-950 px-4 py-3 text-white transition hover:bg-red-700 sm:inline-flex">{{ __('Register') }}</a>
@@ -148,7 +164,7 @@
             </nav>
         </div>
 
-        <div class="border-t border-slate-100" style="background-color: var(--store-nav-bg); border-color: var(--store-border)">
+        <div class="hidden border-t border-slate-100 lg:block" style="background-color: var(--store-nav-bg); border-color: var(--store-border)">
             <nav class="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-3 text-sm font-bold" aria-label="{{ __('Primary navigation') }}">
                 <a href="{{ route('home') }}" class="store-nav-link">{{ __('Home') }}</a>
                 <a href="{{ route('products.index') }}" class="store-nav-link">{{ __('Products') }}</a>
@@ -167,6 +183,43 @@
             </nav>
         </div>
     </header>
+
+    <div class="store-mobile-menu" data-mobile-menu aria-hidden="true">
+        <button type="button" class="store-mobile-menu__backdrop" data-mobile-menu-close aria-label="{{ __('Close menu') }}"></button>
+        <aside class="store-mobile-menu__panel" role="dialog" aria-modal="true" aria-label="{{ __('Primary navigation') }}">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
+                <a href="{{ route('home') }}" class="flex items-center gap-3">
+                    @if ($siteLogoUrl)
+                        <img src="{{ $siteLogoUrl }}" alt="{{ $siteName }}" class="h-10 w-10 rounded-2xl object-contain">
+                    @else
+                        <span class="flex h-10 w-10 items-center justify-center rounded-2xl text-lg font-black text-white" style="background-color: var(--store-primary)">{{ mb_substr($siteName, 0, 1) }}</span>
+                    @endif
+                    <span class="font-black">{{ $siteName }}</span>
+                </a>
+                <button type="button" class="store-icon-button" data-mobile-menu-close aria-label="{{ __('Close menu') }}">×</button>
+            </div>
+            <nav class="grid gap-2 p-4 text-sm font-black">
+                <a href="{{ route('home') }}" class="store-nav-link">{{ __('Home') }}</a>
+                <a href="{{ route('products.index') }}" class="store-nav-link">{{ __('Products') }}</a>
+                <a href="{{ route('offers.index') }}" class="store-nav-link">{{ __('Offers') }}</a>
+                <a href="{{ route('categories.index') }}" class="store-nav-pill justify-center">{{ __('Categories') }}</a>
+                <a href="{{ route('brands.index') }}" class="store-nav-link">{{ __('Brands') }}</a>
+                <a href="{{ route('products.latest') }}" class="store-nav-link">{{ __('New Arrivals') }}</a>
+                <a href="{{ route('about') }}" class="store-nav-link">{{ __('About') }}</a>
+                <a href="{{ route('join-us.create') }}" class="store-nav-link">{{ __('Join Us') }}</a>
+                @auth
+                    <a href="{{ route('account.dashboard') }}" class="store-nav-link">{{ __('Account') }}</a>
+                    <form method="POST" action="{{ route('customer.logout') }}">
+                        @csrf
+                        <button class="store-nav-link w-full">{{ __('Logout') }}</button>
+                    </form>
+                @else
+                    <a href="{{ route('customer.login') }}" class="store-nav-link">{{ __('Login') }}</a>
+                    <a href="{{ route('customer.register') }}" class="store-nav-link">{{ __('Register') }}</a>
+                @endauth
+            </nav>
+        </aside>
+    </div>
 
     <main id="main-content" tabindex="-1">
         @if (session('status'))

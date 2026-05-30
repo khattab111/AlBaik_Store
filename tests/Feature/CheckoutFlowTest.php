@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use App\Actions\Orders\CreateOrderFromCart;
 use App\Data\CheckoutData;
 use App\Models\Address;
+use App\Models\City;
 use App\Models\Currency;
 use App\Models\PaymentMethod;
 use App\Models\Product;
-use App\Models\ShippingMethod;
+use App\Models\ShippingCarrier;
+use App\Models\ShippingRate;
 use App\Models\User;
 use App\Repositories\CartRepository;
 use App\Services\InventoryService;
@@ -33,12 +35,8 @@ class CheckoutFlowTest extends TestCase
             'status' => true,
         ]);
 
-        $address = Address::create([
-            'user_id' => $user->id,
-            'country' => 'Syria',
-            'city' => 'Damascus',
-            'street' => 'Main Street',
-        ]);
+        $city = City::create(['name' => ['en' => 'Damascus', 'ar' => 'دمشق'], 'slug' => 'damascus', 'country' => 'Syria', 'is_active' => true]);
+        $address = Address::create(['user_id' => $user->id, 'country' => 'Syria', 'city_id' => $city->id, 'city' => 'Damascus', 'street' => 'Main Street']);
 
         $payment = PaymentMethod::create([
             'name' => 'Cash on Delivery',
@@ -48,13 +46,8 @@ class CheckoutFlowTest extends TestCase
             'is_active' => true,
         ]);
 
-        $shipping = ShippingMethod::create([
-            'name' => 'Standard',
-            'slug' => 'standard',
-            'type' => 'flat_rate',
-            'cost' => 5,
-            'is_active' => true,
-        ]);
+        $carrier = ShippingCarrier::create(['name' => ['en' => 'Standard', 'ar' => 'قياسي'], 'slug' => 'standard', 'status' => 'active']);
+        ShippingRate::create(['shipping_carrier_id' => $carrier->id, 'city_id' => $city->id, 'base_cost' => 5, 'cost_per_kg' => 0, 'is_active' => true]);
 
         $product = Product::create([
             'name' => 'Test Product',
@@ -74,7 +67,8 @@ class CheckoutFlowTest extends TestCase
             userId: $user->id,
             shippingAddressId: $address->id,
             paymentMethodId: $payment->id,
-            shippingMethodId: $shipping->id,
+            shippingCityId: $city->id,
+            shippingCarrierId: $carrier->id,
         ));
 
         $this->assertSame('20.00', $order->subtotal);

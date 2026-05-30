@@ -28,7 +28,11 @@ class BrandResource extends Resource
                 Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required()->maxLength(255),
                 Forms\Components\Textarea::make("description.{$code}")->label(__('Description'))->rows(4),
             ]),
-            Forms\Components\TextInput::make('slug')->required()->unique(Brand::class, 'slug', ignoreRecord: true),
+            Forms\Components\TextInput::make('slug')
+                ->helperText(__('Generated automatically when the brand is created and kept stable after that.'))
+                ->disabled()
+                ->dehydrated(false)
+                ->visible(fn ($record): bool => $record !== null),
             Forms\Components\FileUpload::make('logo')
                 ->image()
                 ->imageEditor()

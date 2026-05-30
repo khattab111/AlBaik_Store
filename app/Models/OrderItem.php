@@ -18,6 +18,7 @@ class OrderItem extends Model
         'unit_price',
         'price_type',
         'applied_tier_id',
+        'applied_flash_offer_id',
         'subtotal',
         'total_price',
     ];
@@ -47,5 +48,10 @@ class OrderItem extends Model
     public function appliedTier(): BelongsTo
     {
         return $this->belongsTo(ProductPriceTier::class, 'applied_tier_id');
+    }
+
+    public function appliedFlashOffer(): BelongsTo
+    {
+        return $this->belongsTo(FlashOffer::class, 'applied_flash_offer_id');
     }
 }
