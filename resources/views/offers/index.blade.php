@@ -18,11 +18,11 @@
 
     @include('partials.banner-strip', ['banners' => $pageBanners ?? collect()])
 
-    @if(($flashOffers ?? collect())->isNotEmpty())
+    @if(($presentedFlashOffers ?? collect())->isNotEmpty())
         <div class="mb-8 grid gap-4 lg:grid-cols-3">
-            @foreach($flashOffers as $offer)
+            @foreach($presentedFlashOffers as $offer)
                 @php
-                    $mainProduct = $offer->items->pluck('product')->filter()->first();
+                    $mainProduct = $offer['items']->pluck('product')->filter()->first();
                     $image = $mainProduct?->images?->first()?->path;
                     $imageUrl = $image && file_exists(public_path('storage/'.$image))
                         ? asset('storage/'.$image)
@@ -30,29 +30,47 @@
                 @endphp
                 <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
                     <div class="grid gap-0 sm:grid-cols-[150px_1fr]">
-                        <a href="{{ $mainProduct ? route('products.show', $mainProduct->slug) : route('offers.index') }}" class="bg-slate-50">
-                            <img src="{{ $imageUrl }}" alt="{{ $offer->title }}" class="h-full min-h-40 w-full object-contain p-5" loading="lazy" decoding="async">
+                        <a href="{{ route('offers.show', $offer['slug']) }}" class="bg-slate-50">
+                            <img src="{{ $imageUrl }}" alt="{{ $offer['title'] }}" class="h-full min-h-40 w-full object-contain p-5" loading="lazy" decoding="async">
                         </a>
                         <div class="p-5">
-                            <p class="text-xs font-black uppercase text-amber-600">{{ __('Flash Offer') }}</p>
-                            <h2 class="mt-1 text-xl font-black text-slate-950">{{ $offer->title }}</h2>
-                            <p class="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-500">{{ $offer->description }}</p>
+                            <p class="text-xs font-black uppercase text-amber-600">{{ $offer['badge'] }}</p>
+                            <h2 class="mt-1 text-xl font-black text-slate-950">{{ $offer['title'] }}</h2>
+                            <p class="mt-2 text-sm font-black leading-6 text-amber-700">{{ $offer['summary'] }}</p>
+                            @if($offer['description'])
+                                <p class="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-500">{{ $offer['description'] }}</p>
+                            @endif
+                            <div class="mt-3 grid gap-1 text-xs font-bold text-slate-600">
+                                @foreach(array_slice($offer['details'], 0, 4) as $detail)
+                                    <p>{{ $detail }}</p>
+                                @endforeach
+                            </div>
+                            @if($offer['items']->count() > 1)
+                                <div class="mt-3 grid gap-1 rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-600">
+                                    @foreach($offer['items']->take(3) as $item)
+                                        <p>{{ $item['name'] }} × {{ $item['quantity'] }} @if($item['is_free_item']) - {{ __('Free') }} @endif</p>
+                                    @endforeach
+                                </div>
+                            @endif
                             <div class="mt-4 flex flex-wrap gap-2 text-xs font-black">
-                                <span class="rounded-full bg-slate-100 px-3 py-1">{{ __(str_replace('_', ' ', ucfirst($offer->type))) }}</span>
-                                @if($offer->ends_at)
-                                    <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{{ __('Ends at') }} {{ $offer->ends_at->format('Y-m-d') }}</span>
+                                @if($offer['ends_at'])
+                                    <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{{ __('Ends at') }} {{ $offer['ends_at']->format('Y-m-d') }}</span>
                                 @endif
-                                @if($offer->remainingQuantity() !== null)
-                                    <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">{{ __('Remaining') }} {{ $offer->remainingQuantity() }}</span>
+                                @if($offer['remaining_quantity'] !== null)
+                                    <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">{{ __('Remaining') }} {{ $offer['remaining_quantity'] }}</span>
+                                @endif
+                                @if($offer['free_shipping_scope'])
+                                    <span class="rounded-full bg-sky-100 px-3 py-1 text-sky-800">{{ __('Free shipping') }}: {{ $offer['free_shipping_scope'] }}</span>
                                 @endif
                             </div>
-                            @if($mainProduct)
-                                <form method="POST" action="{{ route('cart.add', $mainProduct) }}" class="mt-5" data-ajax-store-action>
+                            <div class="mt-5 grid gap-2 sm:grid-cols-2">
+                                <a href="{{ route('offers.show', $offer['slug']) }}" class="store-button-secondary w-full">{{ __('Details') }}</a>
+                                <form method="POST" action="{{ route('offers.cart.add', $offer['slug']) }}" data-ajax-store-action>
                                     @csrf
                                     <input type="hidden" name="quantity" value="1">
                                     <button class="store-button-primary w-full">{{ __('Add to Cart') }}</button>
                                 </form>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 </article>

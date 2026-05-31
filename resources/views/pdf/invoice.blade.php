@@ -50,8 +50,17 @@
         <tbody>
             @foreach ($order->items as $item)
                 <tr>
-                    <td>{{ $item->product?->name }}</td>
-                    <td>{{ $item->variant?->sku ?? $item->product?->sku }}</td>
+                    <td>
+                        {{ ($item->item_type ?? 'product') === 'offer' ? $item->offer_title : $item->product?->name }}
+                        @if(($item->item_type ?? 'product') === 'offer')
+                            <br><span class="muted">
+                                @foreach(collect($item->components_snapshot ?? [])->take(4) as $component)
+                                    {{ $component['product_name'] ?? 'Product' }} x {{ $component['quantity'] ?? 1 }}@if(!$loop->last), @endif
+                                @endforeach
+                            </span>
+                        @endif
+                    </td>
+                    <td>{{ ($item->item_type ?? 'product') === 'offer' ? ('OFFER-'.$item->offer_id) : ($item->variant?->sku ?? $item->product?->sku) }}</td>
                     <td>{{ $item->quantity }}</td>
                     <td>{{ number_format((float) $item->unit_price, 2) }}</td>
                     <td>{{ number_format((float) $item->total_price, 2) }}</td>

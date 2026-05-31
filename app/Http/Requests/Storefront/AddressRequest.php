@@ -15,16 +15,17 @@ class AddressRequest extends FormRequest
     {
         return [
             'label' => ['nullable', 'string', 'max:100'],
-            'country' => ['nullable', 'string', 'max:100'],
+            'recipient_name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
             'city_id' => ['required', 'exists:cities,id'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'town' => ['nullable', 'string', 'max:100'],
-            'state' => ['nullable', 'string', 'max:100'],
-            'street' => ['required', 'string', 'max:255'],
-            'postal_code' => ['nullable', 'string', 'max:30'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'whatsapp' => ['nullable', 'string', 'max:50'],
+            'address_line' => ['required', 'string', 'max:255'],
+            'building_number' => ['nullable', 'string', 'max:100'],
+            'floor' => ['nullable', 'string', 'max:100'],
+            'apartment' => ['nullable', 'string', 'max:100'],
+            'landmark' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
             'is_default' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
         ];
     }
 }

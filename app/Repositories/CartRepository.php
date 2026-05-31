@@ -34,10 +34,15 @@ class CartRepository
         $unitPrice = $price->price;
 
         return CartItem::updateOrCreate(
-            ['cart_id' => $cart->id, 'product_id' => $product->id, 'variant_id' => $variantId],
+            ['cart_id' => $cart->id, 'item_type' => 'product', 'product_id' => $product->id, 'variant_id' => $variantId],
             [
+                'offer_id' => null,
+                'title' => null,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
+                'original_total_price' => null,
+                'savings_amount' => null,
+                'components_snapshot' => null,
                 'price_type' => $price->priceType,
                 'applied_tier_id' => $price->appliedTierId,
                 'applied_flash_offer_id' => $price->appliedFlashOfferId,
@@ -45,8 +50,38 @@ class CartRepository
         );
     }
 
+    public function addItemWithPrice(
+        Cart $cart,
+        Product $product,
+        int $quantity,
+        float $unitPrice,
+        string $priceType,
+        ?int $appliedFlashOfferId = null,
+        ?int $variantId = null,
+    ): CartItem {
+        if ($variantId) {
+            $product->variants()->findOrFail($variantId);
+        }
+
+        return CartItem::updateOrCreate(
+            ['cart_id' => $cart->id, 'item_type' => 'product', 'product_id' => $product->id, 'variant_id' => $variantId],
+            [
+                'offer_id' => null,
+                'title' => null,
+                'quantity' => max(1, $quantity),
+                'unit_price' => round($unitPrice, 2),
+                'original_total_price' => null,
+                'savings_amount' => null,
+                'components_snapshot' => null,
+                'price_type' => $priceType,
+                'applied_tier_id' => null,
+                'applied_flash_offer_id' => $appliedFlashOfferId,
+            ]
+        );
+    }
+
     public function items(Cart $cart): Collection
     {
-        return $cart->items()->with(['product', 'variant'])->get();
+        return $cart->items()->with(['product', 'variant', 'offer'])->get();
     }
 }

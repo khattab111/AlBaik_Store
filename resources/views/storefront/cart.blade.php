@@ -6,9 +6,17 @@
     <h1 class="mb-6 text-2xl font-bold">{{ __('Cart') }}</h1>
     <section class="grid gap-4">
         @forelse ($items as $item)
+            @php($isOffer = ($item->item_type ?? 'product') === 'offer')
             <div class="flex items-center justify-between rounded border bg-white p-4">
                 <div>
-                    <h2 class="font-semibold">{{ $item->product->name }}</h2>
+                    <h2 class="font-semibold">{{ $isOffer ? $item->title : $item->product->name }}</h2>
+                    @if($isOffer)
+                        <div class="mt-2 text-xs text-gray-600">
+                            @foreach(collect($item->components_snapshot ?? [])->take(4) as $component)
+                                <p>{{ $component['product_name'] ?? __('Product') }} x {{ $component['quantity'] ?? 1 }}</p>
+                            @endforeach
+                        </div>
+                    @endif
                     <p class="text-sm text-gray-600">{{ number_format((float) $item->unit_price, 2) }} USD</p>
                 </div>
                 <form method="POST" action="{{ route('cart.items.update', $item) }}" class="flex gap-2">

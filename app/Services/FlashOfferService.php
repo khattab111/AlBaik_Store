@@ -32,6 +32,10 @@ class FlashOfferService
             ->with(['items' => fn ($query) => $query->where('product_id', $product->id)])
             ->currentlyValid()
             ->whereHas('items', fn ($query) => $query->where('product_id', $product->id))
+            ->whereNotIn('type', [
+                FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
+                FlashOffer::TYPE_BUY_X_GET_Y,
+            ])
             ->orderByDesc('priority')
             ->orderBy('ends_at')
             ->get();

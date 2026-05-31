@@ -20,9 +20,18 @@
     <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div class="grid gap-4">
             @foreach($order->items as $item)
+                @php($isOffer = ($item->item_type ?? 'product') === 'offer')
                 <div class="store-panel flex flex-wrap items-center justify-between gap-4 p-5">
                     <div>
-                        <h2 class="font-black">{{ $item->product->name }}</h2>
+                        <h2 class="font-black">{{ $isOffer ? $item->offer_title : $item->product->name }}</h2>
+                        @if($isOffer)
+                            <p class="mt-1 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ __('Offer') }}</p>
+                            <div class="mt-3 grid gap-1 text-xs font-bold text-slate-500">
+                                @foreach(collect($item->components_snapshot ?? [])->take(5) as $component)
+                                    <p>{{ $component['product_name'] ?? __('Product') }} × {{ $component['quantity'] ?? 1 }}</p>
+                                @endforeach
+                            </div>
+                        @endif
                         <p class="text-sm font-bold text-slate-500">{{ __('Quantity') }}: {{ $item->quantity }}</p>
                     </div>
                     <p class="text-lg font-black text-red-700">USD {{ number_format((float)$item->total_price, 2) }}</p>

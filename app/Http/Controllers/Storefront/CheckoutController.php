@@ -20,12 +20,13 @@ class CheckoutController extends Controller
     {
         $cart = $carts->findForUser($request->user()->id)->load(['items.product.images', 'items.variant']);
         $subtotal = $cart->items->sum(fn ($item) => $item->quantity * (float) $item->unit_price);
-        $defaultCity = $request->user()->addresses()->whereNotNull('city_id')->orderByDesc('is_default')->latest()->first()?->cityModel;
+        $defaultAddress = $request->user()->addresses()->with('city')->where('is_active', true)->orderByDesc('is_default')->latest()->first();
+        $defaultCity = $defaultAddress?->city;
 
         return view('storefront.checkout', [
             'cart' => $cart,
             'items' => $cart->items,
-            'addresses' => $request->user()->addresses()->with('cityModel')->latest()->get(),
+            'addresses' => $request->user()->addresses()->with('city')->where('is_active', true)->latest()->get(),
             'cities' => City::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get(),
             'availableCarriers' => $defaultCity ? $shipping->formatCarriersForCheckout($defaultCity, $cart, $subtotal) : collect(),
             'requiresShipping' => $shipping->requiresShipping($cart),
@@ -42,10 +43,14 @@ class CheckoutController extends Controller
 
         $order = $checkout->handle(new CheckoutData(
             userId: $request->user()->id,
-            shippingAddressId: (int) $request->input('shipping_address_id'),
             paymentMethodId: (int) $request->input('payment_method_id'),
-            shippingCityId: (int) $request->input('shipping_city_id'),
+            addressMode: $request->input('address_mode'),
             shippingCarrierId: $request->filled('shipping_carrier_id') ? (int) $request->input('shipping_carrier_id') : null,
+            userAddressId: $request->filled('user_address_id') ? (int) $request->input('user_address_id') : null,
+            shippingCityId: $request->filled('city_id') ? (int) $request->input('city_id') : null,
+            temporaryAddress: $request->input('address', []),
+            saveAddress: $request->boolean('save_address'),
+            addressLabel: $request->input('address_label'),
             billingAddressId: $request->filled('billing_address_id') ? (int) $request->input('billing_address_id') : null,
             couponCode: $request->input('coupon_code'),
             notes: $request->input('notes'),

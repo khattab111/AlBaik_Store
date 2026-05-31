@@ -8,6 +8,7 @@ use App\Models\CartItem;
 use App\Models\Product;
 use App\Repositories\CartRepository;
 use App\Services\GuestCartService;
+use App\Services\OfferCartService;
 use App\Services\ProductPricingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -33,7 +34,7 @@ class CartController extends Controller
             ]);
         }
 
-        $cart = $this->carts->findForUser($request->user()->id)->load(['items.product.images', 'items.variant']);
+        $cart = $this->carts->findForUser($request->user()->id)->load(['items.product.images', 'items.variant', 'items.appliedFlashOffer', 'items.offer']);
 
         return view('cart.index', [
             'cart' => $cart,
@@ -105,6 +106,36 @@ class CartController extends Controller
         return back()->with('status', __('Cart updated.'));
     }
 
+    public function updateItem(UpdateCartItemRequest $request, CartItem $item, ProductPricingService $pricing, OfferCartService $offerCart): RedirectResponse
+    {
+        abort_unless($item->cart->user_id === $request->user()->id, 403);
+
+        $data = $request->validated();
+
+        if ($item->item_type === 'offer') {
+            $item->load('offer.items.product.images');
+            $offerCart->validateOfferAvailability($item->offer, (int) $data['quantity']);
+
+            $freshItem = $offerCart->addOfferToCart($item->cart, $item->offer, (int) $data['quantity']);
+            $freshItem->save();
+
+            return back()->with('status', __('Cart updated.'));
+        }
+
+        $item->load(['product.priceTiers', 'variant']);
+        $price = $pricing->getPriceForUser($item->product, $request->user(), (int) $data['quantity']);
+
+        $item->update([
+            'quantity' => $data['quantity'],
+            'unit_price' => $price->price,
+            'price_type' => $price->priceType,
+            'applied_tier_id' => $price->appliedTierId,
+            'applied_flash_offer_id' => $price->appliedFlashOfferId,
+        ]);
+
+        return back()->with('status', __('Cart updated.'));
+    }
+
     public function remove(Request $request, Product $product): RedirectResponse
     {
         if (! $request->user()) {
@@ -113,7 +144,16 @@ class CartController extends Controller
             return back()->with('status', __('Cart item removed.'));
         }
 
-        $this->carts->findForUser($request->user()->id)->items()->where('product_id', $product->id)->delete();
+        $this->carts->findForUser($request->user()->id)->items()->where('item_type', 'product')->where('product_id', $product->id)->delete();
+
+        return back()->with('status', __('Cart item removed.'));
+    }
+
+    public function destroyItem(Request $request, CartItem $item): RedirectResponse
+    {
+        abort_unless($item->cart->user_id === $request->user()->id, 403);
+
+        $item->delete();
 
         return back()->with('status', __('Cart item removed.'));
     }

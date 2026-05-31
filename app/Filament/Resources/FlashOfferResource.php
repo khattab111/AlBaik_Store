@@ -52,6 +52,11 @@ class FlashOfferResource extends Resource
                     ->required()
                     ->live()
                     ->default(FlashOffer::TYPE_PERCENTAGE_DISCOUNT),
+                Forms\Components\Select::make('offer_scope')
+                    ->label(__('Offer Scope'))
+                    ->options(FlashOffer::scopeOptions())
+                    ->required()
+                    ->default(FlashOffer::SCOPE_PRODUCT),
                 Forms\Components\Select::make('status')
                     ->options(FlashOffer::statusOptions())
                     ->required()
@@ -104,7 +109,13 @@ class FlashOfferResource extends Resource
                     ->visible(fn (Forms\Get $get): bool => in_array($get('type'), [
                         FlashOffer::TYPE_FREE_SHIPPING_PRODUCT,
                         FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
+                        FlashOffer::TYPE_CART_FREE_SHIPPING,
                     ], true)),
+                Forms\Components\Select::make('free_shipping_scope')
+                    ->label(__('Free Shipping Scope'))
+                    ->options(FlashOffer::freeShippingScopeOptions())
+                    ->required()
+                    ->default(FlashOffer::FREE_SHIPPING_NONE),
                 Forms\Components\TextInput::make('min_order_amount')->numeric()->minValue(0),
                 Forms\Components\TextInput::make('usage_limit')->numeric()->minValue(1),
                 Forms\Components\TextInput::make('usage_per_user')->numeric()->minValue(1),
@@ -148,6 +159,7 @@ class FlashOfferResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('type')->badge()->formatStateUsing(fn (string $state): string => FlashOffer::typeOptions()[$state] ?? $state),
+                Tables\Columns\TextColumn::make('offer_scope')->badge(),
                 Tables\Columns\TextColumn::make('status')->badge(),
                 Tables\Columns\TextColumn::make('starts_at')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('ends_at')->dateTime()->sortable(),

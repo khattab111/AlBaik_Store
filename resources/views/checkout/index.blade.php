@@ -20,11 +20,6 @@
 
     @if($items->isEmpty())
         <div class="store-panel p-12 text-center">{{ __('Cart is empty.') }}</div>
-    @elseif($addresses->isEmpty())
-        <div class="store-panel p-12 text-center">
-            <h2 class="text-2xl font-black">{{ __('Please add an address before checkout.') }}</h2>
-            <a href="{{ route('account.addresses.index') }}" class="store-button-primary mt-6">{{ __('Addresses') }}</a>
-        </div>
     @else
         <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" class="grid gap-8 lg:grid-cols-[1fr_360px]"
             data-checkout-shipping
@@ -37,11 +32,43 @@
                     <div class="mt-5 grid gap-3">
                         @foreach($addresses as $address)
                             <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
-                                <input type="radio" name="shipping_address_id" value="{{ $address->id }}" data-address-city-id="{{ $address->city_id }}" class="sr-only" @checked($loop->first)>
+                                <input type="radio" name="user_address_id" value="{{ $address->id }}" data-address-city-id="{{ $address->city_id }}" data-address-mode="saved" class="sr-only" @checked($loop->first)>
                                 <span class="block font-black">{{ $address->label ?: __('Address') }}</span>
-                                <span class="mt-1 block text-sm text-slate-600">{{ $address->country }} / {{ $address->city }} / {{ $address->town }} / {{ $address->street }} - {{ $address->phone }}</span>
+                                @if($address->is_default)
+                                    <span class="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">{{ __('Default') }}</span>
+                                @endif
+                                <span class="mt-1 block text-sm text-slate-600">{{ $address->recipient_name }} - {{ $address->phone }}</span>
+                                <span class="mt-1 block text-sm text-slate-600">{{ $address->city?->name }} / {{ $address->address_line }}</span>
                             </label>
                         @endforeach
+                        <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+                            <input type="radio" name="user_address_id" value="" data-address-mode="new" class="sr-only" @checked($addresses->isEmpty())>
+                            <span class="block font-black">{{ __('Add New Address') }}</span>
+                            <span class="mt-1 block text-sm text-slate-600">{{ __('Use it once or save it to your address book.') }}</span>
+                        </label>
+                        <input type="hidden" name="address_mode" value="{{ $addresses->isEmpty() ? 'new' : 'saved' }}" data-address-mode-input>
+                    </div>
+
+                    <div class="{{ $addresses->isEmpty() ? '' : 'hidden' }} mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4" data-new-address-form>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <input name="address[recipient_name]" placeholder="{{ __('Recipient name') }}" class="store-field">
+                            <input name="address[phone]" placeholder="{{ __('Phone') }}" class="store-field">
+                        </div>
+                        <input name="address[address_line]" placeholder="{{ __('Address line') }}" class="store-field">
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            <input name="address[building_number]" placeholder="{{ __('Building number') }}" class="store-field">
+                            <input name="address[floor]" placeholder="{{ __('Floor') }}" class="store-field">
+                            <input name="address[apartment]" placeholder="{{ __('Apartment') }}" class="store-field">
+                        </div>
+                        <input name="address[landmark]" placeholder="{{ __('Landmark') }}" class="store-field">
+                        <textarea name="address[notes]" rows="3" placeholder="{{ __('Address notes') }}" class="store-field"></textarea>
+                        <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+                            <input name="address_label" placeholder="{{ __('Address label') }}" class="store-field">
+                            <label class="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold">
+                                <input type="checkbox" name="save_address" value="1">
+                                {{ __('Save this address') }}
+                            </label>
+                        </div>
                     </div>
                 </section>
 
@@ -50,7 +77,7 @@
                     <div class="mt-5 grid gap-4">
                         <label class="grid gap-2">
                             <span class="text-sm font-black">{{ __('City') }}</span>
-                            <select name="shipping_city_id" class="store-field" data-shipping-city @disabled(! $requiresShipping)>
+                            <select name="city_id" class="store-field" data-shipping-city @disabled(! $requiresShipping)>
                                 <option value="">{{ __('Choose city') }}</option>
                                 @foreach($cities as $city)
                                     <option value="{{ $city->id }}">{{ $city->name }} - {{ $city->country }}</option>
@@ -108,8 +135,14 @@
                 <h2 class="text-2xl font-black">{{ __('Order Summary') }}</h2>
                 <div class="mt-5 grid gap-4">
                     @foreach($items as $item)
+                        @php($isOffer = ($item->item_type ?? 'product') === 'offer')
                         <div class="flex justify-between gap-3 text-sm">
-                            <span class="font-bold text-slate-600">{{ $item->product->name }} × {{ $item->quantity }}</span>
+                            <span class="font-bold text-slate-600">
+                                {{ $isOffer ? $item->title : $item->product->name }} × {{ $item->quantity }}
+                                @if($isOffer)
+                                    <span class="block text-xs text-amber-700">{{ __('Offer') }}</span>
+                                @endif
+                            </span>
                             <span class="font-black">USD {{ number_format($item->quantity * (float)$item->unit_price, 2) }}</span>
                         </div>
                     @endforeach

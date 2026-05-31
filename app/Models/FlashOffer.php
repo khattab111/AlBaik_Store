@@ -19,6 +19,15 @@ class FlashOffer extends Model
     public const TYPE_BUNDLE_FIXED_PRICE = 'bundle_fixed_price';
     public const TYPE_FREE_SHIPPING_PRODUCT = 'free_shipping_product';
     public const TYPE_BUY_X_GET_Y = 'buy_x_get_y';
+    public const TYPE_CART_FREE_SHIPPING = 'cart_free_shipping';
+
+    public const SCOPE_PRODUCT = 'product';
+    public const SCOPE_BUNDLE = 'bundle';
+    public const SCOPE_CART = 'cart';
+
+    public const FREE_SHIPPING_NONE = 'none';
+    public const FREE_SHIPPING_OFFER = 'offer';
+    public const FREE_SHIPPING_CART = 'cart';
 
     public const STATUS_DRAFT = 'draft';
     public const STATUS_ACTIVE = 'active';
@@ -34,6 +43,7 @@ class FlashOffer extends Model
         'slug',
         'description',
         'type',
+        'offer_scope',
         'status',
         'starts_at',
         'ends_at',
@@ -44,6 +54,7 @@ class FlashOffer extends Model
         'max_quantity',
         'sold_quantity',
         'free_shipping',
+        'free_shipping_scope',
         'min_order_amount',
         'usage_limit',
         'usage_per_user',
@@ -107,6 +118,25 @@ class FlashOffer extends Model
             self::TYPE_BUNDLE_FIXED_PRICE => __('Bundle fixed price'),
             self::TYPE_FREE_SHIPPING_PRODUCT => __('Product with free shipping'),
             self::TYPE_BUY_X_GET_Y => __('Buy X get Y'),
+            self::TYPE_CART_FREE_SHIPPING => __('Cart free shipping'),
+        ];
+    }
+
+    public static function scopeOptions(): array
+    {
+        return [
+            self::SCOPE_PRODUCT => __('Product'),
+            self::SCOPE_BUNDLE => __('Bundle'),
+            self::SCOPE_CART => __('Cart'),
+        ];
+    }
+
+    public static function freeShippingScopeOptions(): array
+    {
+        return [
+            self::FREE_SHIPPING_NONE => __('None'),
+            self::FREE_SHIPPING_OFFER => __('Offer only'),
+            self::FREE_SHIPPING_CART => __('Whole cart'),
         ];
     }
 

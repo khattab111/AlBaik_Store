@@ -395,6 +395,22 @@ const initializeWholesaleTierPicker = () => {
     });
 };
 
+const initializeProductGallery = () => {
+    const mainImage = document.getElementById('product-main-image');
+
+    if (!mainImage) {
+        return;
+    }
+
+    document.querySelectorAll('[data-product-gallery-thumb]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (button.dataset.image) {
+                mainImage.src = button.dataset.image;
+            }
+        });
+    });
+};
+
 const initializeCheckoutShipping = () => {
     const form = document.querySelector('[data-checkout-shipping]');
 
@@ -498,9 +514,24 @@ const initializeCheckoutShipping = () => {
         await loadQuote();
     };
 
-    form.querySelectorAll('input[name="shipping_address_id"]').forEach((input) => {
+    const addressModeInput = form.querySelector('[data-address-mode-input]');
+    const newAddressForm = form.querySelector('[data-new-address-form]');
+
+    form.querySelectorAll('input[name="user_address_id"]').forEach((input) => {
         input.addEventListener('change', async () => {
-            if (input.checked && input.dataset.addressCityId && citySelect) {
+            if (!input.checked) {
+                return;
+            }
+
+            if (addressModeInput) {
+                addressModeInput.value = input.dataset.addressMode || 'saved';
+            }
+
+            if (newAddressForm) {
+                newAddressForm.classList.toggle('hidden', input.dataset.addressMode !== 'new');
+            }
+
+            if (input.dataset.addressMode === 'saved' && input.dataset.addressCityId && citySelect) {
                 citySelect.value = input.dataset.addressCityId;
                 await loadCarriers();
             }
@@ -518,7 +549,7 @@ const initializeCheckoutShipping = () => {
         }
     });
 
-    const checkedAddress = form.querySelector('input[name="shipping_address_id"]:checked');
+    const checkedAddress = form.querySelector('input[name="user_address_id"]:checked');
 
     if (checkedAddress?.dataset.addressCityId && citySelect) {
         citySelect.value = checkedAddress.dataset.addressCityId;
@@ -538,6 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAsyncStoreActions();
     initializeDocumentationNavigation();
     initializeWholesaleTierPicker();
+    initializeProductGallery();
     initializeCheckoutShipping();
 
     document.querySelectorAll('[data-theme-toggle]').forEach((button) => {

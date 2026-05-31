@@ -72,6 +72,10 @@ class InventoryService
         $warehouse = Warehouse::where('is_active', true)->first();
 
         foreach ($order->items()->with(['product', 'variant'])->get() as $item) {
+            if ($item->item_type === 'offer') {
+                continue;
+            }
+
             if ($item->variant) {
                 $item->variant->decrement('stock', $item->quantity);
                 $item->variant->decrement('reserved_stock', min($item->quantity, $item->variant->reserved_stock));

@@ -7,6 +7,8 @@ use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Presenters\FlashOfferPresenter;
+use App\Services\FlashOfferService;
 use App\Services\ProductPricingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -55,22 +57,50 @@ class ProductController extends Controller
         return $this->index($request)->with('pageTitle', __('New Arrivals'));
     }
 
-    public function show(Product $product, Request $request, ProductPricingService $pricing): View
+    public function show(Product $product, Request $request, ProductPricingService $pricing, FlashOfferPresenter $offers, FlashOfferService $flashOffers): View
     {
         abort_unless($product->status, 404);
 
-        $product->load(['brand', 'category', 'images', 'variants', 'reviews.user', 'priceTiers']);
+        $product->load([
+            'brand',
+            'category',
+            'supplier',
+            'tags',
+            'images',
+            'variants',
+            'reviews.user',
+            'priceTiers',
+            'flashOfferItems.flashOffer.items.product.images',
+        ]);
         $isWholesaleCustomer = (bool) $request->user()?->isWholesaleCustomer();
+        $priceData = $pricing->getPriceForUser($product, $request->user(), 1);
+        $activeOffers = $product->flashOfferItems
+            ->pluck('flashOffer')
+            ->filter(fn ($offer) => $offer && $flashOffers->isOfferValid($offer))
+            ->unique('id')
+            ->values();
 
         return view('products.show', [
             'product' => $product,
-            'pricing' => $pricing->getPriceForUser($product, $request->user(), 1),
+            'pricing' => $priceData,
+            'activeOfferDetails' => $activeOffers->map(fn ($offer) => $offers->forProduct($offer, $product))->values(),
+            'primaryOfferDetails' => $priceData->flashOffer ? $offers->forProduct($priceData->flashOffer, $product) : null,
             'isWholesaleCustomer' => $isWholesaleCustomer,
             'wholesaleTiers' => $isWholesaleCustomer
                 ? $product->priceTiers->where('is_active', true)->where('type', 'wholesale')->sortBy('min_quantity')->values()
                 : collect(),
             'similarProducts' => Product::with(['images', 'brand', 'reviews'])->where('status', true)->whereKeyNot($product->id)->where('category_id', $product->category_id)->latest()->take(4)->get(),
             'brandProducts' => Product::with(['images', 'brand', 'reviews'])->where('status', true)->whereKeyNot($product->id)->where('brand_id', $product->brand_id)->latest()->take(4)->get(),
+            'recommendedProducts' => Product::with(['images', 'brand', 'reviews'])
+                ->where('status', true)
+                ->whereKeyNot($product->id)
+                ->where(function ($query) use ($product): void {
+                    $query->where('is_featured', true)
+                        ->orWhere('category_id', '!=', $product->category_id);
+                })
+                ->latest()
+                ->take(4)
+                ->get(),
         ]);
     }
 }

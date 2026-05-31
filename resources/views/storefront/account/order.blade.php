@@ -25,7 +25,14 @@
     <section class="grid gap-3">
         @foreach ($order->items as $item)
             <div class="rounded border bg-white p-4">
-                {{ $item->product->name }} x {{ $item->quantity }} = {{ number_format((float) $item->total_price, 2) }} USD
+                {{ ($item->item_type ?? 'product') === 'offer' ? $item->offer_title : $item->product->name }} x {{ $item->quantity }} = {{ number_format((float) $item->total_price, 2) }} USD
+                @if(($item->item_type ?? 'product') === 'offer')
+                    <div class="mt-2 text-sm text-gray-600">
+                        @foreach(collect($item->components_snapshot ?? [])->take(5) as $component)
+                            <p>{{ $component['product_name'] ?? __('Product') }} x {{ $component['quantity'] ?? 1 }}</p>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         @endforeach
     </section>

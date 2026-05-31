@@ -12,7 +12,15 @@ class OrderItem extends Model
 
     protected $fillable = [
         'order_id',
+        'item_type',
         'product_id',
+        'offer_id',
+        'offer_title',
+        'offer_type',
+        'offer_price',
+        'original_total_price',
+        'savings_amount',
+        'components_snapshot',
         'variant_id',
         'quantity',
         'unit_price',
@@ -26,8 +34,12 @@ class OrderItem extends Model
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
+        'offer_price' => 'decimal:2',
+        'original_total_price' => 'decimal:2',
+        'savings_amount' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'total_price' => 'decimal:2',
+        'components_snapshot' => 'array',
     ];
 
     public function order(): BelongsTo
@@ -38,6 +50,11 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function offer(): BelongsTo
+    {
+        return $this->belongsTo(FlashOffer::class, 'offer_id');
     }
 
     public function variant(): BelongsTo

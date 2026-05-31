@@ -27,33 +27,64 @@
             <div class="grid gap-4">
                 @foreach($items as $item)
                     @php
-                        $image = $item->product->images->first()?->path;
+                        $isOffer = ($item->item_type ?? 'product') === 'offer';
+                        $firstComponent = collect($item->components_snapshot ?? [])->first();
+                        $image = $isOffer ? ($firstComponent['product_image'] ?? null) : $item->product->images->first()?->path;
                         $imageUrl = $image && file_exists(public_path('storage/'.$image))
                             ? asset('storage/'.$image)
                             : asset('images/storefront/product-fallback.svg');
+                        $title = $isOffer ? $item->title : $item->product->name;
                     @endphp
                     <article class="store-panel grid gap-4 p-4 sm:grid-cols-[120px_1fr_auto]">
-                        <img src="{{ $imageUrl }}" class="h-28 w-28 rounded-2xl object-cover" alt="{{ $item->product->name }}">
+                        <img src="{{ $imageUrl }}" class="h-28 w-28 rounded-2xl object-cover" alt="{{ $title }}">
                         <div>
-                            <h2 class="text-lg font-black">{{ $item->product->name }}</h2>
-                            <p class="mt-1 text-sm font-bold text-slate-500">{{ $item->product->brand?->name }}</p>
-                            @if($item->variant)
+                            <h2 class="text-lg font-black">{{ $title }}</h2>
+                            @if($isOffer)
+                                <p class="mt-1 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ __('Offer') }}</p>
+                                <div class="mt-3 grid gap-1 text-xs font-bold text-slate-500">
+                                    @foreach(collect($item->components_snapshot ?? [])->take(5) as $component)
+                                        <p>{{ $component['product_name'] ?? __('Product') }} × {{ $component['quantity'] ?? 1 }}</p>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="mt-1 text-sm font-bold text-slate-500">{{ $item->product->brand?->name }}</p>
+                            @endif
+                            @if(!$isOffer && $item->variant)
                                 <p class="mt-2 text-xs font-bold text-slate-500">{{ $item->variant->sku }}</p>
+                            @endif
+                            @if(!$isOffer && ($item->applied_flash_offer_id ?? null))
+                                <p class="mt-2 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ __('Flash Offer') }}</p>
                             @endif
                             <p class="mt-3 store-price">USD {{ number_format((float)$item->unit_price, 2) }}</p>
                         </div>
                         <div class="grid content-between gap-3 sm:min-w-48">
-                            <form method="POST" action="{{ route('cart.update', $item->product) }}" class="flex gap-2">
-                                @csrf
-                                @method('PATCH')
-                                <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field w-24">
-                                <button class="store-button-secondary">{{ __('Update') }}</button>
-                            </form>
-                            <form method="POST" action="{{ route('cart.remove', $item->product) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button class="w-full rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 transition hover:bg-red-50">{{ __('Delete') }}</button>
-                            </form>
+                            @auth
+                                <form method="POST" action="{{ $isOffer ? route('cart.items.update', $item) : route('cart.update', $item->product) }}" class="flex gap-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field w-24">
+                                    <button class="store-button-secondary">{{ __('Update') }}</button>
+                                </form>
+                                <form method="POST" action="{{ $isOffer ? route('cart.items.destroy', $item) : route('cart.remove', $item->product) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="w-full rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 transition hover:bg-red-50">{{ __('Delete') }}</button>
+                                </form>
+                            @else
+                                @if(!$isOffer)
+                                    <form method="POST" action="{{ route('cart.update', $item->product) }}" class="flex gap-2">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field w-24">
+                                        <button class="store-button-secondary">{{ __('Update') }}</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('cart.remove', $item->product) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="w-full rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 transition hover:bg-red-50">{{ __('Delete') }}</button>
+                                    </form>
+                                @endif
+                            @endauth
                         </div>
                     </article>
                 @endforeach

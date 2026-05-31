@@ -23,18 +23,20 @@
             @csrf
             <h2 class="text-2xl font-black">{{ __('Add Address') }}</h2>
             <input name="label" placeholder="{{ __('Label') }}" class="store-field">
+            <input name="recipient_name" placeholder="{{ __('Recipient name') }}" class="store-field" required>
+            <input name="phone" placeholder="{{ __('Phone') }}" class="store-field" required>
             <select name="city_id" class="store-field" required>
                 <option value="">{{ __('Choose city') }}</option>
                 @foreach($cities as $city)
                     <option value="{{ $city->id }}">{{ $city->name }} - {{ $city->country }}</option>
                 @endforeach
             </select>
-            <input name="town" placeholder="{{ __('Town') }}" class="store-field">
-            <input name="state" placeholder="{{ __('State') }}" class="store-field">
-            <input name="street" placeholder="{{ __('Street') }}" class="store-field">
-            <input name="postal_code" placeholder="{{ __('Postal Code') }}" class="store-field">
-            <input name="phone" placeholder="{{ __('Phone') }}" class="store-field">
-            <input name="whatsapp" placeholder="{{ __('WhatsApp') }}" class="store-field">
+            <input name="address_line" placeholder="{{ __('Address line') }}" class="store-field" required>
+            <input name="building_number" placeholder="{{ __('Building number') }}" class="store-field">
+            <input name="floor" placeholder="{{ __('Floor') }}" class="store-field">
+            <input name="apartment" placeholder="{{ __('Apartment') }}" class="store-field">
+            <input name="landmark" placeholder="{{ __('Landmark') }}" class="store-field">
+            <textarea name="notes" rows="3" placeholder="{{ __('Notes') }}" class="store-field"></textarea>
             <label class="flex items-center gap-2 text-sm font-bold"><input type="checkbox" name="is_default" value="1"> {{ __('Default') }}</label>
             <button class="store-button-primary">{{ __('Add Address') }}</button>
         </form>
@@ -48,14 +50,26 @@
                             @if($address->is_default)
                                 <span class="ms-2 rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">{{ __('Default') }}</span>
                             @endif
-                            <p class="mt-2 text-sm leading-6 text-slate-600">{{ $address->country }} / {{ $address->city }} / {{ $address->town }} / {{ $address->street }}</p>
-                            <p class="mt-1 text-sm font-bold text-slate-500">{{ __('Phone') }}: {{ $address->phone }} - {{ __('WhatsApp') }}: {{ $address->whatsapp }}</p>
+                            <p class="mt-1 text-sm font-bold text-slate-500">{{ $address->recipient_name }} - {{ __('Phone') }}: {{ $address->phone }}</p>
+                            <p class="mt-2 text-sm leading-6 text-slate-600">{{ $address->city?->name }} / {{ $address->address_line }}</p>
+                            @if($address->landmark)
+                                <p class="mt-1 text-sm text-slate-500">{{ __('Landmark') }}: {{ $address->landmark }}</p>
+                            @endif
                         </div>
-                        <form method="POST" action="{{ route('account.addresses.destroy', $address) }}">
-                            @csrf
-                            @method('DELETE')
-                            <button class="rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
-                        </form>
+                        <div class="flex flex-wrap gap-2">
+                            @unless($address->is_default)
+                                <form method="POST" action="{{ route('account.addresses.default', $address) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button class="rounded-2xl border border-emerald-200 px-4 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-50">{{ __('Set Default') }}</button>
+                                </form>
+                            @endunless
+                            <form method="POST" action="{{ route('account.addresses.destroy', $address) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button class="rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             @empty

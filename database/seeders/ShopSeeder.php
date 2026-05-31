@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Address;
 use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Cart;
@@ -30,6 +29,7 @@ use App\Models\ShippingRate;
 use App\Models\Supplier;
 use App\Models\Tag;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Models\Warehouse;
 use App\Models\WholesaleApplication;
 use App\Models\Wishlist;
@@ -561,6 +561,7 @@ class ShopSeeder extends Seeder
                 'title' => $this->tr('Launch Offers 20%', 'عروض الإطلاق 20%'),
                 'description' => $this->tr('Limited percentage discount on selected products.', 'خصم نسبة محدود على منتجات مختارة.'),
                 'type' => FlashOffer::TYPE_PERCENTAGE_DISCOUNT,
+                'offer_scope' => FlashOffer::SCOPE_PRODUCT,
                 'status' => FlashOffer::STATUS_ACTIVE,
                 'starts_at' => now()->subDay(),
                 'ends_at' => now()->addDays(14),
@@ -569,6 +570,7 @@ class ShopSeeder extends Seeder
                 'discount_value' => 20,
                 'max_quantity' => 300,
                 'sold_quantity' => 44,
+                'free_shipping_scope' => FlashOffer::FREE_SHIPPING_NONE,
             ]
         );
         FlashOfferItem::updateOrCreate(['flash_offer_id' => $launch->id, 'product_id' => $products['sauce']->id], ['quantity' => 1, 'original_price' => 3.50, 'offer_price' => null, 'is_free_item' => false]);
@@ -579,6 +581,7 @@ class ShopSeeder extends Seeder
                 'title' => $this->tr('Smart Bottle Fixed Price', 'سعر ثابت للزجاجة الذكية'),
                 'description' => $this->tr('A fixed price for a limited quantity.', 'سعر محدد لكمية محدودة.'),
                 'type' => FlashOffer::TYPE_FIXED_PRICE_QUANTITY,
+                'offer_scope' => FlashOffer::SCOPE_PRODUCT,
                 'status' => FlashOffer::STATUS_ACTIVE,
                 'starts_at' => now()->subHours(6),
                 'ends_at' => now()->addDays(7),
@@ -586,6 +589,7 @@ class ShopSeeder extends Seeder
                 'fixed_price' => 29.99,
                 'max_quantity' => 50,
                 'sold_quantity' => 6,
+                'free_shipping_scope' => FlashOffer::FREE_SHIPPING_NONE,
             ]
         );
         FlashOfferItem::updateOrCreate(['flash_offer_id' => $fixedPrice->id, 'product_id' => $products['bottle']->id], ['quantity' => 1, 'original_price' => 34.99, 'offer_price' => 29.99, 'is_free_item' => false]);
@@ -596,13 +600,15 @@ class ShopSeeder extends Seeder
                 'title' => $this->tr('Family Food Bundle', 'حزمة العائلة الغذائية'),
                 'description' => $this->tr('Bundle multiple products at a fixed total price.', 'حزمة منتجات متعددة بسعر إجمالي محدد.'),
                 'type' => FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
+                'offer_scope' => FlashOffer::SCOPE_BUNDLE,
                 'status' => FlashOffer::STATUS_ACTIVE,
                 'starts_at' => now()->subDay(),
                 'ends_at' => now()->addDays(10),
                 'priority' => 10,
-                'fixed_price' => 39.00,
+                'fixed_price' => 17.98,
                 'max_quantity' => 100,
                 'free_shipping' => false,
+                'free_shipping_scope' => FlashOffer::FREE_SHIPPING_NONE,
             ]
         );
         FlashOfferItem::updateOrCreate(['flash_offer_id' => $bundle->id, 'product_id' => $products['sandwich']->id], ['quantity' => 2, 'original_price' => 6.99, 'offer_price' => 5.99, 'is_free_item' => false]);
@@ -614,11 +620,13 @@ class ShopSeeder extends Seeder
                 'title' => $this->tr('Bulk Rice Free Shipping', 'شحن مجاني لأكياس الرز'),
                 'description' => $this->tr('Buy the selected bulk product with free shipping.', 'اشتر المنتج المحدد مع شحن مجاني.'),
                 'type' => FlashOffer::TYPE_FREE_SHIPPING_PRODUCT,
+                'offer_scope' => FlashOffer::SCOPE_PRODUCT,
                 'status' => FlashOffer::STATUS_ACTIVE,
                 'starts_at' => now()->subDay(),
                 'ends_at' => now()->addDays(21),
                 'priority' => 5,
                 'free_shipping' => true,
+                'free_shipping_scope' => FlashOffer::FREE_SHIPPING_OFFER,
                 'max_quantity' => 120,
             ]
         );
@@ -627,8 +635,8 @@ class ShopSeeder extends Seeder
 
     private function seedCustomerData(array $users, array $currencies, array $payments, array $shipping, array $products): void
     {
-        $customerAddress = Address::updateOrCreate(['user_id' => $users['customer']->id, 'label' => 'Home'], ['country' => 'Syria', 'city_id' => $shipping['damascus']->id, 'city' => $shipping['damascus']->name, 'town' => 'City Center', 'state' => 'Damascus', 'street' => 'Al Hamra Street', 'postal_code' => '00000', 'phone' => '+963900000002', 'whatsapp' => '+963900000002', 'is_default' => true]);
-        $wholesaleAddress = Address::updateOrCreate(['user_id' => $users['wholesale']->id, 'label' => 'Warehouse'], ['country' => 'Syria', 'city_id' => $shipping['aleppo']->id, 'city' => $shipping['aleppo']->name, 'town' => 'Industrial', 'state' => 'Aleppo', 'street' => 'Industrial Market', 'postal_code' => '00000', 'phone' => '+963900000003', 'whatsapp' => '+963900000003', 'is_default' => true]);
+        $customerAddress = UserAddress::updateOrCreate(['user_id' => $users['customer']->id, 'label' => 'Home'], ['recipient_name' => 'Demo Customer', 'phone' => '+963900000002', 'city_id' => $shipping['damascus']->id, 'address_line' => 'Al Hamra Street', 'building_number' => '12', 'floor' => '2', 'apartment' => '5', 'landmark' => 'Near main market', 'notes' => null, 'is_default' => true, 'is_active' => true]);
+        $wholesaleAddress = UserAddress::updateOrCreate(['user_id' => $users['wholesale']->id, 'label' => 'Warehouse'], ['recipient_name' => 'Wholesale Buyer', 'phone' => '+963900000003', 'city_id' => $shipping['aleppo']->id, 'address_line' => 'Industrial Market', 'building_number' => '44', 'floor' => null, 'apartment' => null, 'landmark' => 'Gate 2', 'notes' => 'Call before delivery.', 'is_default' => true, 'is_active' => true]);
 
         Wishlist::updateOrCreate(['user_id' => $users['customer']->id, 'product_id' => $products['bottle']->id]);
         Wishlist::updateOrCreate(['user_id' => $users['wholesale']->id, 'product_id' => $products['bulk-rice']->id]);
@@ -673,17 +681,25 @@ class ShopSeeder extends Seeder
                 'user_id' => $data['user']->id,
                 'currency_id' => $currencies['USD']->id,
                 'payment_method_id' => $data['payment']->id,
-                'shipping_address_id' => $data['address']->id,
-                'billing_address_id' => $data['address']->id,
+                'shipping_address_id' => null,
+                'billing_address_id' => null,
                 'shipping_city_id' => $data['city']->id,
                 'shipping_city_name' => $data['city']->name,
                 'shipping_carrier_id' => $data['carrier']->id,
                 'shipping_carrier_name' => $data['carrier']->name,
+                'shipping_recipient_name' => $data['address']->recipient_name,
+                'shipping_phone' => $data['address']->phone,
+                'shipping_address_line' => $data['address']->address_line,
+                'shipping_building_number' => $data['address']->building_number,
+                'shipping_floor' => $data['address']->floor,
+                'shipping_apartment' => $data['address']->apartment,
+                'shipping_landmark' => $data['address']->landmark,
+                'shipping_notes' => $data['address']->notes,
                 'subtotal' => $subtotal,
                 'shipping_cost' => $data['shipping_cost'],
                 'shipping_weight' => collect($data['items'])->sum(fn ($item) => $item['qty'] * (float) $products[$item['product']]->weight),
                 'shipping_delivery_time' => '24-48h',
-                'shipping_address_text' => $data['address']->country.' / '.$data['address']->city.' / '.$data['address']->town.' / '.$data['address']->street,
+                'shipping_address_text' => $data['city']->country.' / '.$data['city']->name.' / '.$data['address']->address_line,
                 'is_free_shipping' => false,
                 'discount_amount' => $discount,
                 'payment_fee' => $paymentFee,
@@ -692,11 +708,11 @@ class ShopSeeder extends Seeder
                 'tracking_number' => $data['tracking'],
                 'notes' => 'Seeded demo order for admin testing.',
                 'customer_phone' => $data['address']->phone,
-                'customer_whatsapp' => $data['address']->whatsapp,
+                'customer_whatsapp' => $data['address']->phone,
                 'shipping_country' => $data['city']->country,
                 'shipping_city' => $data['city']->name,
-                'shipping_town' => $data['address']->town,
-                'shipping_street' => $data['address']->street,
+                'shipping_town' => null,
+                'shipping_street' => $data['address']->address_line,
                 'paid_at' => in_array($data['status'], ['processing', 'shipped', 'delivered'], true) ? now()->subDays(2) : null,
                 'shipped_at' => in_array($data['status'], ['shipped', 'delivered'], true) ? now()->subDay() : null,
                 'delivered_at' => $data['status'] === 'delivered' ? now() : null,

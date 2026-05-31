@@ -4,18 +4,18 @@
 
 @section('content')
     <h1 class="mb-6 text-2xl font-bold">{{ __('Checkout') }}</h1>
-    @if ($addresses->isEmpty())
-        <p class="mb-4">{{ __('Please add an address before checkout.') }}</p>
-        <a href="{{ route('account.addresses.index') }}" class="rounded bg-gray-950 px-4 py-2 text-white">{{ __('Addresses') }}</a>
+    @if ($items->isEmpty())
+        <p>{{ __('Cart is empty.') }}</p>
     @else
         <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" class="grid gap-4 rounded border bg-white p-4">
             @csrf
-            <select name="shipping_address_id" class="rounded border px-3 py-2">
+            <select name="user_address_id" class="rounded border px-3 py-2" @disabled($addresses->isEmpty())>
                 @foreach ($addresses as $address)
-                    <option value="{{ $address->id }}">{{ $address->label }} - {{ $address->country }} / {{ $address->city }} / {{ $address->town }} / {{ $address->street }} - {{ __('Phone') }}: {{ $address->phone }} - {{ __('WhatsApp') }}: {{ $address->whatsapp }}</option>
+                    <option value="{{ $address->id }}">{{ $address->label }} - {{ $address->city?->name }} / {{ $address->address_line }} - {{ __('Phone') }}: {{ $address->phone }}</option>
                 @endforeach
             </select>
-            <select name="shipping_city_id" class="rounded border px-3 py-2">
+            <input type="hidden" name="address_mode" value="{{ $addresses->isEmpty() ? 'new' : 'saved' }}">
+            <select name="city_id" class="rounded border px-3 py-2">
                 @foreach ($cities as $city)
                     <option value="{{ $city->id }}">{{ $city->name }} - {{ $city->country }}</option>
                 @endforeach

@@ -40,6 +40,8 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 Route::get('/latest-products', [ProductController::class, 'latest'])->name('products.latest');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/offers', [OfferController::class, 'index'])->name('offers.index');
+Route::get('/offers/{flashOffer:slug}', [OfferController::class, 'show'])->name('offers.show');
+Route::post('/offers/{flashOffer:slug}/cart', [OfferController::class, 'addToCart'])->name('offers.cart.add');
 Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
 Route::get('/brands/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
@@ -96,8 +98,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('products.reviews.store');
 
-    Route::patch('/cart/items/{item}', [\App\Http\Controllers\Storefront\CartController::class, 'update'])->name('cart.items.update');
-    Route::delete('/cart/items/{item}', [\App\Http\Controllers\Storefront\CartController::class, 'destroy'])->name('cart.items.destroy');
+    Route::patch('/cart/items/{item}', [CartController::class, 'updateItem'])->name('cart.items.update');
+    Route::delete('/cart/items/{item}', [CartController::class, 'destroyItem'])->name('cart.items.destroy');
     Route::post('/wishlist/{product}', [FavoriteController::class, 'toggle'])->name('wishlist.store');
     Route::delete('/wishlist/{product}', [FavoriteController::class, 'toggle'])->name('wishlist.destroy');
 
@@ -107,6 +109,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
         Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
+        Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
+        Route::patch('/addresses/{address}/default', [AddressController::class, 'makeDefault'])->name('addresses.default');
         Route::delete('/addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
         Route::get('/orders', fn () => redirect()->route('orders.index'))->name('orders.index');
         Route::get('/orders/{order}', fn ($order) => redirect()->route('orders.show', $order))->name('orders.show');
