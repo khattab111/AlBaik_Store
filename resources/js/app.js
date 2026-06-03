@@ -413,6 +413,7 @@ const initializeAjaxFilters = (root = document) => {
             initializeAjaxFilters(document);
             initializeAsyncStoreActions(target);
             initializeBrandFilterSearch(document);
+            initializeLoadMoreProducts(document);
         } catch (error) {
             window.dispatchEvent(new CustomEvent('store:notice', {
                 detail: { message: error.message || 'Unable to load results.' },
@@ -502,6 +503,78 @@ const initializeAjaxFilters = (root = document) => {
             loadTarget(window.location.href, `[data-ajax-filter-target="${target.dataset.ajaxFilterTarget}"]`, false);
         }
     };
+};
+
+const initializeLoadMoreProducts = (root = document) => {
+    root.querySelectorAll('[data-load-more]').forEach((link) => {
+        if (link.dataset.loadMoreBound === 'true') {
+            return;
+        }
+
+        link.dataset.loadMoreBound = 'true';
+
+        link.addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const targetSelector = link.dataset.ajaxTarget;
+            const target = targetSelector ? document.querySelector(targetSelector) : link.closest('[data-ajax-filter-target]');
+            const list = target?.querySelector('[data-product-list]');
+
+            if (!target || !list) {
+                window.location.href = link.href;
+                return;
+            }
+
+            link.setAttribute('aria-busy', 'true');
+            link.classList.add('is-loading');
+
+            try {
+                const response = await window.fetch(link.href, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html',
+                    },
+                });
+
+                const html = await response.text();
+
+                if (!response.ok) {
+                    throw new Error('Unable to load products.');
+                }
+
+                const parser = new DOMParser();
+                const nextDocument = parser.parseFromString(html, 'text/html');
+                const nextTarget = targetSelector
+                    ? nextDocument.querySelector(targetSelector)
+                    : nextDocument.querySelector(`[data-ajax-filter-target="${target.dataset.ajaxFilterTarget}"]`);
+                const nextList = nextTarget?.querySelector('[data-product-list]');
+
+                if (!nextList) {
+                    window.location.href = link.href;
+                    return;
+                }
+
+                nextList.querySelectorAll('article').forEach((article) => list.appendChild(article));
+
+                const currentMore = target.querySelector('.premium-load-more-wrap');
+                const nextMore = nextTarget.querySelector('.premium-load-more-wrap');
+
+                if (currentMore && nextMore) {
+                    currentMore.innerHTML = nextMore.innerHTML;
+                }
+
+                initializeAsyncStoreActions(list);
+                initializeLoadMoreProducts(target);
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('store:notice', {
+                    detail: { message: error.message || 'Unable to load products.' },
+                }));
+            } finally {
+                link.removeAttribute('aria-busy');
+                link.classList.remove('is-loading');
+            }
+        });
+    });
 };
 
 const initializeBrandFilterSearch = (root = document) => {
@@ -757,6 +830,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAsyncStoreActions();
     initializeAjaxFilters();
     initializeBrandFilterSearch();
+    initializeLoadMoreProducts();
     initializeDocumentationNavigation();
     initializeWholesaleTierPicker();
     initializeProductGallery();
