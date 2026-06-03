@@ -414,6 +414,7 @@ const initializeAjaxFilters = (root = document) => {
             initializeAsyncStoreActions(target);
             initializeBrandFilterSearch(document);
             initializeLoadMoreProducts(document);
+            initializeCountdowns(document);
         } catch (error) {
             window.dispatchEvent(new CustomEvent('store:notice', {
                 detail: { message: error.message || 'Unable to load results.' },
@@ -565,6 +566,7 @@ const initializeLoadMoreProducts = (root = document) => {
 
                 initializeAsyncStoreActions(list);
                 initializeLoadMoreProducts(target);
+                initializeCountdowns(target);
             } catch (error) {
                 window.dispatchEvent(new CustomEvent('store:notice', {
                     detail: { message: error.message || 'Unable to load products.' },
@@ -575,6 +577,53 @@ const initializeLoadMoreProducts = (root = document) => {
             }
         });
     });
+};
+
+const initializeCountdowns = (root = document) => {
+    const elements = Array.from(root.querySelectorAll('[data-countdown]'));
+
+    if (elements.length === 0) {
+        return;
+    }
+
+    const update = () => {
+        const now = Date.now();
+
+        elements.forEach((element) => {
+            const target = Date.parse(element.dataset.countdown || '');
+            const remaining = Number.isFinite(target) ? Math.max(0, target - now) : 0;
+            const totalSeconds = Math.floor(remaining / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const pad = (value) => String(value).padStart(2, '0');
+
+            element.querySelectorAll('[data-countdown-days]').forEach((node) => {
+                node.textContent = pad(days);
+            });
+
+            element.querySelectorAll('[data-countdown-hours]').forEach((node) => {
+                node.textContent = pad(hours);
+            });
+
+            element.querySelectorAll('[data-countdown-total-hours]').forEach((node) => {
+                node.textContent = pad(hours + (days * 24));
+            });
+
+            element.querySelectorAll('[data-countdown-minutes]').forEach((node) => {
+                node.textContent = pad(minutes);
+            });
+
+            element.querySelectorAll('[data-countdown-seconds]').forEach((node) => {
+                node.textContent = pad(seconds);
+            });
+        });
+    };
+
+    update();
+    window.clearInterval(window.storeCountdownTimer);
+    window.storeCountdownTimer = window.setInterval(update, 1000);
 };
 
 const initializeBrandFilterSearch = (root = document) => {
@@ -831,6 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAjaxFilters();
     initializeBrandFilterSearch();
     initializeLoadMoreProducts();
+    initializeCountdowns();
     initializeDocumentationNavigation();
     initializeWholesaleTierPicker();
     initializeProductGallery();

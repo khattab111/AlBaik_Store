@@ -19,6 +19,7 @@ class FlashOfferPresenter
 
         return [
             'id' => $offer->id,
+            'offer' => $offer,
             'slug' => $offer->slug,
             'title' => $offer->title,
             'description' => $offer->description,
@@ -50,6 +51,7 @@ class FlashOfferPresenter
 
         return [
             'id' => $offer->id,
+            'offer' => $offer,
             'slug' => $offer->slug,
             'title' => $offer->title,
             'description' => $offer->description,

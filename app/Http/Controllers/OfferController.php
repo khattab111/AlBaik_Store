@@ -24,28 +24,58 @@ class OfferController extends Controller
     {
         $locale = app()->getLocale();
         $filters = $request->filters();
-        $products = Product::with(['brand', 'category', 'images', 'reviews', 'priceTiers'])
+        $perPage = (int) ($filters['per_page'] ?? 12);
+        $products = Product::with(['brand', 'category', 'images', 'reviews', 'priceTiers', 'flashOfferItems.flashOffer.items.product.images'])
             ->where('status', true)
             ->whereHas('flashOfferItems.flashOffer', fn ($offer) => $offer->currentlyValid());
 
         $products->when($filters['category'] ?? null, fn ($builder, $categorySlug) => $builder->whereHas('category', fn ($category) => $category->where('slug', $categorySlug)));
         $products->when($filters['brand'] ?? null, fn ($builder, $brandSlug) => $builder->whereHas('brand', fn ($brand) => $brand->where('slug', $brandSlug)));
+        $products->when($filters['type'] ?? null, fn ($builder, $type) => $builder->whereHas('flashOfferItems.flashOffer', fn ($offer) => $offer->currentlyValid()->where('type', $type)));
 
         match ($filters['sort'] ?? 'latest') {
             'price_desc' => $products->orderByDesc('retail_price'),
             'price_asc' => $products->orderBy('retail_price'),
+            'ending_soon' => $products->whereHas('flashOfferItems.flashOffer', fn ($offer) => $offer->currentlyValid()->whereNotNull('ends_at'))->latest(),
+            'highest_discount',
+            'best_selling' => $products->latest(),
             default => $products->latest(),
         };
 
         $activeFlashOffers = $flashOffers->getActiveOffers();
+        $presentedFlashOffers = $activeFlashOffers->map(fn ($offer) => $presenter->forOffer($offer));
+        $filteredPresentedOffers = $presentedFlashOffers
+            ->when($filters['type'] ?? null, fn ($offers, $type) => $offers->filter(fn ($offer) => $offer['type'] === $type))
+            ->values();
+
+        $products = $products->paginate($perPage)->withQueryString();
+        $presentedProductOffers = $products->getCollection()
+            ->map(function (Product $product) use ($presenter, $flashOffers): ?array {
+                $offer = $product->flashOfferItems
+                    ->pluck('flashOffer')
+                    ->filter()
+                    ->first(fn (FlashOffer $offer): bool => $flashOffers->isOfferValid($offer));
+
+                if (! $offer) {
+                    return null;
+                }
+
+                return array_merge($presenter->forProduct($offer, $product), [
+                    'product' => $product,
+                ]);
+            })
+            ->filter()
+            ->values();
 
         return view('offers.index', [
-            'products' => $products->paginate(12)->withQueryString(),
+            'products' => $products,
+            'presentedProductOffers' => $presentedProductOffers,
             'categories' => Category::where('status', true)->orderBy("name->{$locale}")->get(),
             'brands' => Brand::where('status', true)->orderBy("name->{$locale}")->get(),
             'filters' => $filters,
             'flashOffers' => $activeFlashOffers,
-            'presentedFlashOffers' => $activeFlashOffers->map(fn ($offer) => $presenter->forOffer($offer)),
+            'presentedFlashOffers' => $filteredPresentedOffers,
+            'allPresentedFlashOffers' => $presentedFlashOffers,
             'pageBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_OFFERS_TOP)->orderBy('sort_order')->get(),
         ]);
     }
