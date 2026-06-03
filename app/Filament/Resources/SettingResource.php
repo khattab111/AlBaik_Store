@@ -20,6 +20,10 @@ class SettingResource extends Resource
 
     protected static ?string $navigationGroup = 'Settings';
 
+ public static function canViewAny(): bool
+{
+    return auth()->user()?->hasRole('Admin') ?? false;
+}
     public static function form(Form $form): Form
     {
         return $form->schema([

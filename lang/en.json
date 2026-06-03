@@ -559,5 +559,20 @@
     "Up to": "Up to",
     "Wholesale offers": "Wholesale offers",
     "You save :amount": "You save :amount",
-    "on selected products": "on selected products"
+    "on selected products": "on selected products",
+    "Access denied": "Access denied",
+    "Back to dashboard": "Back to dashboard",
+    "Go back": "Go back",
+    "If you believe this is a mistake, contact store support or try again later.": "If you believe this is a mistake, contact store support or try again later.",
+    "Login again": "Login again",
+    "Page not found": "Page not found",
+    "Session expired": "Session expired",
+    "Something went wrong": "Something went wrong",
+    "Store temporarily unavailable": "Store temporarily unavailable",
+    "The page you are looking for may have been moved, removed, or the link is incorrect.": "The page you are looking for may have been moved, removed, or the link is incorrect.",
+    "The store encountered an unexpected problem. Our team can review it from the logs.": "The store encountered an unexpected problem. Our team can review it from the logs.",
+    "We are performing maintenance or the service is temporarily busy. Please try again shortly.": "We are performing maintenance or the service is temporarily busy. Please try again shortly.",
+    "We could not complete your request right now.": "We could not complete your request right now.",
+    "You do not have permission to open this page or perform this action.": "You do not have permission to open this page or perform this action.",
+    "Your session has expired for security reasons. Please refresh the page and try again.": "Your session has expired for security reasons. Please refresh the page and try again."
 }

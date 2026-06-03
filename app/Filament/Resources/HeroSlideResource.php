@@ -27,6 +27,11 @@ class HeroSlideResource extends Resource
 
     protected static ?string $slug = 'hero-slides';
 
+   public static function canViewAny(): bool
+{
+    return auth()->user()?->hasRole('Admin') ?? false;
+}
+
     public static function getNavigationLabel(): string
     {
         return __('Hero Section');

@@ -22,6 +22,11 @@ class InventoryMovementResource extends Resource
 
     protected static ?string $navigationGroup = 'Inventory';
 
+  public static function canViewAny(): bool
+{
+    return auth()->user()?->hasRole('Admin') ?? false;
+}
+
     public static function form(Form $form): Form
     {
         return $form->schema([

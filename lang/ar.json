@@ -904,5 +904,20 @@
     "Up to": "حتى",
     "Wholesale offers": "عروض الجملة",
     "You save :amount": "وفرت :amount",
-    "on selected products": "على منتجات مختارة"
+    "on selected products": "على منتجات مختارة",
+    "Access denied": "الوصول مرفوض",
+    "Back to dashboard": "العودة إلى لوحة التحكم",
+    "Go back": "الرجوع",
+    "If you believe this is a mistake, contact store support or try again later.": "إذا كنت تعتقد أن هذا خطأ، تواصل مع دعم المتجر أو حاول مرة أخرى لاحقاً.",
+    "Login again": "تسجيل الدخول مجدداً",
+    "Page not found": "الصفحة غير موجودة",
+    "Session expired": "انتهت الجلسة",
+    "Something went wrong": "حدث خطأ غير متوقع",
+    "Store temporarily unavailable": "المتجر غير متاح مؤقتاً",
+    "The page you are looking for may have been moved, removed, or the link is incorrect.": "قد تكون الصفحة التي تبحث عنها نُقلت أو حُذفت أو أن الرابط غير صحيح.",
+    "The store encountered an unexpected problem. Our team can review it from the logs.": "واجه المتجر مشكلة غير متوقعة. يمكن لفريقنا مراجعتها من السجلات.",
+    "We are performing maintenance or the service is temporarily busy. Please try again shortly.": "نقوم بعملية صيانة أو أن الخدمة مشغولة مؤقتاً. يرجى المحاولة بعد قليل.",
+    "We could not complete your request right now.": "لم نتمكن من إكمال طلبك حالياً.",
+    "You do not have permission to open this page or perform this action.": "ليست لديك صلاحية لفتح هذه الصفحة أو تنفيذ هذا الإجراء.",
+    "Your session has expired for security reasons. Please refresh the page and try again.": "انتهت جلستك لأسباب أمنية. يرجى تحديث الصفحة والمحاولة مرة أخرى."
 }

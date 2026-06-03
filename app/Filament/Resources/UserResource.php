@@ -20,6 +20,10 @@ class UserResource extends Resource
 
     protected static ?string $navigationGroup = 'Customers';
 
+public static function canViewAny(): bool
+{
+    return auth()->user()?->hasRole('Admin') ?? false;
+}
     public static function form(Form $form): Form
     {
         return $form->schema([
