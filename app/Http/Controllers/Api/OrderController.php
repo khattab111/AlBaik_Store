@@ -33,7 +33,24 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request): JsonResponse
     {
-        $order = app(CreateOrderFromCart::class)->handle(CheckoutData::fromRequest($request));
+        $receiptPath = $request->hasFile('payment_receipt')
+            ? $request->file('payment_receipt')->store('payment-receipts', 'public')
+            : null;
+
+        $order = app(CreateOrderFromCart::class)->handle(new CheckoutData(
+            userId: $request->user()->id,
+            paymentMethodId: (int) $request->input('payment_method_id'),
+            addressMode: $request->input('address_mode', 'saved'),
+            shippingCarrierId: $request->filled('shipping_carrier_id') ? (int) $request->input('shipping_carrier_id') : null,
+            userAddressId: $request->filled('user_address_id') ? (int) $request->input('user_address_id') : null,
+            shippingCityId: $request->filled('city_id') ? (int) $request->input('city_id') : null,
+            temporaryAddress: $request->input('address'),
+            saveAddress: $request->boolean('save_address'),
+            addressLabel: $request->input('address_label'),
+            couponCode: $request->input('coupon_code'),
+            notes: $request->input('notes'),
+            paymentReceiptPath: $receiptPath,
+        ));
 
         return (new OrderResource($order))->additional(['message' => 'Order created'])->response()->setStatusCode(201);
     }

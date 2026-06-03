@@ -36,8 +36,12 @@ class BrandResource extends Resource
             Forms\Components\FileUpload::make('logo')
                 ->image()
                 ->imageEditor()
+                ->disk('public')
                 ->directory('brands')
                 ->visibility('public')
+                ->imagePreviewHeight('120')
+                ->openable()
+                ->downloadable()
                 ->nullable(),
             Forms\Components\Toggle::make('status')->default(true),
         ]);
@@ -47,7 +51,7 @@ class BrandResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('logo')->circular(),
+                Tables\Columns\ImageColumn::make('logo')->disk('public')->circular(),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('slug')->sortable(),
                 Tables\Columns\IconColumn::make('status')->boolean(),

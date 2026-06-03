@@ -12,7 +12,7 @@
         <div>
             <h1 class="text-3xl font-bold">{{ $product->name }}</h1>
             <p class="mt-2 text-gray-600">{{ $product->brand?->name }} / {{ $product->category?->name }}</p>
-            <p class="mt-4 text-2xl font-bold">{{ number_format((float) $product->retail_price, 2) }} USD</p>
+            <p class="mt-4 text-2xl font-bold">{{ store_money((float) $product->retail_price) }}</p>
             <p class="mt-4">{{ $product->short_description }}</p>
             <div class="prose mt-4 whitespace-pre-line">{{ $product->description }}</div>
 

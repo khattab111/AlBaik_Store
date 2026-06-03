@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use App\Services\SiteSettingService;
+use App\Traits\TranslationTrait;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -16,6 +17,7 @@ use Illuminate\Support\Str;
 class SiteAppearance extends Page implements HasForms
 {
     use InteractsWithForms;
+     use TranslationTrait;
 
     protected static ?string $navigationIcon = 'heroicon-o-swatch';
 

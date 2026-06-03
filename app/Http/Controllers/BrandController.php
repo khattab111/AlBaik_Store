@@ -16,8 +16,15 @@ class BrandController extends Controller
         $filters = $request->filters();
         $brands = Brand::where('status', true)
             ->withCount(['products' => fn ($query) => $query->where('status', true)])
-            ->when($filters['search'] ?? null, fn ($query, $search) => $query->where("name->{$locale}", 'like', '%'.$search.'%'))
-            ->orderBy("name->{$locale}")
+            ->when($filters['search'] ?? null, fn ($query, $search) => $query->where("name->{$locale}", 'like', '%'.$search.'%'));
+
+        match ($filters['sort'] ?? 'name') {
+            'products_desc' => $brands->orderByDesc('products_count')->orderBy("name->{$locale}"),
+            'latest' => $brands->latest(),
+            default => $brands->orderBy("name->{$locale}"),
+        };
+
+        $brands = $brands
             ->paginate(24)
             ->withQueryString();
 

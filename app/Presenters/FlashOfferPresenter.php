@@ -74,9 +74,9 @@ class FlashOfferPresenter
     {
         return match ($offer->type) {
             FlashOffer::TYPE_PERCENTAGE_DISCOUNT => __(':value% discount', ['value' => number_format((float) $offer->discount_value, 0)]),
-            FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT => __('Save USD :value', ['value' => number_format((float) $offer->discount_value, 2)]),
+            FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT => __('Save :value', ['value' => store_money((float) $offer->discount_value)]),
             FlashOffer::TYPE_FIXED_PRICE_QUANTITY => __('Special price for :quantity pieces', ['quantity' => $quantity ?: $offer->max_quantity ?: 1]),
-            FlashOffer::TYPE_BUNDLE_FIXED_PRICE => __('Bundle price USD :price', ['price' => number_format($offerPrice, 2)]),
+            FlashOffer::TYPE_BUNDLE_FIXED_PRICE => __('Bundle price :price', ['price' => store_money($offerPrice)]),
             FlashOffer::TYPE_FREE_SHIPPING_PRODUCT => __('Free shipping for selected product'),
             FlashOffer::TYPE_BUY_X_GET_Y => __('Buy selected quantity and get free items'),
             FlashOffer::TYPE_CART_FREE_SHIPPING => __('Free shipping for the whole cart'),
@@ -87,12 +87,12 @@ class FlashOfferPresenter
     private function details(FlashOffer $offer, float $original, float $offerPrice, float $saving): array
     {
         $details = [
-            __('Original price: USD :price', ['price' => number_format($original, 2)]),
-            __('Offer price: USD :price', ['price' => number_format($offerPrice, 2)]),
+            __('Original price: :price', ['price' => store_money($original)]),
+            __('Offer price: :price', ['price' => store_money($offerPrice)]),
         ];
 
         if ($saving > 0) {
-            $details[] = __('You save: USD :amount', ['amount' => number_format($saving, 2)]);
+            $details[] = __('You save: :amount', ['amount' => store_money($saving)]);
         }
 
         if ($offer->remainingQuantity() !== null) {

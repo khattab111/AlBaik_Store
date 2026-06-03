@@ -15,6 +15,7 @@ class NewsletterRequest extends FormRequest
     {
         $this->merge([
             'email' => mb_strtolower(trim((string) $this->input('email'))),
+            'source' => $this->input('source') ?: 'homepage',
         ]);
     }
 
@@ -22,6 +23,9 @@ class NewsletterRequest extends FormRequest
     {
         return [
             'email' => ['required', 'email:rfc', 'max:255'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'source' => ['nullable', 'in:homepage,footer,checkout,manual,popup'],
         ];
     }
 }

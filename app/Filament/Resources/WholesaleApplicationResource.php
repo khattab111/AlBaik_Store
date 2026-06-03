@@ -6,6 +6,7 @@ use App\Filament\Resources\WholesaleApplicationResource\Pages;
 use App\Models\User;
 use App\Models\WholesaleApplication;
 use App\Notifications\WholesaleAccountApprovedNotification;
+use App\Traits\TranslationTrait;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -20,6 +21,8 @@ use Throwable;
 
 class WholesaleApplicationResource extends Resource
 {
+    use TranslationTrait;
+
     protected static ?string $model = WholesaleApplication::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';

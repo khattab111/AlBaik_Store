@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasAutoSlug;
 use App\Models\Concerns\HasStoreTranslations;
+use App\Services\StorefrontCacheService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -75,6 +76,14 @@ class FlashOffer extends Model
         'usage_limit' => 'integer',
         'usage_per_user' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        $clearStorefrontCache = fn (): mixed => app(StorefrontCacheService::class)->clearHome();
+
+        static::saved($clearStorefrontCache);
+        static::deleted($clearStorefrontCache);
+    }
 
     public function items(): HasMany
     {

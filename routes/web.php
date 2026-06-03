@@ -7,10 +7,12 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\NewsletterSubscriptionController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
@@ -28,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 Route::redirect('/login', '/admin/login')->name('login');
 Route::get('/locale/{locale}', LocaleController::class)->name('locale.switch');
+Route::get('/currency/{currency}', CurrencyController::class)->name('currency.switch');
 Route::get('/sitemap.xml', [SitemapController::class, 'xml'])->name('sitemap.xml');
 Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');
 Route::get('/sitemap-products-{page}.xml', [SitemapController::class, 'products'])->whereNumber('page')->name('sitemap.products');
@@ -56,6 +59,8 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::get('/join-us', [WholesaleApplicationController::class, 'create'])->name('join-us.create');
 Route::post('/join-us', [WholesaleApplicationController::class, 'store'])->name('join-us.store')->middleware('throttle:5,1');
 Route::post('/newsletter', [NewsletterController::class, 'store'])->name('newsletter.store')->middleware('throttle:6,1');
+Route::post('/newsletter/subscribe', [NewsletterSubscriptionController::class, 'store'])->name('newsletter.subscribe')->middleware('throttle:6,1');
+Route::get('/newsletter/unsubscribe/{token}', [NewsletterSubscriptionController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
 Route::redirect('/shop', '/products')->name('shop.index');
 Route::redirect('/wishlist', '/favorites')->name('wishlist.index');
@@ -118,6 +123,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/documentation', DocumentationController::class)->name('documentation');
+    Route::get('/documentation/{document?}', DocumentationController::class)->name('documentation');
     Route::get('/orders/{order}/invoice', OrderInvoiceController::class)->name('orders.invoice');
 });

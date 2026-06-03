@@ -20,6 +20,7 @@ class ProductFilterRequest extends FormRequest
             'brand' => filled($this->query('brand')) ? trim((string) $this->query('brand')) : null,
             'view' => in_array($this->query('view'), ['grid', 'list'], true) ? $this->query('view') : 'grid',
             'sort' => $this->query('sort', 'latest'),
+            'per_page' => in_array((int) $this->query('per_page'), [12, 24, 36, 48], true) ? (int) $this->query('per_page') : 12,
         ]);
     }
 
@@ -35,6 +36,7 @@ class ProductFilterRequest extends FormRequest
             'on_sale' => ['nullable', 'boolean'],
             'sort' => ['nullable', Rule::in(['latest', 'price_desc', 'price_asc', 'best_selling', 'top_rated'])],
             'view' => ['nullable', Rule::in(['grid', 'list'])],
+            'per_page' => ['nullable', 'integer', Rule::in([12, 24, 36, 48])],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
     }

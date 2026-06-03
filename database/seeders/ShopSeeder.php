@@ -40,6 +40,8 @@ use Spatie\Permission\Models\Role;
 
 class ShopSeeder extends Seeder
 {
+    use SeedsTranslations;
+
     public function run(): void
     {
         $this->seedAccessControl();
@@ -143,9 +145,9 @@ class ShopSeeder extends Seeder
     private function seedCurrencies(): array
     {
         return [
-            'USD' => Currency::updateOrCreate(['code' => 'USD'], ['symbol' => '$', 'name' => 'US Dollar', 'rate' => 1.000000, 'is_default' => true, 'status' => true]),
-            'TRY' => Currency::updateOrCreate(['code' => 'TRY'], ['symbol' => '₺', 'name' => 'Turkish Lira', 'rate' => 28.000000, 'is_default' => false, 'status' => true]),
-            'SYP' => Currency::updateOrCreate(['code' => 'SYP'], ['symbol' => 'ل.س', 'name' => 'Syrian Pound', 'rate' => 13000.000000, 'is_default' => false, 'status' => true]),
+            'USD' => Currency::updateOrCreate(['code' => 'USD'], ['symbol' => '$', 'name' => $this->tr('US Dollar', 'الدولار الأمريكي'), 'rate' => 1.000000, 'is_default' => true, 'status' => true]),
+            'TRY' => Currency::updateOrCreate(['code' => 'TRY'], ['symbol' => '₺', 'name' => $this->tr('Turkish Lira', 'الليرة التركية'), 'rate' => 28.000000, 'is_default' => false, 'status' => true]),
+            'SYP' => Currency::updateOrCreate(['code' => 'SYP'], ['symbol' => 'ل.س', 'name' => $this->tr('Syrian Pound', 'الليرة السورية'), 'rate' => 13000.000000, 'is_default' => false, 'status' => true]),
         ];
     }
 
@@ -168,11 +170,11 @@ class ShopSeeder extends Seeder
         $express = ShippingCarrier::updateOrCreate(['slug' => 'express-courier'], ['name' => $this->tr('Express Courier', 'الشحن السريع'), 'tracking_url' => 'https://tracking.example/express/{tracking}', 'status' => 'active', 'sort_order' => 2]);
 
         $rates = [
-            [$alharam, $damascus, 3.00, 0.50, null, null, 150.00, '24-48h', 0],
-            [$alharam, $aleppo, 4.00, 0.65, null, null, 180.00, '2-4 days', 0],
-            [$alharam, $idlib, 3.00, 0.50, null, null, 120.00, '2-3 days', 0],
-            [$express, $damascus, 6.00, 1.25, null, 20, 250.00, 'Same day', 0],
-            [$express, $aleppo, 7.00, 1.50, null, 15, 300.00, '24-48h', 1.50],
+            [$alharam, $damascus, 3.00, 0.50, null, null, null, '24-48h', 0],
+            [$alharam, $aleppo, 4.00, 0.65, null, null, null, '2-4 days', 0],
+            [$alharam, $idlib, 3.00, 0.50, null, null, null, '2-3 days', 0],
+            [$express, $damascus, 6.00, 1.25, null, 20, null, 'Same day', 0],
+            [$express, $aleppo, 7.00, 1.50, null, 15, null, '24-48h', 1.50],
         ];
 
         foreach ($rates as [$carrier, $city, $base, $perKg, $minWeight, $maxWeight, $threshold, $delivery, $remoteFee]) {
@@ -186,7 +188,7 @@ class ShopSeeder extends Seeder
                 'min_weight' => $minWeight,
                 'max_weight' => $maxWeight,
                 'free_shipping_threshold' => $threshold,
-                'estimated_delivery_time' => $delivery,
+                'estimated_delivery_time' => $this->tr($delivery, $delivery),
                 'remote_area_fee' => $remoteFee,
                 'sort_order' => 1,
             ]);
@@ -207,9 +209,9 @@ class ShopSeeder extends Seeder
         ];
 
         $suppliers = [
-            'main' => Supplier::updateOrCreate(['slug' => 'albaik-main'], ['name' => 'AlBaik Main Supplier', 'email' => 'supply@albaikstore.local', 'phone' => '+963111111111', 'address' => 'Damascus logistics hub', 'is_active' => true]),
-            'food' => Supplier::updateOrCreate(['slug' => 'levant-foods-supplier'], ['name' => 'Levant Foods Supplier', 'email' => 'orders@levant.example', 'phone' => '+963222222222', 'address' => 'Aleppo warehouse', 'is_active' => true]),
-            'tech' => Supplier::updateOrCreate(['slug' => 'smart-goods-supplier'], ['name' => 'Smart Goods Supplier', 'email' => 'sales@smartgoods.example', 'phone' => '+905551112233', 'address' => 'Istanbul trade zone', 'is_active' => true]),
+            'main' => Supplier::updateOrCreate(['slug' => 'albaik-main'], ['name' => $this->tr('AlBaik Main Supplier', 'مورد البيك الرئيسي'), 'email' => 'supply@albaikstore.local', 'phone' => '+963111111111', 'address' => $this->tr('Damascus logistics hub', 'مركز لوجستي في دمشق'), 'is_active' => true]),
+            'food' => Supplier::updateOrCreate(['slug' => 'levant-foods-supplier'], ['name' => $this->tr('Levant Foods Supplier', 'مورد ليفانت فودز'), 'email' => 'orders@levant.example', 'phone' => '+963222222222', 'address' => $this->tr('Aleppo warehouse', 'مستودع حلب'), 'is_active' => true]),
+            'tech' => Supplier::updateOrCreate(['slug' => 'smart-goods-supplier'], ['name' => $this->tr('Smart Goods Supplier', 'مورد الأجهزة الذكية'), 'email' => 'sales@smartgoods.example', 'phone' => '+905551112233', 'address' => $this->tr('Istanbul trade zone', 'منطقة التجارة في إسطنبول'), 'is_active' => true]),
         ];
 
         $categories = [
@@ -233,8 +235,8 @@ class ShopSeeder extends Seeder
         ];
 
         $warehouses = [
-            'main' => Warehouse::updateOrCreate(['code' => 'MAIN'], ['name' => 'Main Warehouse', 'address' => 'Industrial Zone, Damascus', 'city' => 'Damascus', 'country' => 'Syria', 'is_active' => true]),
-            'north' => Warehouse::updateOrCreate(['code' => 'NORTH'], ['name' => 'North Warehouse', 'address' => 'Aleppo Road', 'city' => 'Aleppo', 'country' => 'Syria', 'is_active' => true]),
+            'main' => Warehouse::updateOrCreate(['code' => 'MAIN'], ['name' => $this->tr('Main Warehouse', 'المستودع الرئيسي'), 'address' => $this->tr('Industrial Zone, Damascus', 'المنطقة الصناعية، دمشق'), 'city' => $this->tr('Damascus', 'دمشق'), 'country' => $this->tr('Syria', 'سوريا'), 'is_active' => true]),
+            'north' => Warehouse::updateOrCreate(['code' => 'NORTH'], ['name' => $this->tr('North Warehouse', 'المستودع الشمالي'), 'address' => $this->tr('Aleppo Road', 'طريق حلب'), 'city' => $this->tr('Aleppo', 'حلب'), 'country' => $this->tr('Syria', 'سوريا'), 'is_active' => true]),
         ];
 
         return compact('brands', 'suppliers', 'categories', 'tags', 'warehouses') + ['products' => []];
@@ -477,8 +479,8 @@ class ShopSeeder extends Seeder
 
             $product->tags()->sync(collect($data['tags'])->map(fn ($tag) => $catalog['tags'][$tag]->id)->all());
 
-            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-main.jpg"], ['alt_text' => $data['name_ar'], 'is_primary' => true]);
-            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-gallery.jpg"], ['alt_text' => $data['name_ar'].' gallery', 'is_primary' => false]);
+            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-main.jpg"], ['alt_text' => $this->tr($data['name'], $data['name_ar']), 'is_primary' => true]);
+            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => "demo/products/{$data['slug']}-gallery.jpg"], ['alt_text' => $this->tr($data['name'].' gallery', $data['name_ar'].' gallery'), 'is_primary' => false]);
 
             ProductPriceTier::updateOrCreate([
                 'product_id' => $product->id,
@@ -660,8 +662,8 @@ class ShopSeeder extends Seeder
             ]
         );
 
-        Review::updateOrCreate(['product_id' => $products['sandwich']->id, 'user_id' => $users['customer']->id], ['rating' => 5, 'title' => 'Excellent taste', 'comment' => 'Great demo product for testing published reviews.', 'images' => [], 'is_published' => true]);
-        Review::updateOrCreate(['product_id' => $products['bottle']->id, 'user_id' => $users['wholesale']->id], ['rating' => 4, 'title' => 'Good wholesale option', 'comment' => 'Useful item for business gifting.', 'images' => [], 'is_published' => false]);
+        Review::updateOrCreate(['product_id' => $products['sandwich']->id, 'user_id' => $users['customer']->id], ['rating' => 5, 'title' => $this->tr('Excellent taste', 'طعم ممتاز'), 'comment' => $this->tr('Great demo product for testing published reviews.', 'منتج تجريبي مناسب لاختبار التقييمات المنشورة.'), 'images' => [], 'is_published' => true]);
+        Review::updateOrCreate(['product_id' => $products['bottle']->id, 'user_id' => $users['wholesale']->id], ['rating' => 4, 'title' => $this->tr('Good wholesale option', 'خيار جيد للجملة'), 'comment' => $this->tr('Useful item for business gifting.', 'منتج مفيد لهدايا الأعمال.'), 'images' => [], 'is_published' => false]);
 
         $orders = [
             ['number' => 'ORD-DEMO-00001', 'user' => $users['customer'], 'address' => $customerAddress, 'payment' => $payments['cod'], 'carrier' => $shipping['alharam'], 'city' => $shipping['damascus'], 'status' => 'pending', 'tracking' => null, 'items' => [['product' => 'sandwich', 'qty' => 2, 'unit' => 6.99]], 'shipping_cost' => 5],
@@ -780,6 +782,7 @@ class ShopSeeder extends Seeder
         Setting::updateOrCreate(['key' => 'store.support_email'], ['group' => 'support', 'value' => ['value' => 'support@albaikstore.local'], 'type' => 'string', 'is_public' => true]);
         Setting::updateOrCreate(['key' => 'shipping.default_product_weight'], ['group' => 'shipping', 'value' => ['value' => '0.5'], 'type' => 'number', 'is_public' => false]);
         Setting::updateOrCreate(['key' => 'shipping.enable_free_shipping'], ['group' => 'shipping', 'value' => ['value' => false], 'type' => 'boolean', 'is_public' => false]);
+        Setting::updateOrCreate(['key' => 'shipping.enable_rate_free_shipping'], ['group' => 'shipping', 'value' => ['value' => false], 'type' => 'boolean', 'is_public' => false]);
         Setting::updateOrCreate(['key' => 'shipping.global_free_shipping_threshold'], ['group' => 'shipping', 'value' => ['value' => '250'], 'type' => 'number', 'is_public' => false]);
         Setting::updateOrCreate(['key' => 'shipping.calculation_mode'], ['group' => 'shipping', 'value' => ['value' => 'carrier_city_weight'], 'type' => 'string', 'is_public' => false]);
         Setting::updateOrCreate(['key' => 'contact.email'], ['group' => 'contact', 'value' => ['value' => 'support@albaikstore.local'], 'type' => 'string', 'is_public' => true]);

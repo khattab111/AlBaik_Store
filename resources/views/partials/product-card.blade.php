@@ -53,9 +53,9 @@
 
         <div class="flex items-end justify-between gap-3">
             <div>
-                <p class="store-price">USD {{ number_format($price, 2) }}</p>
+                <p class="store-price">{{ store_money($price) }}</p>
                 @if ($compareAt)
-                    <p class="text-sm font-bold text-slate-400 line-through">USD {{ number_format($compareAt, 2) }}</p>
+                    <p class="text-sm font-bold text-slate-400 line-through">{{ store_money($compareAt) }}</p>
                 @endif
             </div>
             <a href="{{ route('products.show', $product->slug) }}" class="text-sm font-black text-slate-500 hover:text-amber-700" aria-label="{{ __('View details for :product', ['product' => $product->name]) }}">{{ __('Details') }}</a>

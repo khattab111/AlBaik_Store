@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Filament\Resources\ShippingRateResource\Pages;
 use App\Models\City;
 use App\Models\ShippingCarrier;
@@ -16,7 +17,7 @@ use Illuminate\Validation\Rule;
 
 class ShippingRateResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
 
     protected static ?string $model = ShippingRate::class;
 
@@ -44,15 +45,20 @@ class ShippingRateResource extends Resource
                 ->searchable()
                 ->preload()
                 ->required(),
-            Forms\Components\Toggle::make('is_active')->default(true),
-            Forms\Components\TextInput::make('base_cost')->numeric()->required()->default(0),
-            Forms\Components\TextInput::make('cost_per_kg')->numeric()->required()->default(0),
-            Forms\Components\TextInput::make('min_weight')->numeric(),
-            Forms\Components\TextInput::make('max_weight')->numeric(),
-            Forms\Components\TextInput::make('free_shipping_threshold')->numeric(),
-            Forms\Components\TextInput::make('estimated_delivery_time')->maxLength(255),
-            Forms\Components\TextInput::make('remote_area_fee')->numeric(),
-            Forms\Components\TextInput::make('sort_order')->numeric(),
+            Forms\Components\Toggle::make('is_active')->label(__('Is active'))->default(true),
+            Forms\Components\TextInput::make('base_cost')->label(__('Base Cost'))->numeric()->required()->default(0),
+            Forms\Components\TextInput::make('cost_per_kg')->label(__('Cost per kg'))->numeric()->required()->default(0),
+            Forms\Components\TextInput::make('min_weight')->label(__('Min weight'))->numeric(),
+            Forms\Components\TextInput::make('max_weight')->label(__('Max weight'))->numeric(),
+            Forms\Components\TextInput::make('free_shipping_threshold')
+                ->label(__('Free shipping threshold'))
+                ->helperText(__('Used only when rate free shipping is enabled in settings. Leave empty to always charge this rate.'))
+                ->numeric(),
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("estimated_delivery_time.{$code}")->label(__('Estimated delivery time'))->maxLength(255),
+            ]),
+            Forms\Components\TextInput::make('remote_area_fee')->label(__('Remote area fee'))->numeric(),
+            Forms\Components\TextInput::make('sort_order')->label(__('Sort order'))->numeric(),
         ])->columns(2);
     }
 
@@ -62,10 +68,10 @@ class ShippingRateResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('carrier.name')->label(__('Carrier'))->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('city.name')->label(__('City'))->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('base_cost')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('cost_per_kg')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('estimated_delivery_time')->toggleable(),
-                Tables\Columns\IconColumn::make('is_active')->boolean(),
+                Tables\Columns\TextColumn::make('base_cost')->label(__('Base Cost'))->money('USD')->sortable(),
+                Tables\Columns\TextColumn::make('cost_per_kg')->label(__('Cost per kg'))->money('USD')->sortable(),
+                Tables\Columns\TextColumn::make('estimated_delivery_time')->label(__('Estimated delivery time'))->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')->label(__('Is active'))->boolean(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('shipping_carrier_id')->relationship('carrier', 'name')->label(__('Carrier')),

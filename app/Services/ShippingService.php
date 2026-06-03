@@ -140,7 +140,7 @@ class ShippingService
         }
 
         $isFree = $cartFreeShipping
-            || ($rate->free_shipping_threshold !== null && $subtotal >= (float) $rate->free_shipping_threshold)
+            || ($this->settingBool('shipping.enable_rate_free_shipping') && $rate->free_shipping_threshold !== null && $subtotal >= (float) $rate->free_shipping_threshold)
             || ($this->settingBool('shipping.enable_free_shipping') && $subtotal >= $this->settingFloat('shipping.global_free_shipping_threshold', PHP_FLOAT_MAX));
 
         if ($isFree) {

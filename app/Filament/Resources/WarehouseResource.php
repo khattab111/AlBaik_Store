@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Filament\Resources\WarehouseResource\Pages;
 use App\Models\Warehouse;
 use App\Traits\TranslationTrait;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class WarehouseResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = Warehouse::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
@@ -23,11 +24,13 @@ class WarehouseResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->required(),
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required(),
+                Forms\Components\Textarea::make("address.{$code}")->label(__('Address'))->rows(3),
+                Forms\Components\TextInput::make("city.{$code}")->label(__('City')),
+                Forms\Components\TextInput::make("country.{$code}")->label(__('Country')),
+            ]),
             Forms\Components\TextInput::make('code')->required()->unique(Warehouse::class, 'code', ignoreRecord: true),
-            Forms\Components\Textarea::make('address')->rows(3),
-            Forms\Components\TextInput::make('city'),
-            Forms\Components\TextInput::make('country'),
             Forms\Components\Toggle::make('is_active')->default(true),
         ]);
     }

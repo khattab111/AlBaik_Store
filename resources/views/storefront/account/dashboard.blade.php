@@ -36,7 +36,7 @@
                 <a href="{{ route('orders.show', $order) }}" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 p-4 transition hover:border-red-200">
                     <span class="font-black">{{ $order->order_number }}</span>
                     <span class="text-sm font-bold text-slate-500">{{ __($order->status) }}</span>
-                    <span class="font-black text-red-700">USD {{ number_format((float)$order->total, 2) }}</span>
+                    <span class="font-black text-red-700">{{ store_money((float) $order->total) }}</span>
                 </a>
             @empty
                 <p class="text-slate-500">{{ __('No orders found.') }}</p>

@@ -7,10 +7,24 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
             <p class="store-eyebrow text-red-700">{{ __('Administration') }}</p>
-            <h1 class="mt-2 text-3xl font-black sm:text-4xl">{{ __('Store Documentation') }}</h1>
+            <h1 class="mt-2 text-3xl font-black sm:text-4xl">{{ $documentTitle ?? __('Store Documentation') }}</h1>
         </div>
         <a href="{{ url('/admin') }}" class="store-button-secondary">{{ __('Back to Admin') }}</a>
     </div>
+
+    @if (! empty($documents))
+        <nav class="store-panel mb-5 flex flex-wrap gap-2 p-3" aria-label="{{ __('Documentation sections') }}">
+            @foreach ($documents as $key => $document)
+                <a
+                    href="{{ route('admin.documentation', ['document' => $key]) }}"
+                    class="{{ $currentDocument === $key ? 'store-button-primary' : 'store-button-secondary' }} text-sm"
+                    @if($currentDocument === $key) aria-current="page" @endif
+                >
+                    {{ $document['title'] }}
+                </a>
+            @endforeach
+        </nav>
+    @endif
 
     @if (! empty($headings))
         <nav class="store-panel store-documentation-mobile-nav mb-5 p-4 lg:hidden" aria-label="{{ __('Documentation navigation') }}">

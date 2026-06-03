@@ -35,19 +35,19 @@
                             : asset('images/storefront/product-fallback.svg');
                         $title = $isOffer ? $item->title : $item->product->name;
                     @endphp
-                    <article class="store-panel grid gap-4 p-4 sm:grid-cols-[120px_1fr_auto]">
-                        <img src="{{ $imageUrl }}" class="h-28 w-28 rounded-2xl object-cover" alt="{{ $title }}">
-                        <div>
-                            <h2 class="text-lg font-black">{{ $title }}</h2>
+                    <article class="store-panel grid gap-4 p-4 sm:grid-cols-[120px_minmax(0,1fr)] xl:grid-cols-[120px_minmax(0,1fr)_auto]">
+                        <img src="{{ $imageUrl }}" class="mx-auto h-28 w-28 rounded-2xl object-cover sm:mx-0" alt="{{ $title }}">
+                        <div class="min-w-0">
+                            <h2 class="store-safe-text text-lg font-black">{{ $title }}</h2>
                             @if($isOffer)
                                 <p class="mt-1 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ __('Offer') }}</p>
                                 <div class="mt-3 grid gap-1 text-xs font-bold text-slate-500">
                                     @foreach(collect($item->components_snapshot ?? [])->take(5) as $component)
-                                        <p>{{ $component['product_name'] ?? __('Product') }} × {{ $component['quantity'] ?? 1 }}</p>
+                                        <p class="store-safe-text">{{ $component['product_name'] ?? __('Product') }} × {{ $component['quantity'] ?? 1 }}</p>
                                     @endforeach
                                 </div>
                             @else
-                                <p class="mt-1 text-sm font-bold text-slate-500">{{ $item->product->brand?->name }}</p>
+                                <p class="store-safe-text mt-1 text-sm font-bold text-slate-500">{{ $item->product->brand?->name }}</p>
                             @endif
                             @if(!$isOffer && $item->variant)
                                 <p class="mt-2 text-xs font-bold text-slate-500">{{ $item->variant->sku }}</p>
@@ -55,15 +55,15 @@
                             @if(!$isOffer && ($item->applied_flash_offer_id ?? null))
                                 <p class="mt-2 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ __('Flash Offer') }}</p>
                             @endif
-                            <p class="mt-3 store-price">USD {{ number_format((float)$item->unit_price, 2) }}</p>
+                            <p class="mt-3 store-price">{{ store_money((float) $item->unit_price) }}</p>
                         </div>
-                        <div class="grid content-between gap-3 sm:min-w-48">
+                        <div class="grid content-between gap-3 sm:col-span-2 xl:col-span-1 xl:min-w-48">
                             @auth
-                                <form method="POST" action="{{ $isOffer ? route('cart.items.update', $item) : route('cart.update', $item->product) }}" class="flex gap-2">
+                                <form method="POST" action="{{ $isOffer ? route('cart.items.update', $item) : route('cart.update', $item->product) }}" class="grid gap-2 sm:grid-cols-[110px_1fr] xl:grid-cols-[96px_auto]">
                                     @csrf
                                     @method('PATCH')
-                                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field w-24">
-                                    <button class="store-button-secondary">{{ __('Update') }}</button>
+                                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field">
+                                    <button class="store-button-secondary w-full">{{ __('Update') }}</button>
                                 </form>
                                 <form method="POST" action="{{ $isOffer ? route('cart.items.destroy', $item) : route('cart.remove', $item->product) }}">
                                     @csrf
@@ -72,11 +72,11 @@
                                 </form>
                             @else
                                 @if(!$isOffer)
-                                    <form method="POST" action="{{ route('cart.update', $item->product) }}" class="flex gap-2">
+                                    <form method="POST" action="{{ route('cart.update', $item->product) }}" class="grid gap-2 sm:grid-cols-[110px_1fr] xl:grid-cols-[96px_auto]">
                                         @csrf
                                         @method('PATCH')
-                                        <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field w-24">
-                                        <button class="store-button-secondary">{{ __('Update') }}</button>
+                                        <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="store-field">
+                                        <button class="store-button-secondary w-full">{{ __('Update') }}</button>
                                     </form>
                                     <form method="POST" action="{{ route('cart.remove', $item->product) }}">
                                         @csrf
@@ -94,7 +94,7 @@
                 <h2 class="text-2xl font-black">{{ __('Order Summary') }}</h2>
                 <div class="mt-6 grid gap-4 text-sm font-bold">
                     <div class="flex justify-between"><span class="text-slate-500">{{ __('Items') }}</span><span>{{ $items->sum('quantity') }}</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">{{ __('Subtotal') }}</span><span>USD {{ number_format($subtotal, 2) }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">{{ __('Subtotal') }}</span><span>{{ store_money($subtotal) }}</span></div>
                     <div class="flex justify-between"><span class="text-slate-500">{{ __('Shipping') }}</span><span>{{ __('Calculated at checkout') }}</span></div>
                 </div>
                 <a href="{{ route('checkout.index') }}" class="store-button-primary mt-6 w-full">{{ __('Checkout') }}</a>

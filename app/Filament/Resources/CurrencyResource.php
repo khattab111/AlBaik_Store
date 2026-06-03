@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Filament\Resources\CurrencyResource\Pages;
 use App\Models\Currency;
 use App\Traits\TranslationTrait;
@@ -13,7 +14,7 @@ use Filament\Tables\Table;
 
 class CurrencyResource extends Resource
 {
-    use TranslationTrait;
+    use BuildsTranslatableForms, TranslationTrait;
     protected static ?string $model = Currency::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
@@ -23,13 +24,15 @@ class CurrencyResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            static::translatableTabs(fn (string $code): array => [
+                Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required(),
+            ]),
             Forms\Components\TextInput::make('code')
                 ->required()
                 ->maxLength(3)
                 ->unique(Currency::class, 'code', ignoreRecord: true)
                 ->helperText(__('Use ISO code, for example USD, TRY, SYP.')),
             Forms\Components\TextInput::make('symbol')->required()->maxLength(8),
-            Forms\Components\TextInput::make('name')->required(),
             Forms\Components\TextInput::make('rate')
                 ->required()
                 ->numeric()

@@ -54,6 +54,10 @@ class FlashOfferService
         $cart->loadMissing(['items.product.priceTiers']);
 
         foreach ($cart->items as $item) {
+            if (($item->item_type ?? 'product') !== 'product' || ! $item->product) {
+                continue;
+            }
+
             $offer = $this->calculateProductOffer($item->product, $item->quantity, (float) $item->unit_price);
 
             if (! $offer) {

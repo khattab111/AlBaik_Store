@@ -12,7 +12,7 @@
         <div class="mt-8 grid gap-3 rounded-3xl bg-slate-50 p-5 text-start text-sm font-bold">
             <div class="flex justify-between gap-4"><span class="text-slate-500">{{ __('Order number') }}</span><span>{{ $order->order_number }}</span></div>
             <div class="flex justify-between gap-4"><span class="text-slate-500">{{ __('Status') }}</span><span>{{ __($order->status) }}</span></div>
-            <div class="flex justify-between gap-4"><span class="text-slate-500">{{ __('Total') }}</span><span>USD {{ number_format((float) $order->total, 2) }}</span></div>
+            <div class="flex justify-between gap-4"><span class="text-slate-500">{{ __('Total') }}</span><span>{{ store_money((float) $order->total) }}</span></div>
             <div class="flex justify-between gap-4"><span class="text-slate-500">{{ __('Payment method') }}</span><span>{{ $order->paymentMethod?->name }}</span></div>
         </div>
         <div class="mt-8 flex flex-wrap justify-center gap-3">

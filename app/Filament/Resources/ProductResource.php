@@ -8,6 +8,7 @@ use App\Filament\Resources\Concerns\BuildsTranslatableForms;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\Tag;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
@@ -52,7 +53,7 @@ class ProductResource extends Resource
                     ->helperText(__('Optional barcode printed on the physical product or scanned by warehouse devices.'))
                     ->maxLength(255),
                 Forms\Components\Select::make('brand_id')->options(fn () => Brand::where('status', true)->get()->pluck('name', 'id'))->searchable(),
-                Forms\Components\Select::make('supplier_id')->relationship('supplier', 'name')->searchable(),
+                Forms\Components\Select::make('supplier_id')->options(fn () => Supplier::where('is_active', true)->get()->pluck('name', 'id'))->searchable(),
                 Forms\Components\Select::make('category_id')->options(fn () => Category::where('status', true)->get()->pluck('name', 'id'))->searchable(),
                 Forms\Components\Select::make('tags')->relationship('tags', 'name')->getOptionLabelFromRecordUsing(fn (Tag $record): string => $record->name)->multiple()->preload(),
                 Forms\Components\TextInput::make('retail_price')->label(__('Retail Price'))->required()->numeric()->helperText(__('One shared price for all languages.')),
@@ -85,11 +86,21 @@ class ProductResource extends Resource
                 Forms\Components\Repeater::make('images')
                     ->relationship()
                     ->schema([
-                        Forms\Components\FileUpload::make('path')->image()->directory('products'),
-                        Forms\Components\TextInput::make('alt_text')->maxLength(255),
+                        Forms\Components\FileUpload::make('path')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products')
+                            ->visibility('public')
+                            ->imagePreviewHeight('120')
+                            ->openable()
+                            ->downloadable()
+                            ->required(),
+                        static::translatableTabs(fn (string $code): array => [
+                            Forms\Components\TextInput::make("alt_text.{$code}")->label(__('Alt text'))->maxLength(255),
+                        ]),
                         Forms\Components\Toggle::make('is_primary'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
             ])->collapsed(),
             Forms\Components\Section::make(__('Media'))->schema([
                 Forms\Components\TextInput::make('video_url')->url(),
@@ -101,6 +112,12 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('images.path')
+                    ->label(__('Image'))
+                    ->disk('public')
+                    ->square()
+                    ->stacked()
+                    ->limit(3),
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('sku')->sortable(),

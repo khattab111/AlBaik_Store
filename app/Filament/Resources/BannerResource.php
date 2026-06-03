@@ -74,7 +74,7 @@ class BannerResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            Tables\Columns\ImageColumn::make('image'),
+            Tables\Columns\ImageColumn::make('image')->disk('public'),
             Tables\Columns\TextColumn::make('title')->searchable()->sortable(),
             Tables\Columns\TextColumn::make('placement')
                 ->label(__('Placement'))

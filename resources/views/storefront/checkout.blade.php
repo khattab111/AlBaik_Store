@@ -23,7 +23,7 @@
             @if($requiresShipping)
                 <select name="shipping_carrier_id" class="rounded border px-3 py-2">
                     @forelse ($availableCarriers as $carrier)
-                        <option value="{{ $carrier['id'] }}">{{ $carrier['name'] }} - {{ number_format((float) $carrier['cost'], 2) }} USD</option>
+                        <option value="{{ $carrier['id'] }}">{{ $carrier['name'] }} - {{ store_money((float) $carrier['cost']) }}</option>
                     @empty
                         <option value="">{{ __('No shipping carriers are available for this city right now.') }}</option>
                     @endforelse
@@ -59,7 +59,7 @@
             </label>
             <input name="coupon_code" placeholder="{{ __('Coupon Code') }}" class="rounded border px-3 py-2">
             <textarea name="notes" rows="3" placeholder="{{ __('Notes') }}" class="rounded border px-3 py-2"></textarea>
-            <p class="font-bold">{{ __('Subtotal') }}: {{ number_format($subtotal, 2) }} USD</p>
+            <p class="font-bold">{{ __('Subtotal') }}: {{ store_money($subtotal) }}</p>
             <button class="rounded bg-gray-950 px-4 py-2 text-white">{{ __('Place Order') }}</button>
         </form>
         <script>

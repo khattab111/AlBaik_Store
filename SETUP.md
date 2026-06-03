@@ -136,3 +136,5 @@ After running `php artisan db:seed`, use:
 - Users, roles, permissions
 - Activity logs
 - Dashboard stats and latest orders
+  /////////////////////////////////
+  ngrok http 8000

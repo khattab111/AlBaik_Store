@@ -6,7 +6,7 @@
         <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
     </h3>
     <p class="text-sm text-gray-600">{{ $product->brand?->name }}</p>
-    <p class="mt-2 font-bold">{{ number_format((float) $product->retail_price, 2) }} USD</p>
+    <p class="mt-2 font-bold">{{ store_money((float) $product->retail_price) }}</p>
     @auth
         <form method="POST" action="{{ route('cart.items.store') }}" class="mt-3 flex gap-2">
             @csrf

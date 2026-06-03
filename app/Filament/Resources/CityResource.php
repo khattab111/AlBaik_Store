@@ -36,10 +36,10 @@ class CityResource extends Resource
                 ->disabled()
                 ->dehydrated(false)
                 ->visible(fn ($record): bool => $record !== null),
-            Forms\Components\TextInput::make('country')->required()->maxLength(100),
-            Forms\Components\TextInput::make('code')->maxLength(50),
-            Forms\Components\Toggle::make('is_active')->default(true),
-            Forms\Components\TextInput::make('sort_order')->numeric(),
+            Forms\Components\TextInput::make('country')->label(__('Country'))->required()->maxLength(100),
+            Forms\Components\TextInput::make('code')->label(__('Code'))->maxLength(50),
+            Forms\Components\Toggle::make('is_active')->label(__('Is active'))->default(true),
+            Forms\Components\TextInput::make('sort_order')->label(__('Sort order'))->numeric(),
         ]);
     }
 
@@ -47,11 +47,11 @@ class CityResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('country')->sortable(),
-                Tables\Columns\TextColumn::make('code')->toggleable(),
-                Tables\Columns\TextColumn::make('sort_order')->sortable(),
-                Tables\Columns\IconColumn::make('is_active')->boolean(),
+                Tables\Columns\TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('country')->label(__('Country'))->sortable(),
+                Tables\Columns\TextColumn::make('code')->label(__('Code'))->toggleable(),
+                Tables\Columns\TextColumn::make('sort_order')->label(__('Sort order'))->sortable(),
+                Tables\Columns\IconColumn::make('is_active')->label(__('Is active'))->boolean(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

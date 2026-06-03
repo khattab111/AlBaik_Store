@@ -7,12 +7,14 @@ use Illuminate\Database\Seeder;
 
 class CurrencySeeder extends Seeder
 {
+    use SeedsTranslations;
+
     public function run(): void
     {
         $currencies = [
             [
                 'code' => 'USD',
-                'name' => 'US Dollar',
+                'name' => $this->tr('US Dollar', 'الدولار الأمريكي'),
                 'symbol' => '$',
                 'rate' => 1,
                 'is_default' => true,
@@ -20,7 +22,7 @@ class CurrencySeeder extends Seeder
             ],
             [
                 'code' => 'TRY',
-                'name' => 'Turkish Lira',
+                'name' => $this->tr('Turkish Lira', 'الليرة التركية'),
                 'symbol' => '₺',
                 'rate' => 32,
                 'is_default' => false,
@@ -28,7 +30,7 @@ class CurrencySeeder extends Seeder
             ],
             [
                 'code' => 'SYP',
-                'name' => 'Syrian Pound',
+                'name' => $this->tr('Syrian Pound', 'الليرة السورية'),
                 'symbol' => 'ل.س',
                 'rate' => 14000,
                 'is_default' => false,

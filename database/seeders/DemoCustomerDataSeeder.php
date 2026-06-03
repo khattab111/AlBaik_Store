@@ -22,6 +22,8 @@ use Illuminate\Database\Seeder;
 
 class DemoCustomerDataSeeder extends Seeder
 {
+    use SeedsTranslations;
+
     public function run(): void
     {
         $customer = User::where('email', 'customer@albaik.test')->firstOrFail();
@@ -64,8 +66,8 @@ class DemoCustomerDataSeeder extends Seeder
             'status' => WholesaleApplication::STATUS_PENDING,
         ]);
 
-        Review::updateOrCreate(['product_id' => $iphone->id, 'user_id' => $customer->id], ['rating' => 5, 'title' => 'Original phone', 'comment' => 'Great demo product for testing published reviews.', 'images' => [], 'is_published' => true]);
-        Review::updateOrCreate(['product_id' => $airpods->id, 'user_id' => $wholesale->id], ['rating' => 4, 'title' => 'Good wholesale option', 'comment' => 'Useful item for accessories shop.', 'images' => [], 'is_published' => false]);
+        Review::updateOrCreate(['product_id' => $iphone->id, 'user_id' => $customer->id], ['rating' => 5, 'title' => $this->tr('Original phone', 'هاتف أصلي'), 'comment' => $this->tr('Great demo product for testing published reviews.', 'منتج تجريبي مناسب لاختبار التقييمات المنشورة.'), 'images' => [], 'is_published' => true]);
+        Review::updateOrCreate(['product_id' => $airpods->id, 'user_id' => $wholesale->id], ['rating' => 4, 'title' => $this->tr('Good wholesale option', 'خيار جيد للجملة'), 'comment' => $this->tr('Useful item for accessories shop.', 'منتج مفيد لمحلات الإكسسوارات.'), 'images' => [], 'is_published' => false]);
 
         $orders = [
             ['number' => 'ORD-ELEC-00001', 'user' => $customer, 'address' => $customerAddress, 'payment' => $cod, 'carrier' => $alharam, 'city' => $damascus, 'status' => 'pending', 'items' => [[$charger, 2, 19.00], [$cable, 2, 8.50]], 'shipping_cost' => 5],

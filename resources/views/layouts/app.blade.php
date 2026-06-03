@@ -23,6 +23,22 @@
     $borderColor = $siteIdentity['border_color'] ?? '#e5e7eb';
     $heroOverlayFrom = $siteIdentity['hero_overlay_from'] ?? 'rgba(255,255,255,.06)';
     $heroOverlayTo = $siteIdentity['hero_overlay_to'] ?? 'rgba(255,255,255,.42)';
+    $storeCurrencyConfig = [
+        'code' => $currentCurrency?->code ?? 'USD',
+        'symbol' => $currentCurrency?->symbol ?? '$',
+        'rate' => (float) ($currentCurrency?->rate ?? 1),
+        'decimals' => (float) ($currentCurrency?->rate ?? 1) >= 1000 ? 0 : 2,
+    ];
+    $primaryNavItems = [
+        ['label' => __('Home'), 'route' => 'home', 'active' => 'home', 'icon' => null],
+        ['label' => __('Products'), 'route' => 'products.index', 'active' => ['products.index', 'products.show'], 'icon' => null],
+        ['label' => __('Offers'), 'route' => 'offers.index', 'active' => 'offers.*', 'icon' => null],
+        ['label' => __('Categories'), 'route' => 'categories.index', 'active' => 'categories.*', 'icon' => '▦'],
+        ['label' => __('Brands'), 'route' => 'brands.index', 'active' => 'brands.*', 'icon' => null],
+        ['label' => __('New Arrivals'), 'route' => 'products.latest', 'active' => 'products.latest', 'icon' => null],
+        ['label' => __('About'), 'route' => 'about', 'active' => 'about', 'icon' => null],
+        ['label' => __('Join Us'), 'route' => 'join-us.create', 'active' => 'join-us.*', 'icon' => null],
+    ];
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', $currentLocale ?? app()->getLocale()) }}" dir="{{ $textDirection ?? 'ltr' }}">
@@ -75,6 +91,7 @@
                 document.documentElement.dataset.theme = 'light';
             }
         })();
+        window.storeCurrency = {{ Illuminate\Support\Js::from($storeCurrencyConfig) }};
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -87,18 +104,6 @@
     <a href="#main-content" class="skip-link">{{ __('Skip to main content') }}</a>
 
     <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur" style="background-color: color-mix(in srgb, var(--store-header-bg) 95%, transparent); border-color: var(--store-border)" role="banner" data-store-header>
-        <div class="hidden bg-[#111] text-white md:block">
-            <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 text-xs font-black">
-                <div class="flex items-center gap-6">
-                    <span class="inline-flex items-center gap-2"><span class="text-amber-400">◎</span>{{ __('Track order') }}</span>
-                    <span class="inline-flex items-center gap-2"><span class="text-amber-400">◎</span>{{ __('Help') }}</span>
-                </div>
-                <div class="flex items-center gap-6">
-                    <span class="inline-flex items-center gap-2"><span class="text-amber-400">◎</span>{{ __('Fast delivery and easy returns') }}</span>
-                    <a href="{{ route('locale.switch', ($currentLocale ?? app()->getLocale()) === 'ar' ? 'en' : 'ar') }}" class="inline-flex items-center gap-2 text-white/90 hover:text-amber-300">{{ ($currentLocale ?? app()->getLocale()) === 'ar' ? 'English' : 'العربية' }}</a>
-                </div>
-            </div>
-        </div>
         <div class="mx-auto grid max-w-7xl items-center gap-3 px-4 py-3 lg:grid-cols-[auto_minmax(280px,1fr)_auto]">
             <a href="{{ route('home') }}" class="flex items-center gap-3" aria-label="{{ __(':name home', ['name' => $siteName]) }}">
                 @if ($siteLogoUrl)
@@ -139,6 +144,19 @@
                         @endforeach
                     </div>
                 </div>
+                <div class="store-language-menu">
+                    <button type="button" class="store-icon-button" data-currency-toggle aria-label="{{ __('Change currency') }}" aria-expanded="false">
+                        <span class="text-sm font-black">{{ $currentCurrency?->code ?? 'USD' }}</span>
+                    </button>
+                    <div class="store-language-dropdown" data-currency-dropdown>
+                        @foreach (($supportedCurrencies ?? collect()) as $currency)
+                            <a href="{{ route('currency.switch', $currency->code) }}" class="{{ ($currentCurrency?->code ?? null) === $currency->code ? 'is-active' : '' }}">
+                                <span>{{ $currency->name }}</span>
+                                <span class="text-xs uppercase text-slate-400">{{ $currency->symbol }} {{ $currency->code }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
                 @auth
                     <a href="{{ route('favorites.index') }}" class="store-icon-button" aria-label="{{ __('Wishlist, :count items', ['count' => $wishlistCount ?? 0]) }}">
                         <span aria-hidden="true">♡</span>
@@ -166,14 +184,14 @@
 
         <div class="hidden border-t border-slate-100 lg:block" style="background-color: var(--store-nav-bg); border-color: var(--store-border)">
             <nav class="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-3 text-sm font-bold" aria-label="{{ __('Primary navigation') }}">
-                <a href="{{ route('home') }}" class="store-nav-link">{{ __('Home') }}</a>
-                <a href="{{ route('products.index') }}" class="store-nav-link">{{ __('Products') }}</a>
-                <a href="{{ route('offers.index') }}" class="store-nav-link">{{ __('Offers') }}</a>
-                <a href="{{ route('categories.index') }}" class="store-nav-pill"><span aria-hidden="true">▦</span>{{ __('Categories') }}</a>
-                <a href="{{ route('brands.index') }}" class="store-nav-link">{{ __('Brands') }}</a>
-                <a href="{{ route('products.latest') }}" class="store-nav-link">{{ __('New Arrivals') }}</a>
-                <a href="{{ route('about') }}" class="store-nav-link">{{ __('About') }}</a>
-                <a href="{{ route('join-us.create') }}" class="store-nav-link">{{ __('Join Us') }}</a>
+                @foreach ($primaryNavItems as $item)
+                    <a href="{{ route($item['route']) }}" class="store-nav-link {{ request()->routeIs($item['active']) ? 'is-active' : '' }}" @if(request()->routeIs($item['active'])) aria-current="page" @endif>
+                        @if ($item['icon'])
+                            <span aria-hidden="true">{{ $item['icon'] }}</span>
+                        @endif
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
                 @auth
                     <form method="POST" action="{{ route('customer.logout') }}" class="ms-auto shrink-0">
                         @csrf
@@ -199,14 +217,14 @@
                 <button type="button" class="store-icon-button" data-mobile-menu-close aria-label="{{ __('Close menu') }}">×</button>
             </div>
             <nav class="grid gap-2 p-4 text-sm font-black">
-                <a href="{{ route('home') }}" class="store-nav-link">{{ __('Home') }}</a>
-                <a href="{{ route('products.index') }}" class="store-nav-link">{{ __('Products') }}</a>
-                <a href="{{ route('offers.index') }}" class="store-nav-link">{{ __('Offers') }}</a>
-                <a href="{{ route('categories.index') }}" class="store-nav-pill justify-center">{{ __('Categories') }}</a>
-                <a href="{{ route('brands.index') }}" class="store-nav-link">{{ __('Brands') }}</a>
-                <a href="{{ route('products.latest') }}" class="store-nav-link">{{ __('New Arrivals') }}</a>
-                <a href="{{ route('about') }}" class="store-nav-link">{{ __('About') }}</a>
-                <a href="{{ route('join-us.create') }}" class="store-nav-link">{{ __('Join Us') }}</a>
+                @foreach ($primaryNavItems as $item)
+                    <a href="{{ route($item['route']) }}" class="store-nav-link justify-center {{ request()->routeIs($item['active']) ? 'is-active' : '' }}" @if(request()->routeIs($item['active'])) aria-current="page" @endif>
+                        @if ($item['icon'])
+                            <span aria-hidden="true">{{ $item['icon'] }}</span>
+                        @endif
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
                 @auth
                     <a href="{{ route('account.dashboard') }}" class="store-nav-link">{{ __('Account') }}</a>
                     <form method="POST" action="{{ route('customer.logout') }}">
@@ -250,8 +268,9 @@
                     <h2 class="mt-2 text-2xl font-black sm:text-3xl">{{ __('Stay close to the best offers') }}</h2>
                     <p class="store-footer-newsletter-text mt-3 max-w-2xl text-sm leading-7">{{ __('Get weekly deals, new arrivals, and wholesale updates in your inbox.') }}</p>
                 </div>
-                <form method="POST" action="{{ route('newsletter.store') }}" class="store-footer-newsletter-form flex min-w-0 flex-col gap-3 rounded-3xl p-2 shadow-2xl shadow-red-950/20 sm:flex-row" aria-label="{{ __('Subscribe to newsletter') }}">
+                <form method="POST" action="{{ route('newsletter.subscribe') }}" class="store-footer-newsletter-form flex min-w-0 flex-col gap-3 rounded-3xl p-2 shadow-2xl shadow-red-950/20 sm:flex-row" aria-label="{{ __('Subscribe to newsletter') }}">
                     @csrf
+                    <input type="hidden" name="source" value="footer">
                     <label for="footer-newsletter-email" class="sr-only">{{ __('Email address') }}</label>
                     <input id="footer-newsletter-email" type="email" name="email" autocomplete="email" required placeholder="{{ __('Email address') }}" class="min-w-0 flex-1 rounded-2xl border border-white/15 bg-white px-4 py-3 text-sm font-bold text-slate-950 outline-none placeholder:text-slate-400">
                     <button class="rounded-2xl bg-amber-400 px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-300">{{ __('Subscribe') }}</button>

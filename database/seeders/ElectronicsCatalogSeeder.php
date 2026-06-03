@@ -34,18 +34,18 @@ class ElectronicsCatalogSeeder extends Seeder
         }
 
         Supplier::updateOrCreate(['slug' => 'albaik-electronics-main'], [
-            'name' => 'AlBaik Electronics Main Supplier',
+            'name' => $this->tr('AlBaik Electronics Main Supplier', 'مورد البيك الرئيسي للإلكترونيات'),
             'email' => 'supply@albaik-electronics.local',
             'phone' => '+963111111111',
-            'address' => 'Damascus electronics logistics hub',
+            'address' => $this->tr('Damascus electronics logistics hub', 'مركز لوجستي للإلكترونيات في دمشق'),
             'is_active' => true,
         ]);
 
         Supplier::updateOrCreate(['slug' => 'smart-goods-supplier'], [
-            'name' => 'Smart Goods Supplier',
+            'name' => $this->tr('Smart Goods Supplier', 'مورد الأجهزة الذكية'),
             'email' => 'sales@smartgoods.example',
             'phone' => '+905551112233',
-            'address' => 'Istanbul trade zone',
+            'address' => $this->tr('Istanbul trade zone', 'منطقة التجارة في إسطنبول'),
             'is_active' => true,
         ]);
 
@@ -95,18 +95,18 @@ class ElectronicsCatalogSeeder extends Seeder
         }
 
         Warehouse::updateOrCreate(['code' => 'MAIN'], [
-            'name' => 'Main Electronics Warehouse',
-            'address' => 'Industrial Zone, Damascus',
-            'city' => 'Damascus',
-            'country' => 'Syria',
+            'name' => $this->tr('Main Electronics Warehouse', 'مستودع الإلكترونيات الرئيسي'),
+            'address' => $this->tr('Industrial Zone, Damascus', 'المنطقة الصناعية، دمشق'),
+            'city' => $this->tr('Damascus', 'دمشق'),
+            'country' => $this->tr('Syria', 'سوريا'),
             'is_active' => true,
         ]);
 
         Warehouse::updateOrCreate(['code' => 'NORTH'], [
-            'name' => 'North Electronics Warehouse',
-            'address' => 'Aleppo Road',
-            'city' => 'Aleppo',
-            'country' => 'Syria',
+            'name' => $this->tr('North Electronics Warehouse', 'مستودع الإلكترونيات الشمالي'),
+            'address' => $this->tr('Aleppo Road', 'طريق حلب'),
+            'city' => $this->tr('Aleppo', 'حلب'),
+            'country' => $this->tr('Syria', 'سوريا'),
             'is_active' => true,
         ]);
     }

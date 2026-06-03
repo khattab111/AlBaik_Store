@@ -9,23 +9,50 @@ use Illuminate\Support\Str;
 
 class DocumentationController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(?string $document = null): View
     {
         abort_unless(auth()->user()?->canAccessPanel(filament()->getPanel('admin')), 403);
 
-        $path = base_path('docs/ADMIN_STORE_DOCUMENTATION.md');
+        $documents = $this->documents();
+        $currentDocument = $document ?: 'user';
+
+        abort_unless(isset($documents[$currentDocument]), 404);
+
+        $path = base_path($documents[$currentDocument]['path']);
         abort_unless(File::exists($path), 404);
 
         $markdown = File::get($path);
         $headings = $this->extractHeadings($markdown);
 
         return view('admin.documentation', [
+            'documents' => $documents,
+            'currentDocument' => $currentDocument,
+            'documentTitle' => $documents[$currentDocument]['title'],
             'html' => $this->addHeadingIds((string) Str::markdown($markdown, [
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
             ]), $headings),
             'headings' => $headings,
         ]);
+    }
+
+    /**
+     * @return array<string, array{title: string, description: string, path: string}>
+     */
+    private function documents(): array
+    {
+        return [
+            'user' => [
+                'title' => 'دليل مستخدم الموقع',
+                'description' => 'شرح استخدام المتجر من التصفح حتى الطلب والحساب.',
+                'path' => 'docs/STORE_USER_DOCUMENTATION.md',
+            ],
+            'developer' => [
+                'title' => 'دليل المطور',
+                'description' => 'شرح البنية البرمجية وآليات Backend وFrontend وFilament.',
+                'path' => 'docs/DEVELOPER_DOCUMENTATION.md',
+            ],
+        ];
     }
 
     /**

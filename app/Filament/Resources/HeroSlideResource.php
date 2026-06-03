@@ -97,7 +97,7 @@ class HeroSlideResource extends Resource
         return $table
             ->defaultSort('sort_order')
             ->columns([
-                Tables\Columns\ImageColumn::make('image')->label(__('Image')),
+                Tables\Columns\ImageColumn::make('image')->label(__('Image'))->disk('public'),
                 Tables\Columns\TextColumn::make('title')->label(__('Title'))->searchable(),
                 Tables\Columns\TextColumn::make('sort_order')->sortable(),
                 Tables\Columns\IconColumn::make('is_active')->boolean(),

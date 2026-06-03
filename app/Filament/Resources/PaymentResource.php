@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentResource\Pages;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -24,7 +25,7 @@ class PaymentResource extends Resource
     {
         return $form->schema([
             Forms\Components\Select::make('order_id')->relationship('order', 'order_number')->required()->searchable(),
-            Forms\Components\Select::make('payment_method_id')->relationship('method', 'name')->searchable(),
+            Forms\Components\Select::make('payment_method_id')->options(fn () => PaymentMethod::query()->get()->pluck('name', 'id'))->searchable(),
             Forms\Components\TextInput::make('driver')->required(),
             Forms\Components\Select::make('status')->options([
                 'pending' => __('Pending'),
@@ -39,8 +40,12 @@ class PaymentResource extends Resource
             Forms\Components\FileUpload::make('receipt_image')
                 ->label(__('Payment Receipt'))
                 ->image()
+                ->disk('public')
                 ->directory('payment-receipts')
-                ->visibility('public'),
+                ->visibility('public')
+                ->imagePreviewHeight('120')
+                ->openable()
+                ->downloadable(),
             Forms\Components\DateTimePicker::make('submitted_at'),
             Forms\Components\KeyValue::make('payload'),
         ]);
@@ -52,7 +57,7 @@ class PaymentResource extends Resource
             Tables\Columns\TextColumn::make('order.order_number')->searchable()->sortable(),
             Tables\Columns\TextColumn::make('method.name')->sortable(),
             Tables\Columns\TextColumn::make('status')->sortable(),
-            Tables\Columns\ImageColumn::make('receipt_image')->label(__('Receipt')),
+            Tables\Columns\ImageColumn::make('receipt_image')->label(__('Receipt'))->disk('public'),
             Tables\Columns\TextColumn::make('amount')->money('USD')->sortable(),
             Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
         ])->actions([

@@ -65,7 +65,11 @@ class GuestCartService
         $items = $this->rawItems();
 
         foreach ($items as $key => $item) {
-            if ((int) $item['product_id'] === $product->id) {
+            if (($item['item_type'] ?? 'product') !== 'product') {
+                continue;
+            }
+
+            if ((int) ($item['product_id'] ?? 0) === $product->id) {
                 $items[$key]['quantity'] = max(1, $quantity);
             }
         }
@@ -76,7 +80,7 @@ class GuestCartService
     public function remove(Product $product): void
     {
         $items = collect($this->rawItems())
-            ->reject(fn (array $item): bool => (int) $item['product_id'] === $product->id)
+            ->reject(fn (array $item): bool => ($item['item_type'] ?? 'product') === 'product' && (int) ($item['product_id'] ?? 0) === $product->id)
             ->all();
 
         session()->put(self::SESSION_KEY, $items);
@@ -96,7 +100,11 @@ class GuestCartService
     {
         $rawItems = collect($this->rawItems());
         $products = Product::with(['brand', 'images', 'variants', 'priceTiers'])
-            ->whereIn('id', $rawItems->pluck('product_id')->all())
+            ->whereIn('id', $rawItems
+                ->filter(fn (array $item): bool => ($item['item_type'] ?? 'product') === 'product')
+                ->pluck('product_id')
+                ->filter()
+                ->all())
             ->get()
             ->keyBy('id');
 
@@ -131,6 +139,7 @@ class GuestCartService
                 $unitPrice = array_key_exists('unit_price', $item) ? (float) $item['unit_price'] : $price->price;
 
                 return (object) [
+                    'item_type' => 'product',
                     'product' => $product,
                     'variant' => $variant,
                     'quantity' => (int) $item['quantity'],

@@ -9,7 +9,7 @@
             <a href="{{ route('account.orders.show', $order) }}" class="rounded border bg-white p-4">
                 <strong>{{ $order->order_number }}</strong>
                 <span>{{ $order->status }}</span>
-                <span>{{ number_format((float) $order->total, 2) }} USD</span>
+                <span>{{ store_money((float) $order->total) }}</span>
             </a>
         @endforeach
     </section>

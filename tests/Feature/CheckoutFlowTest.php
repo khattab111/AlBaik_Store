@@ -292,4 +292,53 @@ class CheckoutFlowTest extends TestCase
         $this->assertSame(6, $cable->fresh()->stock_quantity);
         $this->assertSame(2, $offer->fresh()->sold_quantity);
     }
+
+    public function test_buy_x_get_y_offer_checks_and_reduces_free_item_stock(): void
+    {
+        $user = User::factory()->create(['status' => true]);
+
+        Currency::create(['code' => 'USD', 'symbol' => '$', 'name' => 'US Dollar', 'rate' => 1, 'is_default' => true, 'status' => true]);
+
+        $city = City::create(['name' => ['en' => 'Aleppo', 'ar' => 'حلب'], 'slug' => 'aleppo-offer', 'country' => 'Syria', 'is_active' => true]);
+        $address = UserAddress::create(['user_id' => $user->id, 'label' => 'Home', 'recipient_name' => 'Offer Buyer', 'phone' => '+963900000005', 'city_id' => $city->id, 'address_line' => 'Main Street', 'is_default' => true, 'is_active' => true]);
+        $payment = PaymentMethod::create(['name' => 'Cash on Delivery', 'slug' => 'cod-buy-x-get-y', 'type' => 'cod', 'fee' => 0, 'is_active' => true]);
+        $carrier = ShippingCarrier::create(['name' => ['en' => 'Standard Buy', 'ar' => 'قياسي شراء'], 'slug' => 'standard-buy', 'status' => 'active']);
+        ShippingRate::create(['shipping_carrier_id' => $carrier->id, 'city_id' => $city->id, 'base_cost' => 0, 'cost_per_kg' => 0, 'is_active' => true]);
+
+        $paidCable = Product::create(['name' => 'Paid Cable', 'slug' => 'paid-cable', 'sku' => 'BUY-PAID-CABLE', 'retail_price' => 10, 'stock_quantity' => 10, 'weight' => 0.2, 'status' => true]);
+        $freeCable = Product::create(['name' => 'Free Cable', 'slug' => 'free-cable', 'sku' => 'BUY-FREE-CABLE', 'retail_price' => 10, 'stock_quantity' => 2, 'weight' => 0.2, 'status' => true]);
+
+        $offer = FlashOffer::create([
+            'title' => ['en' => 'Buy 2 Get 1', 'ar' => 'اشتر 2 واحصل على 1'],
+            'slug' => 'buy-two-get-one-test',
+            'type' => FlashOffer::TYPE_BUY_X_GET_Y,
+            'offer_scope' => FlashOffer::SCOPE_PRODUCT,
+            'status' => FlashOffer::STATUS_ACTIVE,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addDay(),
+            'max_quantity' => 10,
+            'free_shipping_scope' => FlashOffer::FREE_SHIPPING_NONE,
+        ]);
+
+        FlashOfferItem::create(['flash_offer_id' => $offer->id, 'product_id' => $paidCable->id, 'quantity' => 2, 'original_price' => 10, 'is_free_item' => false]);
+        FlashOfferItem::create(['flash_offer_id' => $offer->id, 'product_id' => $freeCable->id, 'quantity' => 1, 'original_price' => 10, 'offer_price' => 0, 'is_free_item' => true]);
+
+        $cart = app(CartRepository::class)->findForUser($user->id);
+        app(OfferCartService::class)->addOfferToCart($cart, $offer, 2);
+
+        app(CreateOrderFromCart::class)->handle(new CheckoutData(
+            userId: $user->id,
+            paymentMethodId: $payment->id,
+            addressMode: 'saved',
+            shippingCityId: $city->id,
+            shippingCarrierId: $carrier->id,
+            userAddressId: $address->id,
+        ));
+
+        $this->assertSame(6, $paidCable->fresh()->stock_quantity);
+        $this->assertSame(0, $freeCable->fresh()->stock_quantity);
+
+        $this->expectException(ValidationException::class);
+        app(OfferCartService::class)->addOfferToCart($cart, $offer, 1);
+    }
 }

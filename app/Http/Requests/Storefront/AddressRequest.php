@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Storefront;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AddressRequest extends FormRequest
 {
@@ -17,7 +18,7 @@ class AddressRequest extends FormRequest
             'label' => ['nullable', 'string', 'max:100'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
-            'city_id' => ['required', 'exists:cities,id'],
+            'city_id' => ['required', Rule::exists('cities', 'id')->where('is_active', true)],
             'address_line' => ['required', 'string', 'max:255'],
             'building_number' => ['nullable', 'string', 'max:100'],
             'floor' => ['nullable', 'string', 'max:100'],

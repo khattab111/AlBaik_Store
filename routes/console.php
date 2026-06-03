@@ -2,11 +2,14 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
+use App\Jobs\SendNewsletterCampaignJob;
 use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\FlashOffer;
+use App\Models\NewsletterCampaign;
 use App\Models\Product;
 
 Artisan::command('inspire', function () {
@@ -49,3 +52,9 @@ Artisan::command('store:generate-missing-slugs', function () {
 
     $this->info("Done. {$total} records updated.");
 })->purpose('Generate missing slugs for store content models');
+
+Schedule::call(function (): void {
+    NewsletterCampaign::readyToSend()
+        ->orderBy('scheduled_at')
+        ->each(fn (NewsletterCampaign $campaign) => SendNewsletterCampaignJob::dispatch($campaign->id));
+})->everyMinute()->name('newsletter-scheduled-campaigns')->withoutOverlapping();

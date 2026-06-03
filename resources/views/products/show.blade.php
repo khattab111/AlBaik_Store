@@ -58,7 +58,7 @@
         'image' => [$mainImageUrl],
         'offers' => [
             '@type' => 'Offer',
-            'priceCurrency' => 'USD',
+            'priceCurrency' => $currentCurrency?->code ?? 'USD',
             'price' => (float) $pricing->price,
             'availability' => $stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             'url' => route('products.show', $product->slug),
@@ -85,7 +85,7 @@
         <span class="text-slate-950">{{ $product->name }}</span>
     </nav>
 
-    <div class="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <section class="store-panel p-4 sm:p-5" aria-label="{{ __('Product images') }}">
             <div class="grid gap-4 sm:grid-cols-[92px_1fr]">
                 <div class="order-2 grid grid-cols-4 gap-3 sm:order-1 sm:grid-cols-1">
@@ -117,7 +117,7 @@
                 </span>
             </div>
 
-            <h1 id="product-title" class="text-3xl font-black leading-tight text-slate-950 sm:text-5xl">{{ $product->name }}</h1>
+            <h1 id="product-title" class="store-safe-text text-3xl font-black leading-tight text-slate-950 sm:text-5xl">{{ $product->name }}</h1>
 
             <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
                 <span class="text-amber-500" aria-hidden="true">★★★★★</span>
@@ -132,7 +132,7 @@
                 <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                     @foreach($topSpecs as $label => $value)
                         <div class="rounded-2xl border border-slate-200 bg-white p-4 text-center">
-                            <p class="text-sm font-black text-slate-950">{{ $value }}</p>
+                            <p class="store-safe-text text-sm font-black text-slate-950">{{ $value }}</p>
                             <p class="mt-1 text-xs font-bold text-slate-500">{{ is_string($label) ? __(str_replace('_', ' ', ucfirst($label))) : __('Specification') }}</p>
                         </div>
                     @endforeach
@@ -142,9 +142,9 @@
             <div class="mt-7 border-y border-slate-200 py-6">
                 <div class="flex flex-wrap items-end gap-3">
                     @if($hasDiscount)
-                        <span class="text-xl font-black text-slate-400 line-through">USD {{ number_format((float) $pricing->originalPrice, 2) }}</span>
+                        <span class="text-xl font-black text-slate-400 line-through">{{ store_money((float) $pricing->originalPrice) }}</span>
                     @endif
-                    <span class="text-4xl font-black text-red-700">USD {{ number_format((float) $pricing->price, 2) }}</span>
+                    <span class="store-safe-text text-3xl font-black text-red-700 sm:text-4xl">{{ store_money((float) $pricing->price) }}</span>
                     @if($discountPercent)
                         <span class="rounded-full bg-red-50 px-3 py-1 text-sm font-black text-red-700">{{ __('Save') }} {{ $discountPercent }}%</span>
                     @endif
@@ -153,12 +153,12 @@
                     {{ $pricing->flashOffer ? __('Product flash offer price') : ($pricing->priceType === 'wholesale' ? __('Wholesale price applied for this quantity.') : __('Retail price')) }}
                 </p>
                 @if($hasDiscount)
-                    <p class="mt-1 text-sm font-black text-emerald-700">{{ __('You save USD :amount', ['amount' => number_format((float) $pricing->originalPrice - (float) $pricing->price, 2)]) }}</p>
+                    <p class="mt-1 text-sm font-black text-emerald-700">{{ __('You save :amount', ['amount' => store_money((float) $pricing->originalPrice - (float) $pricing->price)]) }}</p>
                 @endif
             </div>
 
             <div class="mt-6">
-                <p class="text-base leading-8 text-slate-600">{{ $product->short_description ?: __('A carefully selected product with verified store data and checkout-time shipping calculation.') }}</p>
+                <p class="store-safe-text text-base leading-8 text-slate-600">{{ $product->short_description ?: __('A carefully selected product with verified store data and checkout-time shipping calculation.') }}</p>
                 <p id="product-stock-help" class="mt-3 text-sm font-black {{ $stock > 0 ? 'text-emerald-700' : 'text-red-700' }}">
                     {{ __('Available quantity') }}: {{ $stock }}
                 </p>
@@ -174,7 +174,7 @@
                                 data-quantity="{{ $tier->min_quantity }}"
                                 data-price="{{ number_format((float) $tier->price, 2, '.', '') }}">
                                 <p class="text-sm font-black text-emerald-700">{{ $tier->min_quantity }}+ {{ __('pieces') }}</p>
-                                <p class="mt-1 text-xl font-black text-slate-950">USD {{ number_format((float) $tier->price, 2) }}</p>
+                                <p class="store-safe-text mt-1 text-xl font-black text-slate-950">{{ store_money((float) $tier->price) }}</p>
                             </button>
                         @endforeach
                     </div>
@@ -199,7 +199,7 @@
                         <label for="product-quantity" class="sr-only">{{ __('Quantity') }}</label>
                         <input id="product-quantity" type="number" name="quantity" value="1" min="1" class="store-field" aria-describedby="product-stock-help" data-product-quantity>
                     </div>
-                    <button class="store-button-primary" @disabled($stock <= 0)>{{ __('Add to Cart') }}</button>
+                    <button class="store-button-primary w-full text-base" @disabled($stock <= 0)>{{ __('Add to Cart') }}</button>
                 </form>
 
                 @auth
@@ -229,7 +229,7 @@
                 <div class="mt-5 grid gap-6 lg:grid-cols-[1fr_320px]">
                     <div>
                         <h3 class="text-lg font-black">{{ __('Full description') }}</h3>
-                        <p class="mt-3 whitespace-pre-line leading-8 text-slate-600">{{ $product->description ?: $product->short_description ?: __('No detailed description is available yet.') }}</p>
+                        <p class="store-safe-text mt-3 whitespace-pre-line leading-8 text-slate-600">{{ $product->description ?: $product->short_description ?: __('No detailed description is available yet.') }}</p>
                     </div>
                     <div class="rounded-3xl bg-slate-50 p-5">
                         <h3 class="font-black">{{ __('Why choose this product?') }}</h3>
@@ -237,7 +237,7 @@
                             @foreach($featureBullets as $feature)
                                 <li class="flex gap-2">
                                     <span class="mt-1 size-2 rounded-full bg-emerald-500"></span>
-                                    <span>{{ $feature }}</span>
+                                    <span class="store-safe-text">{{ $feature }}</span>
                                 </li>
                             @endforeach
                         </ul>
@@ -263,7 +263,7 @@
                         @if($value !== null && $value !== '')
                             <div class="rounded-2xl bg-slate-50 p-4">
                                 <dt class="text-xs font-black uppercase text-slate-500">{{ $label }}</dt>
-                                <dd class="mt-1 font-black text-slate-950">{{ $value }}</dd>
+                                <dd class="store-safe-text mt-1 font-black text-slate-950">{{ $value }}</dd>
                             </div>
                         @endif
                     @endforeach
@@ -276,7 +276,7 @@
                             @foreach($variantAttributes as $attribute => $value)
                                 <div class="rounded-2xl border border-slate-200 bg-white p-4">
                                     <dt class="text-xs font-black uppercase text-slate-500">{{ __(str_replace('_', ' ', ucfirst($attribute))) }}</dt>
-                                    <dd class="mt-1 font-black text-slate-950">{{ $value }}</dd>
+                                    <dd class="store-safe-text mt-1 font-black text-slate-950">{{ $value }}</dd>
                                 </div>
                             @endforeach
                         </dl>
@@ -290,13 +290,13 @@
                             @foreach($product->variants as $variant)
                                 <article class="rounded-2xl border border-slate-200 p-4">
                                     <div class="flex flex-wrap items-center justify-between gap-3">
-                                        <p class="font-black">{{ $variant->sku }}</p>
+                                        <p class="store-safe-text font-black">{{ $variant->sku }}</p>
                                         <p class="text-sm font-bold text-slate-500">{{ __('Available') }}: {{ $variant->available_stock }}</p>
                                     </div>
                                     @if($variant->attributes)
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             @foreach($variant->attributes as $attribute => $value)
-                                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">{{ __(str_replace('_', ' ', ucfirst($attribute))) }}: {{ $value }}</span>
+                                                <span class="store-safe-text rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">{{ __(str_replace('_', ' ', ucfirst($attribute))) }}: {{ $value }}</span>
                                             @endforeach
                                         </div>
                                     @endif
@@ -322,16 +322,16 @@
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
                                         <p class="text-xs font-black uppercase text-amber-700">{{ $offer['badge'] }}</p>
-                                        <h3 class="mt-1 text-xl font-black text-slate-950">{{ $offer['title'] }}</h3>
-                                        <p class="mt-2 text-sm font-bold text-slate-700">{{ $offer['summary'] }}</p>
+                                        <h3 class="store-safe-text mt-1 text-xl font-black text-slate-950">{{ $offer['title'] }}</h3>
+                                        <p class="store-safe-text mt-2 text-sm font-bold text-slate-700">{{ $offer['summary'] }}</p>
                                     </div>
                                     @if($offer['discount_percentage'] > 0)
                                         <span class="rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">-{{ $offer['discount_percentage'] }}%</span>
                                     @endif
                                 </div>
                                 <dl class="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-                                    <div class="flex justify-between gap-3"><dt>{{ __('Original') }}</dt><dd>USD {{ number_format((float) $offer['original_price'], 2) }}</dd></div>
-                                    <div class="flex justify-between gap-3"><dt>{{ __('Offer price') }}</dt><dd>USD {{ number_format((float) $offer['offer_price'], 2) }}</dd></div>
+                                    <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><dt>{{ __('Original') }}</dt><dd class="whitespace-nowrap">{{ store_money((float) $offer['original_price']) }}</dd></div>
+                                    <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><dt>{{ __('Offer price') }}</dt><dd class="whitespace-nowrap">{{ store_money((float) $offer['offer_price']) }}</dd></div>
                                     @if($offer['ends_at'])
                                         <div class="flex justify-between gap-3"><dt>{{ __('Ends at') }}</dt><dd>{{ $offer['ends_at']->format('Y-m-d H:i') }}</dd></div>
                                     @endif

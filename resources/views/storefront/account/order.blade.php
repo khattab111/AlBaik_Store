@@ -6,7 +6,7 @@
     <h1 class="mb-6 text-2xl font-bold">{{ $order->order_number }}</h1>
     <div class="mb-6 rounded border bg-white p-4">
         <p>{{ __('Status') }}: {{ $order->status }}</p>
-        <p>{{ __('Total') }}: {{ number_format((float) $order->total, 2) }} USD</p>
+        <p>{{ __('Total') }}: {{ store_money((float) $order->total) }}</p>
         <p>{{ __('Payment method') }}: {{ $order->paymentMethod?->name }}</p>
         <p>{{ __('Shipping carrier') }}: {{ $order->shipping_carrier_name ?? __('No shipping required') }}</p>
         <p>{{ __('Phone') }}: {{ $order->customer_phone }}</p>
@@ -25,7 +25,7 @@
     <section class="grid gap-3">
         @foreach ($order->items as $item)
             <div class="rounded border bg-white p-4">
-                {{ ($item->item_type ?? 'product') === 'offer' ? $item->offer_title : $item->product->name }} x {{ $item->quantity }} = {{ number_format((float) $item->total_price, 2) }} USD
+                {{ ($item->item_type ?? 'product') === 'offer' ? $item->offer_title : $item->product->name }} x {{ $item->quantity }} = {{ store_money((float) $item->total_price) }}
                 @if(($item->item_type ?? 'product') === 'offer')
                     <div class="mt-2 text-sm text-gray-600">
                         @foreach(collect($item->components_snapshot ?? [])->take(5) as $component)

@@ -21,20 +21,20 @@
         <div class="grid gap-4">
             @foreach($order->items as $item)
                 @php($isOffer = ($item->item_type ?? 'product') === 'offer')
-                <div class="store-panel flex flex-wrap items-center justify-between gap-4 p-5">
-                    <div>
-                        <h2 class="font-black">{{ $isOffer ? $item->offer_title : $item->product->name }}</h2>
+                <div class="store-panel grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div class="min-w-0">
+                        <h2 class="store-safe-text font-black">{{ $isOffer ? $item->offer_title : $item->product->name }}</h2>
                         @if($isOffer)
                             <p class="mt-1 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ __('Offer') }}</p>
                             <div class="mt-3 grid gap-1 text-xs font-bold text-slate-500">
                                 @foreach(collect($item->components_snapshot ?? [])->take(5) as $component)
-                                    <p>{{ $component['product_name'] ?? __('Product') }} × {{ $component['quantity'] ?? 1 }}</p>
+                                    <p class="store-safe-text">{{ $component['product_name'] ?? __('Product') }} × {{ $component['quantity'] ?? 1 }}</p>
                                 @endforeach
                             </div>
                         @endif
                         <p class="text-sm font-bold text-slate-500">{{ __('Quantity') }}: {{ $item->quantity }}</p>
                     </div>
-                    <p class="text-lg font-black text-red-700">USD {{ number_format((float)$item->total_price, 2) }}</p>
+                    <p class="text-lg font-black text-red-700 sm:whitespace-nowrap">{{ store_money((float) $item->total_price) }}</p>
                 </div>
             @endforeach
         </div>
@@ -43,8 +43,8 @@
             <h2 class="text-2xl font-black">{{ __('Summary') }}</h2>
             <div class="mt-5 grid gap-3 text-sm font-bold text-slate-600">
                 <p>{{ __('Status') }}: <span class="text-slate-950">{{ __($order->status) }}</span></p>
-                <p>{{ __('Total') }}: <span class="text-red-700">USD {{ number_format((float)$order->total, 2) }}</span></p>
-                <p>{{ __('Shipping Address') }}: {{ $order->shipping_country }} / {{ $order->shipping_city }} / {{ $order->shipping_town }} / {{ $order->shipping_street }}</p>
+                <p>{{ __('Total') }}: <span class="text-red-700">{{ store_money((float) $order->total) }}</span></p>
+                <p class="store-safe-text">{{ __('Shipping Address') }}: {{ $order->shipping_country }} / {{ $order->shipping_city }} / {{ $order->shipping_town }} / {{ $order->shipping_street }}</p>
                 <p>{{ __('Phone') }}: {{ $order->customer_phone }}</p>
                 <p>{{ __('WhatsApp') }}: {{ $order->customer_whatsapp }}</p>
                 @foreach($order->payments as $payment)

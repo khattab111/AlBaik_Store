@@ -30,13 +30,21 @@ class ShippingCarrierResource extends Resource
             static::translatableTabs(fn (string $code): array => [
                 Forms\Components\TextInput::make("name.{$code}")->label(__('Name'))->required()->maxLength(255),
             ]),
-            Forms\Components\TextInput::make('slug')->disabled()->dehydrated(false)->visible(fn ($record): bool => $record !== null),
-            Forms\Components\FileUpload::make('logo')->image()->directory('shipping-carriers'),
-            Forms\Components\TextInput::make('tracking_url')->url()->maxLength(255),
-            Forms\Components\TextInput::make('api_endpoint')->url()->maxLength(255),
-            Forms\Components\TextInput::make('api_key')->password()->revealable()->maxLength(255),
-            Forms\Components\Select::make('status')->options(ShippingCarrier::statusOptions())->default(ShippingCarrier::STATUS_ACTIVE)->required(),
-            Forms\Components\TextInput::make('sort_order')->numeric(),
+            Forms\Components\TextInput::make('slug')->label(__('Slug'))->disabled()->dehydrated(false)->visible(fn ($record): bool => $record !== null),
+            Forms\Components\FileUpload::make('logo')
+                ->label(__('Logo'))
+                ->image()
+                ->disk('public')
+                ->directory('shipping-carriers')
+                ->visibility('public')
+                ->imagePreviewHeight('100')
+                ->openable()
+                ->downloadable(),
+            Forms\Components\TextInput::make('tracking_url')->label(__('Tracking URL'))->url()->maxLength(255),
+            Forms\Components\TextInput::make('api_endpoint')->label(__('API Endpoint'))->url()->maxLength(255),
+            Forms\Components\TextInput::make('api_key')->label(__('API Key'))->password()->revealable()->maxLength(255),
+            Forms\Components\Select::make('status')->label(__('Status'))->options(ShippingCarrier::statusOptions())->default(ShippingCarrier::STATUS_ACTIVE)->required(),
+            Forms\Components\TextInput::make('sort_order')->label(__('Sort order'))->numeric(),
         ]);
     }
 
@@ -44,10 +52,10 @@ class ShippingCarrierResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('logo'),
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('status')->badge()->sortable(),
-                Tables\Columns\TextColumn::make('sort_order')->sortable(),
+                Tables\Columns\ImageColumn::make('logo')->label(__('Logo'))->disk('public'),
+                Tables\Columns\TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('status')->label(__('Status'))->badge()->formatStateUsing(fn (string $state): string => ShippingCarrier::statusOptions()[$state] ?? $state)->sortable(),
+                Tables\Columns\TextColumn::make('sort_order')->label(__('Sort order'))->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(ShippingCarrier::statusOptions()),

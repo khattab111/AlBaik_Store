@@ -246,8 +246,8 @@ class ElectronicsProductsSeeder extends Seeder
             $tagIds = collect($data['tags'])->map(fn ($slug) => Tag::where('slug', $slug)->value('id'))->filter()->values()->all();
             $product->tags()->sync($tagIds);
 
-            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => 'demo/products/'.$data['slug'].'-main.jpg'], ['alt_text' => $data['name_ar'], 'is_primary' => true]);
-            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => 'demo/products/'.$data['slug'].'-gallery.jpg'], ['alt_text' => $data['name_ar'].' gallery', 'is_primary' => false]);
+            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => 'demo/products/'.$data['slug'].'-main.jpg'], ['alt_text' => $this->tr($data['name'], $data['name_ar']), 'is_primary' => true]);
+            ProductImage::updateOrCreate(['product_id' => $product->id, 'path' => 'demo/products/'.$data['slug'].'-gallery.jpg'], ['alt_text' => $this->tr($data['name'].' gallery', $data['name_ar'].' gallery'), 'is_primary' => false]);
 
             ProductPriceTier::updateOrCreate(['product_id' => $product->id, 'type' => 'retail', 'min_quantity' => 1], ['price' => $data['retail_price'], 'is_active' => true, 'sort_order' => 1]);
             ProductPriceTier::updateOrCreate(['product_id' => $product->id, 'type' => 'wholesale', 'min_quantity' => $data['wholesale_minimum_quantity']], ['price' => $data['wholesale_price'], 'is_active' => true, 'sort_order' => 10]);

@@ -17,7 +17,7 @@
                             @endforeach
                         </div>
                     @endif
-                    <p class="text-sm text-gray-600">{{ number_format((float) $item->unit_price, 2) }} USD</p>
+                    <p class="text-sm text-gray-600">{{ store_money((float) $item->unit_price) }}</p>
                 </div>
                 <form method="POST" action="{{ route('cart.items.update', $item) }}" class="flex gap-2">
                     @csrf
@@ -36,7 +36,7 @@
         @endforelse
     </section>
     <div class="mt-6 rounded border bg-white p-4">
-        <p class="font-bold">{{ __('Subtotal') }}: {{ number_format($subtotal, 2) }} USD</p>
+        <p class="font-bold">{{ __('Subtotal') }}: {{ store_money($subtotal) }}</p>
         <a href="{{ route('checkout.index') }}" class="mt-3 inline-block rounded bg-gray-950 px-4 py-2 text-white">{{ __('Checkout') }}</a>
     </div>
 @endsection

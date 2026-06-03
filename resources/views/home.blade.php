@@ -34,20 +34,20 @@
                 <article class="{{ $index === 0 ? 'relative opacity-100' : 'absolute inset-0 opacity-0' }} isolate min-h-[520px] overflow-hidden transition-opacity duration-700" data-hero-slide aria-hidden="{{ $index === 0 ? 'false' : 'true' }}">
                     <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(217,154,22,.14),transparent_28%),linear-gradient(135deg,#fff,#f5f7fb)]"></div>
                     <div class="mx-auto grid min-h-[520px] max-w-7xl items-center gap-8 px-5 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-12">
-                        <div class="relative z-10 max-w-3xl">
-                            <div class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 shadow-sm">
+                        <div class="relative z-10 min-w-0 max-w-3xl">
+                            <div class="store-safe-text inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 shadow-sm">
                                 <span aria-hidden="true">●</span>
                                 {{ $eyebrow }}
                             </div>
-                            <h1 class="mt-6 text-4xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                            <h1 class="store-safe-text mt-6 text-4xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
                                 {{ $title }}
                             </h1>
-                            <p class="mt-5 max-w-2xl text-base font-bold leading-8 text-slate-600 sm:text-lg">
+                            <p class="store-safe-text mt-5 max-w-2xl text-base font-bold leading-8 text-slate-600 sm:text-lg">
                                 {{ $subtitle }}
                             </p>
                             <div class="mt-8 flex flex-wrap gap-3">
-                                <a href="{{ $slide->url ?: route('products.index') }}" class="store-button-primary">{{ $primaryText }} <span aria-hidden="true">←</span></a>
-                                <a href="{{ $slide->secondary_url ?: route('offers.index') }}" class="store-button-secondary">{{ $secondaryText }}</a>
+                                <a href="{{ $slide->url ?: route('products.index') }}" class="store-button-primary w-full sm:w-auto">{{ $primaryText }} <span aria-hidden="true">←</span></a>
+                                <a href="{{ $slide->secondary_url ?: route('offers.index') }}" class="store-button-secondary w-full sm:w-auto">{{ $secondaryText }}</a>
                             </div>
                             <div class="mt-10 grid max-w-xl grid-cols-3 gap-3 text-center">
                                 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -69,9 +69,9 @@
                                 <img src="{{ $heroImage }}" class="aspect-[5/4] w-full rounded-[1.5rem] object-contain" alt="{{ $title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async">
                             </div>
                             @if ($featuredOffer)
-                                <a href="{{ route('offers.index') }}" class="absolute bottom-6 right-6 max-w-xs rounded-3xl border border-slate-200 bg-white p-5 text-slate-950 shadow-2xl transition hover:-translate-y-1 rtl:left-6 rtl:right-auto">
+                                <a href="{{ route('offers.index') }}" class="absolute bottom-4 right-4 max-w-[calc(100%-2rem)] rounded-3xl border border-slate-200 bg-white p-4 text-slate-950 shadow-2xl transition hover:-translate-y-1 sm:bottom-6 sm:right-6 sm:max-w-xs sm:p-5 rtl:left-4 rtl:right-auto sm:rtl:left-6">
                                     <p class="text-xs font-black uppercase tracking-normal text-amber-600">{{ __('Limited deals') }}</p>
-                                    <h2 class="mt-1 text-xl font-black">{{ $featuredOffer->title }}</h2>
+                                    <h2 class="store-safe-text mt-1 text-base font-black sm:text-xl">{{ $featuredOffer->title }}</h2>
                                     <p class="mt-2 text-sm font-bold text-slate-500">{{ __('View Offers') }}</p>
                                 </a>
                             @endif
@@ -111,30 +111,34 @@
     <section class="store-section pt-4">
         <div class="mb-7 flex items-end justify-between gap-4">
             <div>
-                <p class="store-eyebrow">{{ __('Shop by category') }}</p>
-                <h2 class="store-section-title">{{ __('Popular Categories') }}</h2>
+                <p class="store-eyebrow">{{ __('Trusted brands') }}</p>
+                <h2 class="store-section-title">{{ __('Brand Wall') }}</h2>
             </div>
-            <a href="{{ route('categories.index') }}" class="store-button-secondary">{{ __('View All') }}</a>
+            <a href="{{ route('brands.index') }}" class="store-button-secondary">{{ __('View All') }}</a>
         </div>
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            @forelse ($categories as $category)
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            @forelse ($brands as $brand)
                 @php
-                    $categoryImage = match ($category->slug) {
-                        'food', 'sandwiches', 'sauces' => asset('images/storefront/category-food.svg'),
-                        'electronics', 'drinkware' => asset('images/storefront/category-electronics.svg'),
-                        'bulk-supplies', 'bulk' => asset('images/storefront/category-bulk.svg'),
-                        default => asset('images/storefront/category-default.svg'),
-                    };
+                    $logoUrl = $brand->logo && file_exists(public_path('storage/'.$brand->logo)) ? asset('storage/'.$brand->logo) : null;
                 @endphp
-                <a href="{{ route('categories.show', $category->slug) }}" class="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl">
-                    <img src="{{ $categoryImage }}" class="aspect-[7/4] w-full object-cover" alt="{{ $category->name }}">
-                    <div class="p-5">
-                        <h3 class="text-lg font-black">{{ $category->name }}</h3>
-                        <p class="mt-1 text-sm font-bold text-slate-500">{{ $category->products_count }} {{ __('Products') }}</p>
+                <a href="{{ route('brands.show', $brand->slug) }}" class="group store-panel relative flex min-h-44 items-center overflow-hidden p-5 transition hover:-translate-y-1 hover:shadow-xl">
+                    <span class="absolute end-4 top-4 rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">{{ $brand->products_count }} {{ __('Products') }}</span>
+                    <div class="flex w-full items-center gap-4">
+                        <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 p-3 transition group-hover:border-amber-200 group-hover:bg-white">
+                            @if ($logoUrl)
+                                <img src="{{ $logoUrl }}" class="max-h-full max-w-full object-contain" alt="{{ $brand->name }}">
+                            @else
+                                <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-2xl font-black text-red-700 transition group-hover:bg-red-700 group-hover:text-white">{{ mb_substr($brand->name, 0, 1) }}</span>
+                            @endif
+                        </div>
+                        <div class="min-w-0 pt-7">
+                            <h3 class="store-safe-text text-lg font-black">{{ $brand->name }}</h3>
+                            <p class="mt-2 text-sm font-bold text-slate-500">{{ __('View brand') }}</p>
+                        </div>
                     </div>
                 </a>
             @empty
-                <p class="text-slate-500">{{ __('No categories found.') }}</p>
+                <p class="text-slate-500">{{ __('No brands found.') }}</p>
             @endforelse
         </div>
     </section>
@@ -237,28 +241,30 @@
     <section class="store-section">
         <div class="mb-7 flex items-end justify-between gap-4">
             <div>
-                <p class="store-eyebrow">{{ __('Trusted brands') }}</p>
-                <h2 class="store-section-title">{{ __('Brand Wall') }}</h2>
+                <p class="store-eyebrow">{{ __('Shop by category') }}</p>
+                <h2 class="store-section-title">{{ __('Popular Categories') }}</h2>
             </div>
-            <a href="{{ route('brands.index') }}" class="store-button-secondary">{{ __('View All') }}</a>
+            <a href="{{ route('categories.index') }}" class="store-button-secondary">{{ __('View All') }}</a>
         </div>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            @forelse ($brands as $brand)
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            @forelse ($categories as $category)
                 @php
-                    $logoUrl = $brand->logo && file_exists(public_path('storage/'.$brand->logo)) ? asset('storage/'.$brand->logo) : null;
+                    $categoryImage = match ($category->slug) {
+                        'food', 'sandwiches', 'sauces' => asset('images/storefront/category-food.svg'),
+                        'electronics', 'drinkware' => asset('images/storefront/category-electronics.svg'),
+                        'bulk-supplies', 'bulk' => asset('images/storefront/category-bulk.svg'),
+                        default => asset('images/storefront/category-default.svg'),
+                    };
                 @endphp
-                <a href="{{ route('brands.show', $brand->slug) }}" class="store-panel flex min-h-32 items-center justify-center p-6 text-center transition hover:-translate-y-1 hover:shadow-lg">
-                    <div>
-                        @if ($logoUrl)
-                            <img src="{{ $logoUrl }}" class="mx-auto h-16 max-w-36 object-contain" alt="{{ $brand->name }}">
-                        @else
-                            <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-2xl font-black text-red-700">{{ mb_substr($brand->name, 0, 1) }}</span>
-                        @endif
-                        <h3 class="mt-3 font-black">{{ $brand->name }}</h3>
+                <a href="{{ route('categories.show', $category->slug) }}" class="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+                    <img src="{{ $categoryImage }}" class="aspect-[7/4] w-full object-cover" alt="{{ $category->name }}">
+                    <div class="p-5">
+                        <h3 class="store-safe-text text-lg font-black">{{ $category->name }}</h3>
+                        <p class="mt-1 text-sm font-bold text-slate-500">{{ $category->products_count }} {{ __('Products') }}</p>
                     </div>
                 </a>
             @empty
-                <p class="text-slate-500">{{ __('No brands found.') }}</p>
+                <p class="text-slate-500">{{ __('No categories found.') }}</p>
             @endforelse
         </div>
     </section>
@@ -282,8 +288,9 @@
                     <h2 class="mt-2 text-3xl font-black">{{ __('Subscribe to receive the latest offers') }}</h2>
                     <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-200">{{ __('Get launch offers, restock alerts, and wholesale updates directly in your inbox.') }}</p>
                 </div>
-                <form method="POST" action="{{ route('newsletter.store') }}" class="flex w-full max-w-xl flex-col gap-3 sm:flex-row">
+                <form method="POST" action="{{ route('newsletter.subscribe') }}" class="flex w-full max-w-xl flex-col gap-3 sm:flex-row">
                     @csrf
+                    <input type="hidden" name="source" value="homepage">
                     <input type="email" name="email" class="min-w-0 flex-1 rounded-2xl border-0 px-4 py-3 text-slate-950 outline-none" placeholder="{{ __('Email address') }}" required>
                     <button class="rounded-2xl bg-amber-400 px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-300">{{ __('Subscribe') }}</button>
                 </form>

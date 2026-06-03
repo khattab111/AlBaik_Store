@@ -58,16 +58,19 @@ class FlashOfferResource extends Resource
                     ->required()
                     ->default(FlashOffer::SCOPE_PRODUCT),
                 Forms\Components\Select::make('status')
+                    ->label(__('Status'))
                     ->options(FlashOffer::statusOptions())
                     ->required()
                     ->default(FlashOffer::STATUS_DRAFT),
                 Forms\Components\DateTimePicker::make('starts_at')->label(__('Starts at')),
                 Forms\Components\DateTimePicker::make('ends_at')->label(__('Ends at')),
                 Forms\Components\TextInput::make('priority')
+                    ->label(__('Priority'))
                     ->numeric()
                     ->default(0)
                     ->helperText(__('Higher priority offers are evaluated first.')),
                 Forms\Components\Select::make('discount_type')
+                    ->label(__('Discount type'))
                     ->options([
                         'percentage' => __('Percentage'),
                         'fixed' => __('Fixed amount'),
@@ -82,6 +85,7 @@ class FlashOfferResource extends Resource
                     ], true))
                     ->default(fn (Forms\Get $get): string => $get('type') === FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT ? 'fixed' : 'percentage'),
                 Forms\Components\TextInput::make('discount_value')
+                    ->label(__('Discount value'))
                     ->numeric()
                     ->minValue(0)
                     ->visible(fn (Forms\Get $get): bool => in_array($get('type'), [
@@ -89,6 +93,7 @@ class FlashOfferResource extends Resource
                         FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT,
                     ], true)),
                 Forms\Components\TextInput::make('fixed_price')
+                    ->label(__('Fixed price'))
                     ->numeric()
                     ->minValue(0)
                     ->visible(fn (Forms\Get $get): bool => in_array($get('type'), [
@@ -96,10 +101,12 @@ class FlashOfferResource extends Resource
                         FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
                     ], true)),
                 Forms\Components\TextInput::make('max_quantity')
+                    ->label(__('Max quantity'))
                     ->numeric()
                     ->minValue(1)
                     ->helperText(__('Maximum total quantity that can be sold through this offer.')),
                 Forms\Components\TextInput::make('sold_quantity')
+                    ->label(__('Sold quantity'))
                     ->numeric()
                     ->disabled()
                     ->dehydrated(false)
@@ -116,9 +123,9 @@ class FlashOfferResource extends Resource
                     ->options(FlashOffer::freeShippingScopeOptions())
                     ->required()
                     ->default(FlashOffer::FREE_SHIPPING_NONE),
-                Forms\Components\TextInput::make('min_order_amount')->numeric()->minValue(0),
-                Forms\Components\TextInput::make('usage_limit')->numeric()->minValue(1),
-                Forms\Components\TextInput::make('usage_per_user')->numeric()->minValue(1),
+                Forms\Components\TextInput::make('min_order_amount')->label(__('Min order amount'))->numeric()->minValue(0),
+                Forms\Components\TextInput::make('usage_limit')->label(__('Usage limit'))->numeric()->minValue(1),
+                Forms\Components\TextInput::make('usage_per_user')->label(__('Usage per user'))->numeric()->minValue(1),
             ])->columns(2),
             Forms\Components\Section::make(__('Offer Products'))->schema([
                 Forms\Components\Repeater::make('items')
@@ -131,14 +138,17 @@ class FlashOfferResource extends Resource
                             ->preload()
                             ->required(),
                         Forms\Components\TextInput::make('quantity')
+                            ->label(__('Quantity'))
                             ->numeric()
                             ->minValue(1)
                             ->default(1),
                         Forms\Components\TextInput::make('original_price')
+                            ->label(__('Original price'))
                             ->numeric()
                             ->minValue(0)
                             ->helperText(__('Optional snapshot. Leave empty to use the current product price.')),
                         Forms\Components\TextInput::make('offer_price')
+                            ->label(__('Offer price'))
                             ->numeric()
                             ->minValue(0)
                             ->helperText(__('Used by fixed price, bundle, and buy X get Y offers.')),
@@ -157,16 +167,16 @@ class FlashOfferResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('type')->badge()->formatStateUsing(fn (string $state): string => FlashOffer::typeOptions()[$state] ?? $state),
-                Tables\Columns\TextColumn::make('offer_scope')->badge(),
-                Tables\Columns\TextColumn::make('status')->badge(),
-                Tables\Columns\TextColumn::make('starts_at')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('ends_at')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('priority')->sortable(),
+                Tables\Columns\TextColumn::make('title')->label(__('Title'))->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('type')->label(__('Offer Type'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::typeOptions()[$state] ?? $state),
+                Tables\Columns\TextColumn::make('offer_scope')->label(__('Offer Scope'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::scopeOptions()[$state] ?? $state),
+                Tables\Columns\TextColumn::make('status')->label(__('Status'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::statusOptions()[$state] ?? $state),
+                Tables\Columns\TextColumn::make('starts_at')->label(__('Starts at'))->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('ends_at')->label(__('Ends at'))->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('priority')->label(__('Priority'))->sortable(),
                 Tables\Columns\TextColumn::make('sold_quantity')->label(__('Sold')),
                 Tables\Columns\TextColumn::make('max_quantity')->label(__('Limit')),
-                Tables\Columns\IconColumn::make('free_shipping')->boolean(),
+                Tables\Columns\IconColumn::make('free_shipping')->label(__('Free Shipping'))->boolean(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(FlashOffer::statusOptions()),

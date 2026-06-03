@@ -56,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.app', function ($view): void {
             $user = auth()->user();
             $siteSettings = app(SiteSettingService::class);
+            $currencyService = app(CurrencyService::class);
             $cartCount = 0;
             $wishlistCount = 0;
 
@@ -79,6 +80,8 @@ class AppServiceProvider extends ServiceProvider
                 'siteIdentity' => $siteSettings->identity(),
                 'siteContact' => $siteSettings->contact(),
                 'siteSocial' => $siteSettings->social(),
+                'supportedCurrencies' => $currencyService->activeCurrencies(),
+                'currentCurrency' => $currencyService->currentCurrency(),
             ]);
         });
     }

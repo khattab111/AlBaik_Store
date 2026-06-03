@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InventoryMovementResource\Pages;
 use App\Models\InventoryMovement;
+use App\Models\ProductVariant;
+use App\Models\Warehouse;
 use App\Traits\TranslationTrait;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -23,8 +25,8 @@ class InventoryMovementResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Select::make('warehouse_id')->relationship('warehouse', 'name')->required()->searchable(),
-            Forms\Components\Select::make('product_variant_id')->relationship('variant', 'sku')->required()->searchable(),
+            Forms\Components\Select::make('warehouse_id')->options(fn () => Warehouse::where('is_active', true)->get()->pluck('name', 'id'))->required()->searchable(),
+            Forms\Components\Select::make('product_variant_id')->options(fn () => ProductVariant::query()->pluck('sku', 'id'))->required()->searchable(),
             Forms\Components\Select::make('type')->options(['purchase' => __('Purchase'), 'sale' => __('Sale'), 'adjustment' => __('Adjustment'), 'return' => __('Return')])->required(),
             Forms\Components\TextInput::make('quantity')->numeric()->required(),
             Forms\Components\TextInput::make('source_type'),

@@ -37,8 +37,12 @@ class PaymentMethodResource extends Resource
             Forms\Components\FileUpload::make('image')
                 ->image()
                 ->imageEditor()
+                ->disk('public')
                 ->directory('payment-methods')
-                ->visibility('public'),
+                ->visibility('public')
+                ->imagePreviewHeight('120')
+                ->openable()
+                ->downloadable(),
             Forms\Components\TextInput::make('wallet_url')
                 ->label(__('Wallet Link'))
                 ->maxLength(255)
@@ -47,8 +51,12 @@ class PaymentMethodResource extends Resource
                 ->label(__('Barcode Image'))
                 ->image()
                 ->imageEditor()
+                ->disk('public')
                 ->directory('payment-method-barcodes')
-                ->visibility('public'),
+                ->visibility('public')
+                ->imagePreviewHeight('120')
+                ->openable()
+                ->downloadable(),
             Forms\Components\KeyValue::make('settings'),
             Forms\Components\TextInput::make('fee')->numeric()->default(0),
             Forms\Components\Toggle::make('is_active')->default(true),
@@ -58,7 +66,7 @@ class PaymentMethodResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            Tables\Columns\ImageColumn::make('image')->circular(),
+            Tables\Columns\ImageColumn::make('image')->disk('public')->circular(),
             Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
             Tables\Columns\TextColumn::make('type')->sortable(),
             Tables\Columns\TextColumn::make('wallet_url')->label(__('Wallet Link'))->limit(40),

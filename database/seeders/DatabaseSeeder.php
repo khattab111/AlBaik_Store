@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ElectronicsCatalogSeeder::class,
             ElectronicsProductsSeeder::class,
             MarketingOffersSeeder::class,
+            NewsletterTemplateSeeder::class,
             DemoCustomerDataSeeder::class,
             StoreSettingsAndBannersSeeder::class,
         ]);

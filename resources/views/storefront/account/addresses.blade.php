@@ -18,8 +18,8 @@
         <p class="mt-3 max-w-2xl leading-7 text-slate-600">{{ __('Keep delivery information clear for faster checkout.') }}</p>
     </div>
 
-    <div class="grid gap-8 lg:grid-cols-[360px_1fr]">
-        <form method="POST" action="{{ route('account.addresses.store') }}" class="store-panel grid h-fit gap-4 p-6">
+    <div class="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <form method="POST" action="{{ route('account.addresses.store') }}" class="store-panel grid h-fit gap-4 p-5 sm:p-6">
             @csrf
             <h2 class="text-2xl font-black">{{ __('Add Address') }}</h2>
             <input name="label" placeholder="{{ __('Label') }}" class="store-field">
@@ -45,29 +45,29 @@
             @forelse ($addresses as $address)
                 <div class="store-panel p-5">
                     <div class="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                            <strong class="text-lg">{{ $address->label ?: __('Address') }}</strong>
+                        <div class="min-w-0">
+                            <strong class="store-safe-text text-lg">{{ $address->label ?: __('Address') }}</strong>
                             @if($address->is_default)
                                 <span class="ms-2 rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">{{ __('Default') }}</span>
                             @endif
-                            <p class="mt-1 text-sm font-bold text-slate-500">{{ $address->recipient_name }} - {{ __('Phone') }}: {{ $address->phone }}</p>
-                            <p class="mt-2 text-sm leading-6 text-slate-600">{{ $address->city?->name }} / {{ $address->address_line }}</p>
+                            <p class="store-safe-text mt-1 text-sm font-bold text-slate-500">{{ $address->recipient_name }} - {{ __('Phone') }}: {{ $address->phone }}</p>
+                            <p class="store-safe-text mt-2 text-sm leading-6 text-slate-600">{{ $address->city?->name }} / {{ $address->address_line }}</p>
                             @if($address->landmark)
-                                <p class="mt-1 text-sm text-slate-500">{{ __('Landmark') }}: {{ $address->landmark }}</p>
+                                <p class="store-safe-text mt-1 text-sm text-slate-500">{{ __('Landmark') }}: {{ $address->landmark }}</p>
                             @endif
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="grid w-full gap-2 sm:w-auto sm:grid-cols-2">
                             @unless($address->is_default)
                                 <form method="POST" action="{{ route('account.addresses.default', $address) }}">
                                     @csrf
                                     @method('PATCH')
-                                    <button class="rounded-2xl border border-emerald-200 px-4 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-50">{{ __('Set Default') }}</button>
+                                    <button class="w-full rounded-2xl border border-emerald-200 px-4 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-50">{{ __('Set Default') }}</button>
                                 </form>
                             @endunless
                             <form method="POST" action="{{ route('account.addresses.destroy', $address) }}">
                                 @csrf
                                 @method('DELETE')
-                                <button class="rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
+                                <button class="w-full rounded-2xl border border-red-200 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-50">{{ __('Delete') }}</button>
                             </form>
                         </div>
                     </div>

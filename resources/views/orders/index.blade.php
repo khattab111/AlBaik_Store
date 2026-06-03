@@ -21,9 +21,9 @@
     <div class="grid gap-4">
         @forelse($orders as $order)
             <a href="{{ route('orders.show', $order) }}" class="store-panel grid gap-4 p-5 transition hover:-translate-y-1 hover:shadow-lg md:grid-cols-4">
-                <strong class="text-lg">{{ $order->order_number }}</strong>
+                <strong class="store-safe-text text-lg">{{ $order->order_number }}</strong>
                 <span class="font-bold text-slate-600">{{ __($order->status) }}</span>
-                <span class="font-black text-red-700">USD {{ number_format((float)$order->total, 2) }}</span>
+                <span class="font-black text-red-700">{{ store_money((float) $order->total) }}</span>
                 <span class="text-sm font-bold text-slate-500">{{ $order->created_at->format('Y-m-d') }}</span>
             </a>
         @empty

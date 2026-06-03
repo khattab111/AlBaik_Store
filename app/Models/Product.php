@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasStoreTranslations;
 use App\Models\Concerns\HasAutoSlug;
+use App\Services\StorefrontCacheService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,6 +61,14 @@ class Product extends Model
         'requires_shipping' => 'boolean',
         'free_shipping' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        $clearStorefrontCache = fn (): mixed => app(StorefrontCacheService::class)->clearHome();
+
+        static::saved($clearStorefrontCache);
+        static::deleted($clearStorefrontCache);
+    }
 
     public function brand(): BelongsTo
     {

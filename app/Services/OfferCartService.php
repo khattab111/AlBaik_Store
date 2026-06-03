@@ -60,17 +60,18 @@ class OfferCartService
         }
 
         foreach ($offer->items as $item) {
-            if (! $item->product || $item->is_free_item) {
+            if (! $item->product) {
                 continue;
             }
 
             $required = max(1, (int) $item->quantity) * $quantity;
+            $stock = (int) Product::whereKey($item->product_id)->value('stock_quantity');
 
-            if ($item->product->stock_quantity < $required) {
+            if ($stock < $required) {
                 throw ValidationException::withMessages([
                     'quantity' => __('Insufficient stock for :product. Available: :stock.', [
                         'product' => $item->product->name,
-                        'stock' => $item->product->stock_quantity,
+                        'stock' => $stock,
                     ]),
                 ]);
             }
@@ -131,11 +132,23 @@ class OfferCartService
         $this->validateOfferAvailability($offer, $quantity);
 
         foreach ($offer->items as $item) {
-            if (! $item->product || $item->is_free_item) {
+            if (! $item->product) {
                 continue;
             }
 
-            Product::whereKey($item->product_id)->decrement('stock_quantity', max(1, (int) $item->quantity) * $quantity);
+            $required = max(1, (int) $item->quantity) * $quantity;
+            $product = Product::whereKey($item->product_id)->lockForUpdate()->firstOrFail();
+
+            if ($product->stock_quantity < $required) {
+                throw ValidationException::withMessages([
+                    'quantity' => __('Insufficient stock for :product. Available: :stock.', [
+                        'product' => $product->name,
+                        'stock' => $product->stock_quantity,
+                    ]),
+                ]);
+            }
+
+            $product->decrement('stock_quantity', $required);
         }
 
         $this->flashOffers->reserveOfferQuantity($offer, $quantity);

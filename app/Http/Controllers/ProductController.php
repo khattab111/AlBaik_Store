@@ -17,9 +17,22 @@ class ProductController extends Controller
 {
     public function index(ProductFilterRequest $request): View
     {
+        return $this->productIndexView($request, $request->filters());
+    }
+
+    public function latest(ProductFilterRequest $request): View
+    {
+        return $this->productIndexView($request, [
+            ...$request->filters(),
+            'sort' => 'latest',
+        ])->with('pageTitle', __('New Arrivals'));
+    }
+
+    private function productIndexView(Request $request, array $filters): View
+    {
         $locale = app()->getLocale();
-        $filters = $request->filters();
         $displayMode = $filters['view'] ?? 'grid';
+        $perPage = (int) ($filters['per_page'] ?? 12);
 
         $query = Product::with(['brand', 'category', 'images', 'reviews', 'priceTiers'])
             ->where('status', true);
@@ -41,20 +54,19 @@ class ProductController extends Controller
         };
 
         return view('products.index', [
-            'products' => $query->paginate(12)->withQueryString(),
-            'categories' => Category::where('status', true)->orderBy("name->{$locale}")->get(),
-            'brands' => Brand::where('status', true)->orderBy("name->{$locale}")->get(),
+            'products' => $query->paginate(in_array($perPage, [12, 24, 36, 48], true) ? $perPage : 12)->withQueryString(),
+            'categories' => Category::where('status', true)
+                ->withCount(['products' => fn ($builder) => $builder->where('status', true)])
+                ->orderBy("name->{$locale}")
+                ->get(),
+            'brands' => Brand::where('status', true)
+                ->withCount(['products' => fn ($builder) => $builder->where('status', true)])
+                ->orderBy("name->{$locale}")
+                ->get(),
             'filters' => $filters,
             'displayMode' => $displayMode,
             'pageBanners' => Banner::activeNow()->forPlacement(['shop', Banner::PLACEMENT_PRODUCTS_TOP])->orderBy('sort_order')->get(),
         ]);
-    }
-
-    public function latest(Request $request): View
-    {
-        $request->merge(['sort' => 'latest']);
-
-        return $this->index($request)->with('pageTitle', __('New Arrivals'));
     }
 
     public function show(Product $product, Request $request, ProductPricingService $pricing, FlashOfferPresenter $offers, FlashOfferService $flashOffers): View

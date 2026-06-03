@@ -242,6 +242,8 @@ const initializeHeaderNavigation = () => {
     const menu = document.querySelector('[data-mobile-menu]');
     const languageMenu = document.querySelector('.store-language-menu');
     const languageToggle = document.querySelector('[data-language-toggle]');
+    const currencyToggle = document.querySelector('[data-currency-toggle]');
+    const currencyMenu = currencyToggle?.closest('.store-language-menu');
 
     document.querySelectorAll('[data-mobile-menu-open]').forEach((button) => {
         button.addEventListener('click', () => {
@@ -263,15 +265,27 @@ const initializeHeaderNavigation = () => {
         event.stopPropagation();
         const isOpen = languageMenu?.classList.toggle('is-open') || false;
         languageToggle.setAttribute('aria-expanded', String(isOpen));
+        currencyMenu?.classList.remove('is-open');
+        currencyToggle?.setAttribute('aria-expanded', 'false');
+    });
+
+    currencyToggle?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = currencyMenu?.classList.toggle('is-open') || false;
+        currencyToggle.setAttribute('aria-expanded', String(isOpen));
+        languageMenu?.classList.remove('is-open');
+        languageToggle?.setAttribute('aria-expanded', 'false');
     });
 
     document.addEventListener('click', (event) => {
-        if (!languageMenu || languageMenu.contains(event.target)) {
+        if (languageMenu?.contains(event.target) || currencyMenu?.contains(event.target)) {
             return;
         }
 
         languageMenu.classList.remove('is-open');
         languageToggle?.setAttribute('aria-expanded', 'false');
+        currencyMenu?.classList.remove('is-open');
+        currencyToggle?.setAttribute('aria-expanded', 'false');
     });
 };
 
@@ -287,10 +301,16 @@ const updateCount = (selector, value) => {
     });
 };
 
-const initializeAsyncStoreActions = () => {
+const initializeAsyncStoreActions = (root = document) => {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-    document.querySelectorAll('[data-ajax-store-action]').forEach((form) => {
+    root.querySelectorAll('[data-ajax-store-action]').forEach((form) => {
+        if (form.dataset.ajaxStoreBound === 'true') {
+            return;
+        }
+
+        form.dataset.ajaxStoreBound = 'true';
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
@@ -339,6 +359,166 @@ const initializeAsyncStoreActions = () => {
                 button?.removeAttribute('disabled');
                 form.classList.remove('is-submitting');
             }
+        });
+    });
+};
+
+const initializeAjaxFilters = (root = document) => {
+    const loadTarget = async (url, targetSelector, pushState = true) => {
+        const target = document.querySelector(targetSelector);
+
+        if (!target) {
+            window.location.href = url;
+            return;
+        }
+
+        target.classList.add('is-loading');
+
+        try {
+            const response = await window.fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                },
+            });
+
+            const html = await response.text();
+
+            if (!response.ok) {
+                throw new Error('Unable to load results.');
+            }
+
+            const parser = new DOMParser();
+            const nextDocument = parser.parseFromString(html, 'text/html');
+            const nextTarget = nextDocument.querySelector(targetSelector);
+
+            if (!nextTarget) {
+                window.location.href = url;
+                return;
+            }
+
+            target.innerHTML = nextTarget.innerHTML;
+
+            const currentFilterForm = document.getElementById('product-filter-form');
+            const nextFilterForm = nextDocument.getElementById('product-filter-form');
+
+            if (currentFilterForm && nextFilterForm && !target.contains(currentFilterForm)) {
+                currentFilterForm.replaceWith(nextFilterForm);
+            }
+
+            if (pushState) {
+                window.history.pushState({}, '', url);
+            }
+
+            initializeAjaxFilters(document);
+            initializeAsyncStoreActions(target);
+            initializeBrandFilterSearch(document);
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('store:notice', {
+                detail: { message: error.message || 'Unable to load results.' },
+            }));
+        } finally {
+            target.classList.remove('is-loading');
+        }
+    };
+
+    root.querySelectorAll('[data-ajax-filter]').forEach((form) => {
+        if (form.dataset.ajaxFilterBound === 'true') {
+            return;
+        }
+
+        form.dataset.ajaxFilterBound = 'true';
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const targetSelector = form.dataset.ajaxTarget;
+
+            if (!targetSelector) {
+                form.submit();
+                return;
+            }
+
+            const url = new URL(form.action || window.location.href, window.location.origin);
+            const formData = new FormData(form);
+
+            Array.from(url.searchParams.keys()).forEach((key) => url.searchParams.delete(key));
+
+            formData.forEach((value, key) => {
+                if (String(value).trim() !== '') {
+                    url.searchParams.set(key, String(value));
+                }
+            });
+
+            loadTarget(url.toString(), targetSelector);
+        });
+
+        form.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', () => form.requestSubmit());
+        });
+    });
+
+    root.querySelectorAll('[data-filter-link]').forEach((link) => {
+        if (link.dataset.ajaxFilterLinkBound === 'true') {
+            return;
+        }
+
+        link.dataset.ajaxFilterLinkBound = 'true';
+
+        link.addEventListener('click', (event) => {
+            const targetSelector = link.dataset.ajaxTarget;
+
+            if (!targetSelector) {
+                return;
+            }
+
+            event.preventDefault();
+            loadTarget(link.href, targetSelector);
+        });
+    });
+
+    root.querySelectorAll('[data-ajax-filter-target] nav a, [data-ajax-filter-target] .pagination a').forEach((link) => {
+        if (link.dataset.ajaxPaginationBound === 'true') {
+            return;
+        }
+
+        const target = link.closest('[data-ajax-filter-target]');
+
+        if (!target) {
+            return;
+        }
+
+        link.dataset.ajaxPaginationBound = 'true';
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            loadTarget(link.href, `[data-ajax-filter-target="${target.dataset.ajaxFilterTarget}"]`);
+        });
+    });
+
+    window.onpopstate = () => {
+        const target = document.querySelector('[data-ajax-filter-target]');
+
+        if (target?.dataset.ajaxFilterTarget) {
+            loadTarget(window.location.href, `[data-ajax-filter-target="${target.dataset.ajaxFilterTarget}"]`, false);
+        }
+    };
+};
+
+const initializeBrandFilterSearch = (root = document) => {
+    root.querySelectorAll('[data-brand-filter-search]').forEach((input) => {
+        if (input.dataset.brandFilterBound === 'true') {
+            return;
+        }
+
+        input.dataset.brandFilterBound = 'true';
+
+        input.addEventListener('input', () => {
+            const panel = input.closest('.product-filter-accordion');
+            const query = input.value.trim().toLowerCase();
+
+            panel?.querySelectorAll('[data-brand-filter-item]').forEach((item) => {
+                item.hidden = query !== '' && !item.textContent.toLowerCase().includes(query);
+            });
         });
     });
 };
@@ -427,7 +607,15 @@ const initializeCheckoutShipping = () => {
     const quoteUrl = form.dataset.quoteUrl;
     const subtotal = Number(subtotalElement?.dataset.checkoutSubtotal || 0);
 
-    const money = (value) => Number(value || 0).toFixed(2);
+    const money = (value) => {
+        const currency = window.storeCurrency || { code: 'USD', symbol: '$', rate: 1, decimals: 2 };
+        const amount = Number(value || 0) * Number(currency.rate || 1);
+
+        return `${currency.symbol || ''} ${amount.toLocaleString(undefined, {
+            minimumFractionDigits: Number(currency.decimals || 0),
+            maximumFractionDigits: Number(currency.decimals || 0),
+        })} ${currency.code || ''}`.trim();
+    };
 
     const updateTotals = (shippingCost) => {
         if (shippingCostElement) {
@@ -444,7 +632,7 @@ const initializeCheckoutShipping = () => {
             <input type="radio" name="shipping_carrier_id" value="${carrier.id}" data-shipping-cost="${carrier.cost}" class="sr-only" ${checked ? 'checked' : ''}>
             <span class="block font-black">${carrier.name}</span>
             <span class="mt-1 block text-sm text-slate-600">${carrier.estimated_delivery_time || ''}</span>
-            <span class="mt-3 block text-lg font-black text-red-700">USD ${money(carrier.cost)}</span>
+            <span class="mt-3 block text-lg font-black text-red-700">${money(carrier.cost)}</span>
         </label>
     `;
 
@@ -567,6 +755,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeHeaderNavigation();
     initializeStoreNotices();
     initializeAsyncStoreActions();
+    initializeAjaxFilters();
+    initializeBrandFilterSearch();
     initializeDocumentationNavigation();
     initializeWholesaleTierPicker();
     initializeProductGallery();

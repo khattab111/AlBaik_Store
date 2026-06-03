@@ -13,7 +13,20 @@ class StorefrontCacheService
     {
         foreach ($this->localeCodes() as $locale) {
             Cache::forget("storefront.home.{$locale}.v1");
+            Cache::forget("storefront.home.{$locale}.v2");
         }
+    }
+
+    public function clearCategory(int $categoryId): void
+    {
+        Cache::forget("storefront.category.{$categoryId}.v1");
+        $this->clearHome();
+    }
+
+    public function clearBrand(int $brandId): void
+    {
+        Cache::forget("storefront.brand.{$brandId}.v1");
+        $this->clearHome();
     }
 
     /**
