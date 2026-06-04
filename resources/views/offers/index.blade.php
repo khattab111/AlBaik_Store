@@ -43,7 +43,7 @@
     $includedProducts = $allOffers->sum(fn ($offer) => $offer['items']->count());
     $topDeals = $allOffers->sortByDesc('discount_percentage')->take(10);
     $endingSoonDeals = $allOffers->filter(fn ($offer) => $offer['ends_at'] && $offer['ends_at']->between(now(), now()->copy()->addDay()))->take(8);
-    $dealCards = ($presentedProductOffers ?? collect())->map(function (array $deal): array {
+    $dealCards = ($presentedOffers ?? collect())->map(function (array $deal): array {
         $product = $deal['product'] ?? null;
         $firstOfferItem = $deal['items']->first();
         $image = $product?->images?->first()?->path ?: ($firstOfferItem['image'] ?? null);
@@ -202,7 +202,7 @@
             </form>
 
             <div class="deals-toolbar">
-                <div class="deals-results"><strong>{{ $products->total() }}</strong><span>{{ __('Deals') }}</span></div>
+                <div class="deals-results"><strong>{{ $offersPaginator->total() }}</strong><span>{{ __('Deals') }}</span></div>
                 <nav class="deals-view-switch" aria-label="{{ __('Offer view options') }}">
                     <a href="{{ route('offers.index', array_merge($queryFilters, ['view' => 'grid'])) }}" class="{{ $displayMode === 'grid' ? 'is-active' : '' }}" data-filter-link data-ajax-target="{{ $filterTarget }}">▦</a>
                     <a href="{{ route('offers.index', array_merge($queryFilters, ['view' => 'list'])) }}" class="{{ $displayMode === 'list' ? 'is-active' : '' }}" data-filter-link data-ajax-target="{{ $filterTarget }}">☰</a>
@@ -264,8 +264,8 @@
             </div>
 
             <div class="premium-load-more-wrap">
-                @if($products->hasMorePages())
-                    <a href="{{ $products->nextPageUrl() }}" class="premium-load-more" data-load-more data-ajax-target="{{ $filterTarget }}">
+                @if($offersPaginator->hasMorePages())
+                    <a href="{{ $offersPaginator->nextPageUrl() }}" class="premium-load-more" data-load-more data-ajax-target="{{ $filterTarget }}">
                         {{ __('Load More') }}
                         <span aria-hidden="true">⌄</span>
                     </a>

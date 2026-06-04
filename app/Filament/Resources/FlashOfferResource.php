@@ -32,10 +32,12 @@ class FlashOfferResource extends Resource
                 static::translatableTabs(fn (string $code): array => [
                     Forms\Components\TextInput::make("title.{$code}")
                         ->label(__('Title'))
+                        ->helperText(__('Write a clear promotional title that explains the customer benefit.'))
                         ->required()
                         ->maxLength(255),
                     Forms\Components\Textarea::make("description.{$code}")
                         ->label(__('Description'))
+                        ->helperText(__('Explain the offer conditions, included products, and any important restrictions.'))
                         ->rows(3),
                 ]),
                 Forms\Components\TextInput::make('slug')
@@ -51,19 +53,27 @@ class FlashOfferResource extends Resource
                     ->options(FlashOffer::typeOptions())
                     ->required()
                     ->live()
-                    ->default(FlashOffer::TYPE_PERCENTAGE_DISCOUNT),
+                    ->default(FlashOffer::TYPE_PERCENTAGE_DISCOUNT)
+                    ->helperText(__('Choose how the final price or shipping benefit will be calculated.')),
                 Forms\Components\Select::make('offer_scope')
                     ->label(__('Offer Scope'))
                     ->options(FlashOffer::scopeOptions())
                     ->required()
-                    ->default(FlashOffer::SCOPE_PRODUCT),
+                    ->default(FlashOffer::SCOPE_PRODUCT)
+                    ->helperText(__('Product applies to selected products, Bundle sells several products together, and Cart applies to the whole order.')),
                 Forms\Components\Select::make('status')
                     ->label(__('Status'))
                     ->options(FlashOffer::statusOptions())
                     ->required()
-                    ->default(FlashOffer::STATUS_DRAFT),
-                Forms\Components\DateTimePicker::make('starts_at')->label(__('Starts at')),
-                Forms\Components\DateTimePicker::make('ends_at')->label(__('Ends at')),
+                    ->default(FlashOffer::STATUS_DRAFT)
+                    ->helperText(__('Only active offers within their valid date range and available quantity appear in the storefront.')),
+                Forms\Components\DateTimePicker::make('starts_at')
+                    ->label(__('Starts at'))
+                    ->helperText(__('Leave empty to make the offer available immediately after activating it.')),
+                Forms\Components\DateTimePicker::make('ends_at')
+                    ->label(__('Ends at'))
+                    ->after('starts_at')
+                    ->helperText(__('Leave empty if the offer has no scheduled end date.')),
                 Forms\Components\TextInput::make('priority')
                     ->label(__('Priority'))
                     ->numeric()
@@ -83,11 +93,13 @@ class FlashOfferResource extends Resource
                         FlashOffer::TYPE_PERCENTAGE_DISCOUNT,
                         FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT,
                     ], true))
-                    ->default(fn (Forms\Get $get): string => $get('type') === FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT ? 'fixed' : 'percentage'),
+                    ->default(fn (Forms\Get $get): string => $get('type') === FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT ? 'fixed' : 'percentage')
+                    ->helperText(__('Percentage subtracts a percentage from the original price; fixed subtracts a specific amount.')),
                 Forms\Components\TextInput::make('discount_value')
                     ->label(__('Discount value'))
                     ->numeric()
                     ->minValue(0)
+                    ->helperText(__('Enter 15 for a 15% discount, or enter the amount to subtract for a fixed discount.'))
                     ->visible(fn (Forms\Get $get): bool => in_array($get('type'), [
                         FlashOffer::TYPE_PERCENTAGE_DISCOUNT,
                         FlashOffer::TYPE_FIXED_AMOUNT_DISCOUNT,
@@ -96,6 +108,7 @@ class FlashOfferResource extends Resource
                     ->label(__('Fixed price'))
                     ->numeric()
                     ->minValue(0)
+                    ->helperText(__('The final price paid for the selected quantity or the complete bundle.'))
                     ->visible(fn (Forms\Get $get): bool => in_array($get('type'), [
                         FlashOffer::TYPE_FIXED_PRICE_QUANTITY,
                         FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
@@ -110,9 +123,11 @@ class FlashOfferResource extends Resource
                     ->numeric()
                     ->disabled()
                     ->dehydrated(false)
+                    ->helperText(__('Updated automatically after successful purchases and cannot be edited manually.'))
                     ->visible(fn ($record): bool => $record !== null),
                 Forms\Components\Toggle::make('free_shipping')
                     ->label(__('Free Shipping'))
+                    ->helperText(__('Enable this when the selected offer should provide a shipping benefit.'))
                     ->visible(fn (Forms\Get $get): bool => in_array($get('type'), [
                         FlashOffer::TYPE_FREE_SHIPPING_PRODUCT,
                         FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
@@ -122,10 +137,23 @@ class FlashOfferResource extends Resource
                     ->label(__('Free Shipping Scope'))
                     ->options(FlashOffer::freeShippingScopeOptions())
                     ->required()
-                    ->default(FlashOffer::FREE_SHIPPING_NONE),
-                Forms\Components\TextInput::make('min_order_amount')->label(__('Min order amount'))->numeric()->minValue(0),
-                Forms\Components\TextInput::make('usage_limit')->label(__('Usage limit'))->numeric()->minValue(1),
-                Forms\Components\TextInput::make('usage_per_user')->label(__('Usage per user'))->numeric()->minValue(1),
+                    ->default(FlashOffer::FREE_SHIPPING_NONE)
+                    ->helperText(__('Offer only exempts products inside this offer; Whole cart makes shipping free for the complete order.')),
+                Forms\Components\TextInput::make('min_order_amount')
+                    ->label(__('Min order amount'))
+                    ->numeric()
+                    ->minValue(0)
+                    ->helperText(__('Reserved for future restrictions and is not currently enforced during checkout.')),
+                Forms\Components\TextInput::make('usage_limit')
+                    ->label(__('Usage limit'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->helperText(__('Reserved for future usage tracking and is not currently enforced during checkout.')),
+                Forms\Components\TextInput::make('usage_per_user')
+                    ->label(__('Usage per user'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->helperText(__('Reserved for future per-customer limits and is not currently enforced during checkout.')),
             ])->columns(2),
             Forms\Components\Section::make(__('Offer Products'))->schema([
                 Forms\Components\Repeater::make('items')
@@ -133,6 +161,7 @@ class FlashOfferResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('product_id')
                             ->label(__('Product'))
+                            ->helperText(__('Select a product included in the offer. Add multiple rows for bundles or buy X get Y offers.'))
                             ->options(fn () => Product::where('status', true)->orderBy('id')->get()->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
@@ -141,7 +170,8 @@ class FlashOfferResource extends Resource
                             ->label(__('Quantity'))
                             ->numeric()
                             ->minValue(1)
-                            ->default(1),
+                            ->default(1)
+                            ->helperText(__('Number of units of this product included in one offer unit.')),
                         Forms\Components\TextInput::make('original_price')
                             ->label(__('Original price'))
                             ->numeric()
