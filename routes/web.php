@@ -18,6 +18,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\WholesaleController;
 use App\Http\Controllers\Storefront\Account\AddressController;
 use App\Http\Controllers\Storefront\Account\DashboardController;
 use App\Http\Controllers\Storefront\Account\ProfileController;
@@ -86,6 +87,11 @@ Route::patch('/cart/update/{product}', [CartController::class, 'update'])->name(
 Route::delete('/cart/remove/{product}', [CartController::class, 'remove'])->name('cart.remove');
 Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
+
+Route::middleware('wholesale')->prefix('wholesale')->name('wholesale.')->group(function () {
+    Route::get('/products', [WholesaleController::class, 'products'])->name('products.index');
+    Route::get('/offers', [WholesaleController::class, 'offers'])->name('offers.index');
+});
 
 Route::middleware('auth')->group(function () {
 

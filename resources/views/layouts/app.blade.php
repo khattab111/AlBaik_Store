@@ -39,6 +39,15 @@
         ['label' => __('About'), 'route' => 'about', 'active' => 'about', 'icon' => null],
         ['label' => __('Join Us'), 'route' => 'join-us.create', 'active' => 'join-us.*', 'icon' => null],
     ];
+
+    if (auth()->user()?->isWholesaleCustomer()) {
+        array_splice($primaryNavItems, 4, 0, [[
+            'label' => __('Wholesale'),
+            'route' => 'wholesale.products.index',
+            'active' => 'wholesale.*',
+            'icon' => null,
+        ]]);
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', $currentLocale ?? app()->getLocale()) }}" dir="{{ $textDirection ?? 'ltr' }}">

@@ -13,24 +13,35 @@ use Illuminate\Validation\ValidationException;
 
 class FlashOfferService
 {
-    public function getActiveOffers(): Collection
+    public function getActiveOffers(?string $audience = FlashOffer::AUDIENCE_RETAIL): Collection
     {
-        return FlashOffer::query()
+        $query = FlashOffer::query()
             ->with(['items.product.images'])
-            ->currentlyValid()
+            ->currentlyValid();
+
+        if ($audience !== null) {
+            $query->forAudience($audience);
+        }
+
+        return $query
             ->orderByDesc('priority')
             ->orderBy('ends_at')
             ->get();
     }
 
-    public function calculateProductOffer(Product $product, int $quantity, ?float $basePrice = null): ?FlashOfferPriceData
+    public function calculateProductOffer(Product $product, int $quantity, ?float $basePrice = null, ?string $audience = FlashOffer::AUDIENCE_RETAIL): ?FlashOfferPriceData
     {
+        if ($audience === FlashOffer::AUDIENCE_WHOLESALE && ! $product->is_wholesale_available) {
+            return null;
+        }
+
         $quantity = max(1, $quantity);
         $basePrice ??= (float) $product->retail_price;
 
         $offers = FlashOffer::query()
             ->with(['items' => fn ($query) => $query->where('product_id', $product->id)])
             ->currentlyValid()
+            ->when($audience !== null, fn ($query) => $query->forAudience($audience))
             ->whereHas('items', fn ($query) => $query->where('product_id', $product->id))
             ->whereNotIn('type', [
                 FlashOffer::TYPE_BUNDLE_FIXED_PRICE,
@@ -51,14 +62,17 @@ class FlashOfferService
 
     public function applyOfferToCart(Cart $cart): void
     {
-        $cart->loadMissing(['items.product.priceTiers']);
+        $cart->loadMissing(['user', 'items.product.priceTiers']);
+        $audience = $cart->user?->isWholesaleCustomer()
+            ? FlashOffer::AUDIENCE_WHOLESALE
+            : FlashOffer::AUDIENCE_RETAIL;
 
         foreach ($cart->items as $item) {
             if (($item->item_type ?? 'product') !== 'product' || ! $item->product) {
                 continue;
             }
 
-            $offer = $this->calculateProductOffer($item->product, $item->quantity, (float) $item->unit_price);
+            $offer = $this->calculateProductOffer($item->product, $item->quantity, (float) $item->unit_price, $audience);
 
             if (! $offer) {
                 continue;
@@ -72,7 +86,7 @@ class FlashOfferService
         }
     }
 
-    public function isOfferValid(FlashOffer $offer): bool
+    public function isOfferValid(FlashOffer $offer, ?string $audience = null): bool
     {
         if ($offer->status !== FlashOffer::STATUS_ACTIVE) {
             return false;
@@ -87,6 +101,10 @@ class FlashOfferService
         }
 
         if ($offer->max_quantity !== null && $offer->sold_quantity >= $offer->max_quantity) {
+            return false;
+        }
+
+        if ($audience !== null && ! in_array($offer->audience ?? FlashOffer::AUDIENCE_RETAIL, $this->allowedAudiences($audience), true)) {
             return false;
         }
 
@@ -157,5 +175,12 @@ class FlashOfferService
             offerPrice: $price,
             freeShipping: (bool) $offer->free_shipping,
         );
+    }
+
+    private function allowedAudiences(string $audience): array
+    {
+        return $audience === FlashOffer::AUDIENCE_WHOLESALE
+            ? [FlashOffer::AUDIENCE_WHOLESALE, FlashOffer::AUDIENCE_BOTH]
+            : [FlashOffer::AUDIENCE_RETAIL, FlashOffer::AUDIENCE_BOTH];
     }
 }

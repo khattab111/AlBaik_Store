@@ -26,6 +26,10 @@ class FlashOffer extends Model
     public const SCOPE_BUNDLE = 'bundle';
     public const SCOPE_CART = 'cart';
 
+    public const AUDIENCE_RETAIL = 'retail';
+    public const AUDIENCE_WHOLESALE = 'wholesale';
+    public const AUDIENCE_BOTH = 'both';
+
     public const FREE_SHIPPING_NONE = 'none';
     public const FREE_SHIPPING_OFFER = 'offer';
     public const FREE_SHIPPING_CART = 'cart';
@@ -45,6 +49,7 @@ class FlashOffer extends Model
         'description',
         'type',
         'offer_scope',
+        'audience',
         'status',
         'starts_at',
         'ends_at',
@@ -109,6 +114,15 @@ class FlashOffer extends Model
         return $query->where(fn (Builder $builder) => $builder->whereNull('max_quantity')->orWhereColumn('sold_quantity', '<', 'max_quantity'));
     }
 
+    public function scopeForAudience(Builder $query, string $audience): Builder
+    {
+        $allowed = $audience === self::AUDIENCE_WHOLESALE
+            ? [self::AUDIENCE_WHOLESALE, self::AUDIENCE_BOTH]
+            : [self::AUDIENCE_RETAIL, self::AUDIENCE_BOTH];
+
+        return $query->whereIn('audience', $allowed);
+    }
+
     public function remainingQuantity(): ?int
     {
         if ($this->max_quantity === null) {
@@ -137,6 +151,15 @@ class FlashOffer extends Model
             self::SCOPE_PRODUCT => __('Product'),
             self::SCOPE_BUNDLE => __('Bundle'),
             self::SCOPE_CART => __('Cart'),
+        ];
+    }
+
+    public static function audienceOptions(): array
+    {
+        return [
+            self::AUDIENCE_RETAIL => __('Retail customers'),
+            self::AUDIENCE_WHOLESALE => __('Wholesale customers'),
+            self::AUDIENCE_BOTH => __('Retail and wholesale'),
         ];
     }
 

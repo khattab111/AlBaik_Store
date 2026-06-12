@@ -30,6 +30,7 @@ class CartRepository
         }
 
         $user = $cart->relationLoaded('user') ? $cart->user : User::find($cart->user_id);
+        $quantity = $this->normalizedQuantity($product, $user, $quantity);
         $price = $this->pricing->getPriceForUser($product->loadMissing('priceTiers'), $user, $quantity);
         $unitPrice = $price->price;
 
@@ -83,5 +84,16 @@ class CartRepository
     public function items(Cart $cart): Collection
     {
         return $cart->items()->with(['product', 'variant', 'offer'])->get();
+    }
+
+    private function normalizedQuantity(Product $product, ?User $user, int $quantity): int
+    {
+        $quantity = max(1, $quantity);
+
+        if ($user?->isWholesaleCustomer() && $product->is_wholesale_available) {
+            return max($quantity, (int) ($product->wholesale_minimum_quantity ?: 1));
+        }
+
+        return $quantity;
     }
 }

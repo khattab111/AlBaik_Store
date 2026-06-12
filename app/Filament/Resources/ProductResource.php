@@ -57,6 +57,21 @@ class ProductResource extends Resource
                 Forms\Components\Select::make('category_id')->options(fn () => Category::where('status', true)->get()->pluck('name', 'id'))->searchable(),
                 Forms\Components\Select::make('tags')->relationship('tags', 'name')->getOptionLabelFromRecordUsing(fn (Tag $record): string => $record->name)->multiple()->preload(),
                 Forms\Components\TextInput::make('retail_price')->label(__('Retail Price'))->required()->numeric()->helperText(__('One shared price for all languages.')),
+                Forms\Components\TextInput::make('wholesale_price')
+                    ->label(__('Wholesale price'))
+                    ->numeric()
+                    ->minValue(0)
+                    ->helperText(__('Fallback wholesale unit price when no active wholesale price tier matches the quantity.')),
+                Forms\Components\TextInput::make('wholesale_minimum_quantity')
+                    ->label(__('Wholesale minimum quantity'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->default(1)
+                    ->helperText(__('Lowest quantity allowed when a wholesale customer adds this product from the wholesale area.')),
+                Forms\Components\Toggle::make('is_wholesale_available')
+                    ->label(__('Available for wholesale'))
+                    ->helperText(__('Enable this product in the wholesale products page. Keep it off for retail-only products.'))
+                    ->default(false),
                 Forms\Components\TextInput::make('stock_quantity')->label(__('Stock Quantity'))->numeric()->default(0)->helperText(__('One shared stock quantity for all languages.')),
                 Forms\Components\TextInput::make('low_stock_threshold')->label(__('Low stock threshold'))->numeric()->default(5),
                 Forms\Components\TextInput::make('weight')->label(__('Weight'))->numeric()->default(0)->helperText(__('Used by shipping rules and is not language-specific.')),
@@ -125,6 +140,8 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('supplier.name')->label(__('Supplier'))->sortable(),
                 Tables\Columns\TextColumn::make('category.name')->label(__('Category'))->sortable(),
                 Tables\Columns\TextColumn::make('retail_price')->money('USD')->sortable(),
+                Tables\Columns\TextColumn::make('wholesale_price')->label(__('Wholesale price'))->money('USD')->sortable(),
+                Tables\Columns\IconColumn::make('is_wholesale_available')->label(__('Wholesale'))->boolean(),
                 Tables\Columns\TextColumn::make('stock_quantity')->sortable(),
                 Tables\Columns\IconColumn::make('status')->boolean(),
             ])

@@ -138,3 +138,8 @@ After running `php artisan db:seed`, use:
 - Dashboard stats and latest orders
   /////////////////////////////////
   ngrok http 8000
+
+  ////////////////////////
+
+php artisan serve --host=0.0.0.0 --port=8000
+hostname -I

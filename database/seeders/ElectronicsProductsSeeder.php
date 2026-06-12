@@ -234,6 +234,7 @@ class ElectronicsProductsSeeder extends Seeder
                 'retail_price' => $data['retail_price'],
                 'wholesale_price' => $data['wholesale_price'],
                 'wholesale_minimum_quantity' => $data['wholesale_minimum_quantity'],
+                'is_wholesale_available' => true,
                 'stock_quantity' => $data['stock_quantity'],
                 'weight' => $data['weight'],
                 'low_stock_threshold' => 10,

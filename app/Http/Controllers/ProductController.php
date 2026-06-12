@@ -43,7 +43,7 @@ class ProductController extends Controller
         $query->when($filters['min_price'] ?? null, fn ($builder, $price) => $builder->where('retail_price', '>=', (float) $price));
         $query->when($filters['max_price'] ?? null, fn ($builder, $price) => $builder->where('retail_price', '<=', (float) $price));
         $query->when($request->boolean('in_stock'), fn ($builder) => $builder->where('stock_quantity', '>', 0));
-        $query->when($request->boolean('on_sale'), fn ($builder) => $builder->whereHas('flashOfferItems.flashOffer', fn ($offer) => $offer->currentlyValid()));
+        $query->when($request->boolean('on_sale'), fn ($builder) => $builder->whereHas('flashOfferItems.flashOffer', fn ($offer) => $offer->currentlyValid()->forAudience(\App\Models\FlashOffer::AUDIENCE_RETAIL)));
 
         match ($filters['sort'] ?? 'latest') {
             'price_desc' => $query->orderByDesc('retail_price'),
@@ -85,10 +85,13 @@ class ProductController extends Controller
             'flashOfferItems.flashOffer.items.product.images',
         ]);
         $isWholesaleCustomer = (bool) $request->user()?->isWholesaleCustomer();
+        $audience = $isWholesaleCustomer
+            ? \App\Models\FlashOffer::AUDIENCE_WHOLESALE
+            : \App\Models\FlashOffer::AUDIENCE_RETAIL;
         $priceData = $pricing->getPriceForUser($product, $request->user(), 1);
         $activeOffers = $product->flashOfferItems
             ->pluck('flashOffer')
-            ->filter(fn ($offer) => $offer && $flashOffers->isOfferValid($offer))
+            ->filter(fn ($offer) => $offer && $flashOffers->isOfferValid($offer, $audience))
             ->unique('id')
             ->values();
 

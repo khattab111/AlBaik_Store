@@ -26,7 +26,8 @@ class OfferController extends Controller
         $perPage = (int) ($filters['per_page'] ?? 12);
         $offers = FlashOffer::query()
             ->with(['items.product.images', 'items.product.brand', 'items.product.category', 'items.product.reviews'])
-            ->currentlyValid();
+            ->currentlyValid()
+            ->forAudience(FlashOffer::AUDIENCE_RETAIL);
 
         $offers->when($filters['category'] ?? null, fn ($builder, $categorySlug) => $builder
             ->whereHas('items.product.category', fn ($category) => $category->where('slug', $categorySlug)));
@@ -43,7 +44,7 @@ class OfferController extends Controller
             default => $offers->latest(),
         };
 
-        $activeFlashOffers = $flashOffers->getActiveOffers();
+        $activeFlashOffers = $flashOffers->getActiveOffers(FlashOffer::AUDIENCE_RETAIL);
         $presentedFlashOffers = $activeFlashOffers->map(fn ($offer) => $presenter->forOffer($offer));
         $filteredPresentedOffers = $presentedFlashOffers
             ->when($filters['type'] ?? null, fn ($offers, $type) => $offers->filter(fn ($offer) => $offer['type'] === $type))
@@ -69,9 +70,9 @@ class OfferController extends Controller
         ]);
     }
 
-    public function show(FlashOffer $flashOffer, FlashOfferService $flashOffers, FlashOfferPresenter $presenter): View
+    public function show(FlashOffer $flashOffer, Request $request, FlashOfferService $flashOffers, FlashOfferPresenter $presenter): View
     {
-        abort_unless($flashOffers->isOfferValid($flashOffer), 404);
+        abort_unless($flashOffers->isOfferValid($flashOffer, $this->audienceForRequest($request)), 404);
 
         $flashOffer->load(['items.product.images', 'items.product.brand', 'items.product.reviews']);
 
@@ -89,7 +90,7 @@ class OfferController extends Controller
         CartRepository $carts,
         GuestCartService $guestCart,
     ): RedirectResponse|JsonResponse {
-        abort_unless($flashOffers->isOfferValid($flashOffer), 404);
+        abort_unless($flashOffers->isOfferValid($flashOffer, $this->audienceForRequest($request)), 404);
 
         $data = $request->validate([
             'quantity' => ['nullable', 'integer', 'min:1', 'max:50'],
@@ -116,5 +117,12 @@ class OfferController extends Controller
         }
 
         return redirect()->route('cart.index')->with('status', __('Offer added to cart.'));
+    }
+
+    private function audienceForRequest(Request $request): string
+    {
+        return $request->user()?->isWholesaleCustomer()
+            ? FlashOffer::AUDIENCE_WHOLESALE
+            : FlashOffer::AUDIENCE_RETAIL;
     }
 }

@@ -93,10 +93,11 @@ class CartController extends Controller
 
         $cart = $this->carts->findForUser($request->user()->id);
         $item = $cart->items()->where('product_id', $product->id)->with(['product.priceTiers', 'variant'])->firstOrFail();
-        $price = $pricing->getPriceForUser($item->product, $request->user(), (int) $data['quantity']);
+        $quantity = $this->normalizedQuantityForUser($item->product, $request, (int) $data['quantity']);
+        $price = $pricing->getPriceForUser($item->product, $request->user(), $quantity);
 
         $item->update([
-            'quantity' => $data['quantity'],
+            'quantity' => $quantity,
             'unit_price' => $price->price,
             'price_type' => $price->priceType,
             'applied_tier_id' => $price->appliedTierId,
@@ -123,10 +124,11 @@ class CartController extends Controller
         }
 
         $item->load(['product.priceTiers', 'variant']);
-        $price = $pricing->getPriceForUser($item->product, $request->user(), (int) $data['quantity']);
+        $quantity = $this->normalizedQuantityForUser($item->product, $request, (int) $data['quantity']);
+        $price = $pricing->getPriceForUser($item->product, $request->user(), $quantity);
 
         $item->update([
-            'quantity' => $data['quantity'],
+            'quantity' => $quantity,
             'unit_price' => $price->price,
             'price_type' => $price->priceType,
             'applied_tier_id' => $price->appliedTierId,
@@ -169,5 +171,16 @@ class CartController extends Controller
         $this->carts->findForUser($request->user()->id)->items()->delete();
 
         return back()->with('status', __('Cart cleared.'));
+    }
+
+    private function normalizedQuantityForUser(Product $product, Request $request, int $quantity): int
+    {
+        $quantity = max(1, $quantity);
+
+        if ($request->user()?->isWholesaleCustomer() && $product->is_wholesale_available) {
+            return max($quantity, (int) ($product->wholesale_minimum_quantity ?: 1));
+        }
+
+        return $quantity;
     }
 }

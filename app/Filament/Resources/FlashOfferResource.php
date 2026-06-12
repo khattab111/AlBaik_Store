@@ -61,6 +61,12 @@ class FlashOfferResource extends Resource
                     ->required()
                     ->default(FlashOffer::SCOPE_PRODUCT)
                     ->helperText(__('Product applies to selected products, Bundle sells several products together, and Cart applies to the whole order.')),
+                Forms\Components\Select::make('audience')
+                    ->label(__('Audience'))
+                    ->options(FlashOffer::audienceOptions())
+                    ->required()
+                    ->default(FlashOffer::AUDIENCE_RETAIL)
+                    ->helperText(__('Retail offers appear in the public store, wholesale offers appear only for approved wholesale customers, and both appears in both areas.')),
                 Forms\Components\Select::make('status')
                     ->label(__('Status'))
                     ->options(FlashOffer::statusOptions())
@@ -200,6 +206,7 @@ class FlashOfferResource extends Resource
                 Tables\Columns\TextColumn::make('title')->label(__('Title'))->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('type')->label(__('Offer Type'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::typeOptions()[$state] ?? $state),
                 Tables\Columns\TextColumn::make('offer_scope')->label(__('Offer Scope'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::scopeOptions()[$state] ?? $state),
+                Tables\Columns\TextColumn::make('audience')->label(__('Audience'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::audienceOptions()[$state] ?? $state),
                 Tables\Columns\TextColumn::make('status')->label(__('Status'))->badge()->formatStateUsing(fn (string $state): string => FlashOffer::statusOptions()[$state] ?? $state),
                 Tables\Columns\TextColumn::make('starts_at')->label(__('Starts at'))->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('ends_at')->label(__('Ends at'))->dateTime()->sortable(),
@@ -211,6 +218,7 @@ class FlashOfferResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(FlashOffer::statusOptions()),
                 Tables\Filters\SelectFilter::make('type')->options(FlashOffer::typeOptions()),
+                Tables\Filters\SelectFilter::make('audience')->options(FlashOffer::audienceOptions()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
