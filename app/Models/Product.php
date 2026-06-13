@@ -127,6 +127,11 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function wishlist(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
     public function priceTiers(): HasMany
     {
         return $this->hasMany(ProductPriceTier::class)->orderBy('sort_order')->orderBy('min_quantity');

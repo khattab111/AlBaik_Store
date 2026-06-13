@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             ElectronicsProductsSeeder::class,
             MarketingOffersSeeder::class,
             NewsletterTemplateSeeder::class,
+            ElectronicServicesSeeder::class,
+            ThreeLwanProviderSeeder::class,
             DemoCustomerDataSeeder::class,
             ProductReviewSeeder::class,
             StoreSettingsAndBannersSeeder::class,

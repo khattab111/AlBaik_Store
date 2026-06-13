@@ -25,6 +25,7 @@ use App\Http\Controllers\Storefront\Account\ProfileController;
 use App\Http\Controllers\Storefront\Account\WalletDepositController;
 use App\Http\Controllers\Storefront\Account\WalletController;
 use App\Http\Controllers\Storefront\AuthController;
+use App\Http\Controllers\Storefront\ElectronicServiceController;
 use App\Http\Controllers\Storefront\PasswordResetController;
 use App\Http\Controllers\Storefront\ReviewController;
 use App\Http\Controllers\WholesaleApplicationController;
@@ -48,6 +49,9 @@ Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name
 Route::get('/offers', [OfferController::class, 'index'])->name('offers.index');
 Route::get('/offers/{flashOffer:slug}', [OfferController::class, 'show'])->name('offers.show');
 Route::post('/offers/{flashOffer:slug}/cart', [OfferController::class, 'addToCart'])->name('offers.cart.add');
+Route::get('/services', [ElectronicServiceController::class, 'index'])->name('services.index');
+Route::get('/services/orders', [ElectronicServiceController::class, 'orders'])->name('services.orders.index')->middleware('auth');
+Route::get('/services/{service:slug}', [ElectronicServiceController::class, 'show'])->name('services.show');
 Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
 Route::get('/brands/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
@@ -115,6 +119,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('products.reviews.store');
+    Route::post('/services/{service:slug}/order', [ElectronicServiceController::class, 'store'])->name('services.orders.store')->middleware('throttle:8,1');
 
     Route::patch('/cart/items/{item}', [CartController::class, 'updateItem'])->name('cart.items.update');
     Route::delete('/cart/items/{item}', [CartController::class, 'destroyItem'])->name('cart.items.destroy');

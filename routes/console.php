@@ -4,6 +4,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
+use App\Jobs\CheckProviderOrdersStatusJob;
 use App\Jobs\SendNewsletterCampaignJob;
 use App\Models\Banner;
 use App\Models\Brand;
@@ -90,3 +91,8 @@ Schedule::call(function (): void {
         ->orderBy('scheduled_at')
         ->each(fn (NewsletterCampaign $campaign) => SendNewsletterCampaignJob::dispatch($campaign->id));
 })->everyMinute()->name('newsletter-scheduled-campaigns')->withoutOverlapping();
+
+Schedule::job(new CheckProviderOrdersStatusJob())
+    ->everyFiveMinutes()
+    ->name('provider-orders-status-check')
+    ->withoutOverlapping();

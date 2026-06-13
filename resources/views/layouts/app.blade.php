@@ -48,6 +48,7 @@
             ['label' => __('Home'), 'route' => 'home', 'active' => 'home', 'icon' => null],
             ['label' => __('Products'), 'route' => 'products.index', 'active' => ['products.index', 'products.show'], 'icon' => null],
             ['label' => __('Offers'), 'route' => 'offers.index', 'active' => 'offers.*', 'icon' => null],
+            ['label' => __('Electronic services'), 'route' => 'services.index', 'active' => 'services.*', 'icon' => null],
             ['label' => __('Categories'), 'route' => 'categories.index', 'active' => 'categories.*', 'icon' => '▦'],
             ['label' => __('Brands'), 'route' => 'brands.index', 'active' => 'brands.*', 'icon' => null],
             ['label' => __('New Arrivals'), 'route' => 'products.latest', 'active' => 'products.latest', 'icon' => null],
