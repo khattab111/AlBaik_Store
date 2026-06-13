@@ -2,7 +2,7 @@
 
 @section('title', $product->name)
 @section('meta_description', $product->seo_description ?: ($product->short_description ?: __('View product details, price, stock, variants, and related products.')))
-@section('canonical', route('products.show', $product->slug))
+@section('canonical', ($isWholesaleCustomer ?? false) ? route('wholesale.products.show', $product->slug) : route('products.show', $product->slug))
 @section('og_type', 'product')
 
 @php
@@ -15,8 +15,8 @@
     $mainImage = $product->images->first()?->path;
     $mainImageUrl = $imageUrl($mainImage);
     $galleryImages = $product->images->isNotEmpty() ? $product->images : collect([(object) ['path' => null, 'alt_text' => $product->name]]);
-    $rating = round((float) $product->reviews->avg('rating'), 1);
-    $reviewsCount = $product->reviews->count();
+    $rating = round((float) ($product->average_rating ?? 0), 1);
+    $reviewsCount = (int) ($product->reviews_count ?? 0);
     $stock = $product->availableStock();
     $hasDiscount = $pricing->originalPrice && $pricing->originalPrice > $pricing->price;
     $discountPercent = $hasDiscount ? round(((float) $pricing->originalPrice - (float) $pricing->price) / (float) $pricing->originalPrice * 100) : null;
@@ -61,9 +61,17 @@
             'priceCurrency' => $currentCurrency?->code ?? 'USD',
             'price' => (float) $pricing->price,
             'availability' => $stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            'url' => route('products.show', $product->slug),
+            'url' => $isWholesaleCustomer ? route('wholesale.products.show', $product->slug) : route('products.show', $product->slug),
         ],
     ];
+
+    if ($reviewsCount > 0) {
+        $schema['aggregateRating'] = [
+            '@type' => 'AggregateRating',
+            'ratingValue' => $rating,
+            'reviewCount' => $reviewsCount,
+        ];
+    }
 @endphp
 
 @section('og_image', $mainImageUrl)
@@ -76,7 +84,7 @@
     <nav class="store-breadcrumb" aria-label="{{ __('Breadcrumb') }}">
         <a href="{{ route('home') }}" class="transition hover:text-amber-700">{{ __('Home') }}</a>
         <span aria-hidden="true">›</span>
-        <a href="{{ route('products.index') }}" class="transition hover:text-amber-700">{{ __('Products') }}</a>
+        <a href="{{ $isWholesaleCustomer ? route('wholesale.products.index') : route('products.index') }}" class="transition hover:text-amber-700">{{ $isWholesaleCustomer ? __('Wholesale products') : __('Products') }}</a>
         @if($product->category)
             <span aria-hidden="true">›</span>
             <a href="{{ route('categories.show', $product->category->slug) }}" class="transition hover:text-amber-700">{{ $product->category->name }}</a>
@@ -307,6 +315,97 @@
                 @endif
             </section>
 
+            <section class="store-panel p-6" aria-labelledby="reviews-heading">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="store-eyebrow">{{ __('Reviews') }}</p>
+                        <h2 id="reviews-heading" class="text-2xl font-black">{{ __('Product Reviews') }}</h2>
+                    </div>
+                    <div class="rounded-3xl bg-amber-50 px-5 py-3 text-center">
+                        <p class="text-2xl font-black text-slate-950">{{ number_format($rating, 1) }}</p>
+                        <p class="text-sm font-black text-amber-600" dir="ltr">★★★★★</p>
+                        <p class="text-xs font-bold text-slate-500">{{ $reviewsCount }} {{ __('Reviews') }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid gap-4">
+                    @forelse($approvedReviews as $review)
+                        <article class="rounded-3xl border border-slate-200 bg-white p-5">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-black text-slate-950">{{ $review->user?->name ?: __('Customer') }}</p>
+                                    <p class="mt-1 text-sm font-black text-amber-500" dir="ltr">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</p>
+                                </div>
+                                <time class="text-xs font-bold text-slate-500" datetime="{{ $review->created_at?->toIso8601String() }}">{{ $review->created_at?->format('Y-m-d') }}</time>
+                            </div>
+                            @if($review->title)
+                                <h3 class="store-safe-text mt-4 text-lg font-black text-slate-950">{{ $review->title }}</h3>
+                            @endif
+                            @if($review->comment)
+                                <p class="store-safe-text mt-2 leading-8 text-slate-600">{{ $review->comment }}</p>
+                            @endif
+                            @if($review->images->isNotEmpty())
+                                <div class="mt-4 flex flex-wrap gap-3">
+                                    @foreach($review->images as $image)
+                                        @php($reviewImageUrl = $image->path && file_exists(public_path('storage/'.$image->path)) ? asset('storage/'.$image->path) : null)
+                                        @if($reviewImageUrl)
+                                            <img src="{{ $reviewImageUrl }}" alt="{{ $review->title ?: __('Review image') }}" class="size-20 rounded-2xl border border-slate-200 object-cover" loading="lazy" decoding="async">
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        </article>
+                    @empty
+                        <p class="rounded-3xl bg-slate-50 p-5 font-bold text-slate-500">{{ __('No approved reviews yet.') }}</p>
+                    @endforelse
+                </div>
+
+                <div class="mt-7 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <h3 class="text-xl font-black text-slate-950">{{ __('Write a review') }}</h3>
+                    @auth
+                        @if($canReviewProduct)
+                            <form method="POST" action="{{ route('products.reviews.store', $product) }}" enctype="multipart/form-data" class="mt-5 grid gap-4">
+                                @csrf
+                                <div>
+                                    <label for="review-rating" class="text-sm font-black text-slate-700">{{ __('Rating') }}</label>
+                                    <select id="review-rating" name="rating" class="store-field mt-2" required>
+                                        <option value="">{{ __('Choose rating') }}</option>
+                                        @foreach([5, 4, 3, 2, 1] as $star)
+                                            <option value="{{ $star }}" @selected((int) old('rating') === $star)>{{ $star }} ★</option>
+                                        @endforeach
+                                    </select>
+                                    @error('rating') <p class="mt-2 text-sm font-bold text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label for="review-title" class="text-sm font-black text-slate-700">{{ __('Title') }}</label>
+                                    <input id="review-title" name="title" value="{{ old('title') }}" class="store-field mt-2" maxlength="255">
+                                    @error('title') <p class="mt-2 text-sm font-bold text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label for="review-comment" class="text-sm font-black text-slate-700">{{ __('Comment') }}</label>
+                                    <textarea id="review-comment" name="comment" rows="4" class="store-field mt-2">{{ old('comment') }}</textarea>
+                                    @error('comment') <p class="mt-2 text-sm font-bold text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label for="review-images" class="text-sm font-black text-slate-700">{{ __('Images') }}</label>
+                                    <input id="review-images" name="images[]" type="file" accept="image/jpeg,image/png,image/webp" multiple class="store-field mt-2">
+                                    @error('images') <p class="mt-2 text-sm font-bold text-red-600">{{ $message }}</p> @enderror
+                                    @error('images.*') <p class="mt-2 text-sm font-bold text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <button class="store-button-primary w-full sm:w-auto">{{ __('Submit review') }}</button>
+                            </form>
+                        @elseif($hasReviewedProduct)
+                            <p class="mt-3 font-bold text-slate-600">{{ __('You have already reviewed this product.') }}</p>
+                        @else
+                            <p class="mt-3 font-bold text-slate-600">{{ __('You can review this product after receiving an order that contains it.') }}</p>
+                        @endif
+                    @else
+                        <p class="mt-3 font-bold text-slate-600">{{ __('Login to write a review.') }}</p>
+                        <a href="{{ route('customer.login') }}" class="store-button-secondary mt-4 w-full sm:w-auto">{{ __('Login') }}</a>
+                    @endauth
+                </div>
+            </section>
+
             @if($activeOfferDetails->isNotEmpty())
                 <section class="store-panel p-6" aria-labelledby="linked-offers-heading">
                     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -314,7 +413,7 @@
                             <p class="store-eyebrow">{{ __('Offers') }}</p>
                             <h2 id="linked-offers-heading" class="text-2xl font-black">{{ __('Offers linked to this product') }}</h2>
                         </div>
-                        <a href="{{ route('offers.index') }}" class="text-sm font-black text-amber-700 hover:text-slate-950">{{ __('All offers') }}</a>
+                        <a href="{{ $isWholesaleCustomer ? route('wholesale.offers.index') : route('offers.index') }}" class="text-sm font-black text-amber-700 hover:text-slate-950">{{ $isWholesaleCustomer ? __('Wholesale offers') : __('All offers') }}</a>
                     </div>
                     <div class="mt-5 grid gap-4 md:grid-cols-2">
                         @foreach($activeOfferDetails as $offer)

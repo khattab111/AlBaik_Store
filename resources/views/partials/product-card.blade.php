@@ -3,8 +3,8 @@
     $imageUrl = $image && file_exists(public_path('storage/'.$image))
         ? asset('storage/'.$image)
         : asset('images/storefront/product-fallback.svg');
-    $rating = round((float) $product->reviews->avg('rating'), 1);
-    $reviewsCount = $product->reviews->count();
+    $rating = round((float) ($product->average_rating ?? 0), 1);
+    $reviewsCount = (int) ($product->reviews_count ?? 0);
     $displayMode = $displayMode ?? 'grid';
     $isList = $displayMode === 'list';
     $pricing = app(\App\Services\ProductPricingService::class)->getPriceForUser($product->loadMissing('priceTiers'), auth()->user(), 1);

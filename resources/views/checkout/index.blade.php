@@ -117,10 +117,26 @@
                     </div>
                     <div class="mt-5 grid gap-3 md:grid-cols-2">
                         @foreach($paymentMethods as $method)
+                            @php($isWalletMethod = $method->type === 'wallet')
                             <label class="cursor-pointer rounded-2xl border border-slate-200 p-4 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
                                 <input type="radio" name="payment_method_id" value="{{ $method->id }}" class="sr-only" @checked($loop->first)>
                                 <span class="store-safe-text block font-black">{{ $method->name }}</span>
                                 <span class="store-safe-text mt-1 block text-sm text-slate-600">{{ $method->description }}</span>
+                                @if($isWalletMethod)
+                                    <span class="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
+                                        <span class="flex items-center justify-between gap-3">
+                                            <span>{{ __('Available balance') }}</span>
+                                            <strong class="text-slate-950">{{ number_format((float) $wallet->balance, 2) }} {{ $wallet->currency_code ?: '' }}</strong>
+                                        </span>
+                                        @if(! $wallet->isActive())
+                                            <span class="text-red-700">{{ __('Wallet is not active.') }}</span>
+                                        @elseif((float) $wallet->balance < (float) $subtotal)
+                                            <span class="text-amber-700">{{ __('Your wallet balance may be insufficient after shipping is calculated.') }}</span>
+                                        @else
+                                            <span class="text-emerald-700">{{ __('Wallet balance can cover the current subtotal.') }}</span>
+                                        @endif
+                                    </span>
+                                @endif
                                 @if($method->wallet_url)
                                     <span class="store-safe-text mt-3 block rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-700">{{ __('Wallet Link') }}: {{ $method->wallet_url }}</span>
                                 @endif

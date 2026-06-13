@@ -40,6 +40,8 @@ class Product extends Model
         'wholesale_price',
         'wholesale_minimum_quantity',
         'is_wholesale_available',
+        'average_rating',
+        'reviews_count',
         'stock_quantity',
         'weight',
         'length',
@@ -57,6 +59,8 @@ class Product extends Model
         'wholesale_price' => 'decimal:2',
         'wholesale_minimum_quantity' => 'integer',
         'is_wholesale_available' => 'boolean',
+        'average_rating' => 'decimal:2',
+        'reviews_count' => 'integer',
         'weight' => 'decimal:3',
         'length' => 'decimal:3',
         'width' => 'decimal:3',
@@ -101,6 +105,16 @@ class Product extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function approvedProductReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class)->where('status', ProductReview::STATUS_APPROVED);
     }
 
     public function images(): HasMany

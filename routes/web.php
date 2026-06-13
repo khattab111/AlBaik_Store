@@ -22,6 +22,8 @@ use App\Http\Controllers\WholesaleController;
 use App\Http\Controllers\Storefront\Account\AddressController;
 use App\Http\Controllers\Storefront\Account\DashboardController;
 use App\Http\Controllers\Storefront\Account\ProfileController;
+use App\Http\Controllers\Storefront\Account\WalletDepositController;
+use App\Http\Controllers\Storefront\Account\WalletController;
 use App\Http\Controllers\Storefront\AuthController;
 use App\Http\Controllers\Storefront\PasswordResetController;
 use App\Http\Controllers\Storefront\ReviewController;
@@ -90,7 +92,12 @@ Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.s
 
 Route::middleware('wholesale')->prefix('wholesale')->name('wholesale.')->group(function () {
     Route::get('/products', [WholesaleController::class, 'products'])->name('products.index');
+    Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
     Route::get('/offers', [WholesaleController::class, 'offers'])->name('offers.index');
+    Route::get('/offers/{flashOffer:slug}', [OfferController::class, 'show'])->name('offers.show');
+    Route::get('/account', DashboardController::class)->name('account.dashboard');
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
 Route::middleware('auth')->group(function () {
@@ -118,6 +125,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+        Route::post('/wallet/deposits', [WalletDepositController::class, 'store'])->name('wallet.deposits.store')->middleware('throttle:5,1');
         Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
         Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
         Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');

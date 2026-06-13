@@ -142,6 +142,8 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('retail_price')->money('USD')->sortable(),
                 Tables\Columns\TextColumn::make('wholesale_price')->label(__('Wholesale price'))->money('USD')->sortable(),
                 Tables\Columns\IconColumn::make('is_wholesale_available')->label(__('Wholesale'))->boolean(),
+                Tables\Columns\TextColumn::make('average_rating')->label(__('Average rating'))->sortable(),
+                Tables\Columns\TextColumn::make('reviews_count')->label(__('Reviews'))->sortable(),
                 Tables\Columns\TextColumn::make('stock_quantity')->sortable(),
                 Tables\Columns\IconColumn::make('status')->boolean(),
             ])

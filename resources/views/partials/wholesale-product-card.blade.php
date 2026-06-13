@@ -4,8 +4,8 @@
     $imageUrl = $image && file_exists(public_path('storage/'.$image))
         ? asset('storage/'.$image)
         : asset('images/storefront/product-fallback.svg');
-    $rating = round((float) $product->reviews->avg('rating'), 1);
-    $reviewsCount = $product->reviews->count();
+    $rating = round((float) ($product->average_rating ?? 0), 1);
+    $reviewsCount = (int) ($product->reviews_count ?? 0);
     $displayMode = $displayMode ?? 'grid';
     $isList = $displayMode === 'list';
     $pricing = app(\App\Services\ProductPricingService::class)->getPriceForUser($product->loadMissing('priceTiers'), auth()->user(), $minimumQuantity);
@@ -16,7 +16,7 @@
 
 <article class="premium-product-card {{ $isList ? 'is-list' : '' }}">
     <div class="premium-product-media">
-        <a href="{{ route('products.show', $product->slug) }}" aria-label="{{ $product->name }}">
+        <a href="{{ route('wholesale.products.show', $product->slug) }}" aria-label="{{ $product->name }}">
             <img src="{{ $imageUrl }}" alt="{{ $product->name }}" loading="lazy" decoding="async">
         </a>
 
@@ -27,7 +27,7 @@
 
     <div class="premium-product-body">
         <p class="premium-product-brand">{{ $product->brand?->name ?: 'ALBAIK' }}</p>
-        <h3><a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a></h3>
+        <h3><a href="{{ route('wholesale.products.show', $product->slug) }}">{{ $product->name }}</a></h3>
         <p class="premium-product-subtitle">{{ __('Minimum quantity: :quantity', ['quantity' => $minimumQuantity]) }}</p>
 
         <div class="premium-product-rating">

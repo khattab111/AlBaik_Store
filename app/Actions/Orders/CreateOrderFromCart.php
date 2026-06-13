@@ -11,17 +11,22 @@ use App\Models\FlashOffer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
+use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\ShippingCarrier;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Models\WalletTransaction;
 use App\Repositories\CartRepository;
 use App\Services\InventoryService;
 use App\Services\OfferCartService;
+use App\Services\OrderWorkflowService;
 use App\Services\PaymentService;
 use App\Services\FlashOfferService;
 use App\Services\ProductPricingService;
 use App\Services\ShippingService;
+use App\Services\WalletService;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -35,6 +40,8 @@ class CreateOrderFromCart
         private readonly PaymentService $payments,
         private readonly ProductPricingService $pricing,
         private readonly FlashOfferService $flashOffers,
+        private readonly WalletService $wallets,
+        private readonly OrderWorkflowService $workflow,
     ) {}
 
     public function handle(CheckoutData $data): Order
@@ -211,9 +218,45 @@ class CreateOrderFromCart
                 'note' => 'Order created from cart.',
             ]);
 
-            $payment = $this->payments->createPayment($order, $paymentMethod);
+            if ($paymentMethod->type === 'wallet') {
+                $walletTransaction = null;
 
-            if ($data->paymentReceiptPath) {
+                if ($total > 0) {
+                    try {
+                        $walletTransaction = $this->wallets->debit(
+                            $user,
+                            $total,
+                            WalletTransaction::TYPE_PURCHASE,
+                            $order,
+                            __('Wallet payment for order :order', ['order' => $order->order_number]),
+                        );
+                    } catch (DomainException $exception) {
+                        throw ValidationException::withMessages([
+                            'payment_method_id' => $exception->getMessage(),
+                        ]);
+                    }
+                }
+
+                $payment = Payment::create([
+                    'order_id' => $order->id,
+                    'payment_method_id' => $paymentMethod->id,
+                    'driver' => 'wallet',
+                    'status' => 'paid',
+                    'amount' => $total,
+                    'transaction_reference' => $walletTransaction?->transaction_number,
+                    'submitted_at' => now(),
+                    'payload' => [
+                        'wallet_transaction_id' => $walletTransaction?->id,
+                        'wallet_id' => $walletTransaction?->wallet_id,
+                    ],
+                ]);
+
+                $this->workflow->transition($order, 'paid', $user, __('Wallet transaction completed'));
+            } else {
+                $payment = $this->payments->createPayment($order, $paymentMethod);
+            }
+
+            if ($data->paymentReceiptPath && $paymentMethod->type !== 'wallet') {
                 $payment->update([
                     'receipt_image' => $data->paymentReceiptPath,
                     'submitted_at' => now(),

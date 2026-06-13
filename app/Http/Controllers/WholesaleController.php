@@ -44,7 +44,7 @@ class WholesaleController extends Controller
             'price_desc' => $query->orderByDesc('wholesale_price')->orderByDesc('retail_price'),
             'price_asc' => $query->orderBy('wholesale_price')->orderBy('retail_price'),
             'best_selling' => $query->withCount('orderItems')->orderByDesc('order_items_count'),
-            'top_rated' => $query->withAvg('reviews', 'rating')->orderByDesc('reviews_avg_rating'),
+            'top_rated' => $query->orderByDesc('average_rating')->orderByDesc('reviews_count'),
             default => $query->latest(),
         };
 

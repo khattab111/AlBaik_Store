@@ -27,7 +27,7 @@
         @empty
             <div class="store-panel col-span-full p-12 text-center">
                 <h2 class="text-2xl font-black">{{ __('No favorite products.') }}</h2>
-                <a href="{{ route('products.index') }}" class="store-button-primary mt-6">{{ __('Browse Products') }}</a>
+                <a href="{{ auth()->user()?->isWholesaleCustomer() ? route('wholesale.products.index') : route('products.index') }}" class="store-button-primary mt-6">{{ auth()->user()?->isWholesaleCustomer() ? __('Wholesale products') : __('Browse Products') }}</a>
             </div>
         @endforelse
     </div>

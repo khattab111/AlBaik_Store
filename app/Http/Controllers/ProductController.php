@@ -7,21 +7,31 @@ use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductReview;
 use App\Presenters\FlashOfferPresenter;
 use App\Services\FlashOfferService;
 use App\Services\ProductPricingService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(ProductFilterRequest $request): View
+    public function index(ProductFilterRequest $request): View|RedirectResponse
     {
+        if ($request->user()?->isWholesaleCustomer()) {
+            return redirect()->route('wholesale.products.index', $request->query());
+        }
+
         return $this->productIndexView($request, $request->filters());
     }
 
-    public function latest(ProductFilterRequest $request): View
+    public function latest(ProductFilterRequest $request): View|RedirectResponse
     {
+        if ($request->user()?->isWholesaleCustomer()) {
+            return redirect()->route('wholesale.products.index', [...$request->query(), 'sort' => 'latest']);
+        }
+
         return $this->productIndexView($request, [
             ...$request->filters(),
             'sort' => 'latest',
@@ -49,7 +59,7 @@ class ProductController extends Controller
             'price_desc' => $query->orderByDesc('retail_price'),
             'price_asc' => $query->orderBy('retail_price'),
             'best_selling' => $query->withCount('orderItems')->orderByDesc('order_items_count'),
-            'top_rated' => $query->withAvg('reviews', 'rating')->orderByDesc('reviews_avg_rating'),
+            'top_rated' => $query->orderByDesc('average_rating')->orderByDesc('reviews_count'),
             default => $query->latest(),
         };
 
@@ -69,9 +79,19 @@ class ProductController extends Controller
         ]);
     }
 
-    public function show(Product $product, Request $request, ProductPricingService $pricing, FlashOfferPresenter $offers, FlashOfferService $flashOffers): View
+    public function show(Product $product, Request $request, ProductPricingService $pricing, FlashOfferPresenter $offers, FlashOfferService $flashOffers): View|RedirectResponse
     {
         abort_unless($product->status, 404);
+
+        $isWholesaleCustomer = (bool) $request->user()?->isWholesaleCustomer();
+
+        if ($isWholesaleCustomer && ! $request->routeIs('wholesale.products.show')) {
+            return redirect()->route('wholesale.products.show', $product->slug);
+        }
+
+        if ($request->routeIs('wholesale.products.show')) {
+            abort_unless($product->is_wholesale_available, 404);
+        }
 
         $product->load([
             'brand',
@@ -81,10 +101,11 @@ class ProductController extends Controller
             'images',
             'variants',
             'reviews.user',
+            'approvedProductReviews.user',
+            'approvedProductReviews.images',
             'priceTiers',
             'flashOfferItems.flashOffer.items.product.images',
         ]);
-        $isWholesaleCustomer = (bool) $request->user()?->isWholesaleCustomer();
         $audience = $isWholesaleCustomer
             ? \App\Models\FlashOffer::AUDIENCE_WHOLESALE
             : \App\Models\FlashOffer::AUDIENCE_RETAIL;
@@ -116,6 +137,34 @@ class ProductController extends Controller
                 ->latest()
                 ->take(4)
                 ->get(),
+            'approvedReviews' => $product->approvedProductReviews->sortByDesc('created_at')->take(6)->values(),
+            'canReviewProduct' => $this->canUserReviewProduct($request, $product),
+            'hasReviewedProduct' => $request->user()
+                ? ProductReview::where('product_id', $product->id)->where('user_id', $request->user()->id)->exists()
+                : false,
         ]);
+    }
+
+    private function canUserReviewProduct(Request $request, Product $product): bool
+    {
+        if (! $request->user()) {
+            return false;
+        }
+
+        if (ProductReview::where('product_id', $product->id)->where('user_id', $request->user()->id)->exists()) {
+            return false;
+        }
+
+        return $request->user()
+            ->orders()
+            ->whereIn('status', ['delivered', 'completed'])
+            ->where(function ($query) use ($product): void {
+                $query->whereHas('items', fn ($item) => $item->where('product_id', $product->id))
+                    ->orWhereHas('items', function ($item) use ($product): void {
+                        $item->whereNotNull('components_snapshot')
+                            ->where('components_snapshot', 'like', '%"product_id":'.$product->id.'%');
+                    });
+            })
+            ->exists();
     }
 }

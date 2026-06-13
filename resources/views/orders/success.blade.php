@@ -17,7 +17,7 @@
         </div>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
             <a href="{{ route('orders.show', $order) }}" class="store-button-primary">{{ __('View Order') }}</a>
-            <a href="{{ route('products.index') }}" class="store-button-secondary">{{ __('Continue Shopping') }}</a>
+            <a href="{{ auth()->user()?->isWholesaleCustomer() ? route('wholesale.products.index') : route('products.index') }}" class="store-button-secondary">{{ __('Continue Shopping') }}</a>
         </div>
     </div>
 </section>

@@ -12,6 +12,7 @@ use App\Models\ShippingCarrier;
 use App\Repositories\CartRepository;
 use App\Services\ProductPricingService;
 use App\Services\ShippingService;
+use App\Services\WalletService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,7 @@ use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
-    public function index(Request $request, CartRepository $carts, ShippingService $shipping, ProductPricingService $pricing): View
+    public function index(Request $request, CartRepository $carts, ShippingService $shipping, ProductPricingService $pricing, WalletService $wallets): View
     {
         $cart = $carts->findForUser($request->user()->id)->load(['items.product.images', 'items.product.priceTiers', 'items.variant', 'items.offer']);
         $subtotal = $cart->items->sum(fn ($item) => $item->quantity * (float) $item->unit_price);
@@ -35,6 +36,7 @@ class CheckoutController extends Controller
             'availableCarriers' => $defaultCity ? $shipping->formatCarriersForCheckout($defaultCity, $cart, $subtotal, $freeShipping['cart'], $freeShipping['products']) : collect(),
             'requiresShipping' => $shipping->requiresShipping($cart),
             'paymentMethods' => PaymentMethod::where('is_active', true)->orderBy('name')->get(),
+            'wallet' => $wallets->getOrCreateWallet($request->user()),
             'subtotal' => $subtotal,
         ]);
     }

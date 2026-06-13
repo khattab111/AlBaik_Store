@@ -20,7 +20,7 @@
         <div class="store-panel p-12 text-center">
             <h2 class="text-2xl font-black">{{ __('Cart is empty.') }}</h2>
             <p class="mt-3 text-slate-500">{{ __('Start with products or active offers.') }}</p>
-            <a href="{{ route('products.index') }}" class="store-button-primary mt-6">{{ __('Browse Products') }}</a>
+            <a href="{{ auth()->user()?->isWholesaleCustomer() ? route('wholesale.products.index') : route('products.index') }}" class="store-button-primary mt-6">{{ auth()->user()?->isWholesaleCustomer() ? __('Wholesale products') : __('Browse Products') }}</a>
         </div>
     @else
         <div class="grid gap-8 lg:grid-cols-[1fr_360px]">

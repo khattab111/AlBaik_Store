@@ -7,7 +7,7 @@
     <nav class="store-breadcrumb" aria-label="{{ __('Breadcrumb') }}">
         <a href="{{ route('home') }}" class="transition hover:text-red-700">{{ __('Home') }}</a>
         <span aria-hidden="true">›</span>
-        <a href="{{ route('orders.index') }}" class="transition hover:text-red-700">{{ __('Orders') }}</a>
+        <a href="{{ ($isWholesaleAccount ?? false) ? route('wholesale.orders.index') : route('orders.index') }}" class="transition hover:text-red-700">{{ ($isWholesaleAccount ?? false) ? __('Wholesale orders') : __('Orders') }}</a>
         <span aria-hidden="true">›</span>
         <span class="text-slate-950">{{ $order->order_number }}</span>
     </nav>

@@ -9,7 +9,35 @@
     $queryFilters = collect($filters ?? [])->except('page')->filter(fn ($value) => filled($value))->all();
     $perPage = (int) ($filters['per_page'] ?? 12);
     $filterTarget = "[data-ajax-filter-target='wholesale-offers-directory']";
-    $dealCards = collect($presentedOffers ?? []);
+    $dealCards = collect($presentedOffers ?? [])->map(function (array $deal): array {
+        $product = $deal['product'] ?? null;
+        $firstOfferItem = collect($deal['items'] ?? [])->first();
+        $image = $product?->images?->first()?->path ?: ($firstOfferItem['image'] ?? null);
+        $sold = max(0, (int) (($deal['offer']->sold_quantity ?? null) ?: 0));
+        $remaining = $deal['remaining_quantity'] ?? null;
+        $maxQuantity = $remaining !== null ? max($sold + $remaining, 1) : null;
+        $progress = $maxQuantity ? min(100, round(($sold / $maxQuantity) * 100)) : null;
+
+        return [
+            'slug' => $deal['slug'] ?? '',
+            'title' => $deal['title'] ?? __('Wholesale offer'),
+            'product_name' => $product?->name ?: ($deal['title'] ?? __('Wholesale offer')),
+            'brand' => $product?->brand?->name ?: __('Wholesale'),
+            'summary' => $deal['summary'] ?? __('Limited time offer'),
+            'discount_percentage' => (float) ($deal['discount_percentage'] ?? 0),
+            'offer_price' => (float) ($deal['offer_price'] ?? 0),
+            'original_price' => (float) ($deal['original_price'] ?? 0),
+            'saving' => (float) ($deal['saving'] ?? 0),
+            'remaining_quantity' => $remaining,
+            'sold' => $sold,
+            'max_quantity' => $maxQuantity,
+            'progress' => $progress,
+            'ends_at' => $deal['ends_at'] ?? null,
+            'image_url' => $image && file_exists(public_path('storage/'.$image))
+                ? asset('storage/'.$image)
+                : asset('images/storefront/product-fallback.svg'),
+        ];
+    });
 @endphp
 
 <section class="deals-page">
@@ -94,7 +122,7 @@
                 @forelse($dealCards as $deal)
                     <article class="deal-card {{ $displayMode === 'list' ? 'is-list' : '' }}">
                         <div class="deal-card-media">
-                            <a href="{{ route('offers.show', $deal['slug']) }}" aria-label="{{ $deal['title'] }}">
+                            <a href="{{ route('wholesale.offers.show', $deal['slug']) }}" aria-label="{{ $deal['title'] }}">
                                 <img src="{{ $deal['image_url'] }}" alt="{{ $deal['product_name'] }}" loading="lazy" decoding="async">
                             </a>
                             <span class="deal-discount">{{ $deal['discount_percentage'] > 0 ? '-' . number_format($deal['discount_percentage'], 0) . '%' : __('Wholesale') }}</span>
@@ -104,7 +132,7 @@
                         </div>
                         <div class="deal-card-body">
                             <p class="deal-badge">{{ $deal['summary'] }}</p>
-                            <h2><a href="{{ route('offers.show', $deal['slug']) }}">{{ $deal['product_name'] }}</a></h2>
+                            <h2><a href="{{ route('wholesale.offers.show', $deal['slug']) }}">{{ $deal['product_name'] }}</a></h2>
                             <p class="deal-brand">{{ $deal['brand'] }}</p>
                             <div class="deal-prices">
                                 <strong>{{ store_money($deal['offer_price']) }}</strong>

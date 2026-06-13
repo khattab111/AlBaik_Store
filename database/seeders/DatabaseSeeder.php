@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             MarketingOffersSeeder::class,
             NewsletterTemplateSeeder::class,
             DemoCustomerDataSeeder::class,
+            ProductReviewSeeder::class,
             StoreSettingsAndBannersSeeder::class,
         ]);
     }

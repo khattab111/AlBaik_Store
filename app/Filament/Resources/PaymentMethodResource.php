@@ -33,6 +33,7 @@ class PaymentMethodResource extends Resource
                 'cod' => __('Cash on Delivery'),
                 'bank_transfer' => __('Bank Transfer'),
                 'manual' => __('Manual'),
+                'wallet' => __('Wallet'),
             ])->required(),
             Forms\Components\FileUpload::make('image')
                 ->image()

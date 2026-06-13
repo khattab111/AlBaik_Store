@@ -37,7 +37,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
         app(GuestCartService::class)->mergeToUser($request->user()->id);
 
-        return redirect()->intended(route('account.dashboard'));
+        return $this->redirectAfterLogin($request);
     }
 
     public function registerForm(): View
@@ -71,5 +71,23 @@ class AuthController extends Controller
         request()->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    private function redirectAfterLogin(CustomerLoginRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+        $intended = $request->session()->pull('url.intended');
+
+        if ($user->isWholesaleCustomer()) {
+            if (is_string($intended) && str_contains($intended, '/wholesale')) {
+                return redirect()->to($intended);
+            }
+
+            return redirect()->route('wholesale.account.dashboard');
+        }
+
+        return $intended
+            ? redirect()->to($intended)
+            : redirect()->route('account.dashboard');
     }
 }

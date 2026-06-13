@@ -7,8 +7,10 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -50,6 +52,15 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            if (Schema::hasTable('wallets')) {
+                Wallet::firstOrCreate(['user_id' => $user->id]);
+            }
+        });
+    }
+
     public function addresses()
     {
         return $this->hasMany(UserAddress::class);
@@ -75,9 +86,29 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Cart::class);
     }
 
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function walletDepositRequests(): HasMany
+    {
+        return $this->hasMany(WalletDepositRequest::class);
+    }
+
     public function wholesaleApplications(): HasMany
     {
         return $this->hasMany(WholesaleApplication::class);
+    }
+
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
     }
 
     public function reviewedWholesaleApplications(): HasMany

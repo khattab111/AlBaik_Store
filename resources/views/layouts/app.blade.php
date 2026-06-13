@@ -29,25 +29,31 @@
         'rate' => (float) ($currentCurrency?->rate ?? 1),
         'decimals' => (float) ($currentCurrency?->rate ?? 1) >= 1000 ? 0 : 2,
     ];
-    $primaryNavItems = [
-        ['label' => __('Home'), 'route' => 'home', 'active' => 'home', 'icon' => null],
-        ['label' => __('Products'), 'route' => 'products.index', 'active' => ['products.index', 'products.show'], 'icon' => null],
-        ['label' => __('Offers'), 'route' => 'offers.index', 'active' => 'offers.*', 'icon' => null],
-        ['label' => __('Categories'), 'route' => 'categories.index', 'active' => 'categories.*', 'icon' => '▦'],
-        ['label' => __('Brands'), 'route' => 'brands.index', 'active' => 'brands.*', 'icon' => null],
-        ['label' => __('New Arrivals'), 'route' => 'products.latest', 'active' => 'products.latest', 'icon' => null],
-        ['label' => __('About'), 'route' => 'about', 'active' => 'about', 'icon' => null],
-        ['label' => __('Join Us'), 'route' => 'join-us.create', 'active' => 'join-us.*', 'icon' => null],
-    ];
-
-    if (auth()->user()?->isWholesaleCustomer()) {
-        array_splice($primaryNavItems, 4, 0, [[
-            'label' => __('Wholesale'),
-            'route' => 'wholesale.products.index',
-            'active' => 'wholesale.*',
-            'icon' => null,
-        ]]);
-    }
+    $isWholesaleUser = auth()->user()?->isWholesaleCustomer() ?? false;
+    $productsRoute = $isWholesaleUser ? 'wholesale.products.index' : 'products.index';
+    $offersRoute = $isWholesaleUser ? 'wholesale.offers.index' : 'offers.index';
+    $accountRoute = $isWholesaleUser ? 'wholesale.account.dashboard' : 'account.dashboard';
+    $ordersRoute = $isWholesaleUser ? 'wholesale.orders.index' : 'orders.index';
+    $primaryNavItems = $isWholesaleUser
+        ? [
+            ['label' => __('Home'), 'route' => 'home', 'active' => 'home', 'icon' => null],
+            ['label' => __('Wholesale products'), 'route' => 'wholesale.products.index', 'active' => 'wholesale.products.*', 'icon' => null],
+            ['label' => __('Wholesale offers'), 'route' => 'wholesale.offers.index', 'active' => 'wholesale.offers.*', 'icon' => null],
+            ['label' => __('Wholesale orders'), 'route' => 'wholesale.orders.index', 'active' => 'wholesale.orders.*', 'icon' => null],
+            ['label' => __('Wholesale account'), 'route' => 'wholesale.account.dashboard', 'active' => 'wholesale.account.*', 'icon' => null],
+            ['label' => __('About'), 'route' => 'about', 'active' => 'about', 'icon' => null],
+            ['label' => __('Contact'), 'route' => 'contact', 'active' => 'contact', 'icon' => null],
+        ]
+        : [
+            ['label' => __('Home'), 'route' => 'home', 'active' => 'home', 'icon' => null],
+            ['label' => __('Products'), 'route' => 'products.index', 'active' => ['products.index', 'products.show'], 'icon' => null],
+            ['label' => __('Offers'), 'route' => 'offers.index', 'active' => 'offers.*', 'icon' => null],
+            ['label' => __('Categories'), 'route' => 'categories.index', 'active' => 'categories.*', 'icon' => '▦'],
+            ['label' => __('Brands'), 'route' => 'brands.index', 'active' => 'brands.*', 'icon' => null],
+            ['label' => __('New Arrivals'), 'route' => 'products.latest', 'active' => 'products.latest', 'icon' => null],
+            ['label' => __('About'), 'route' => 'about', 'active' => 'about', 'icon' => null],
+            ['label' => __('Join Us'), 'route' => 'join-us.create', 'active' => 'join-us.*', 'icon' => null],
+        ];
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', $currentLocale ?? app()->getLocale()) }}" dir="{{ $textDirection ?? 'ltr' }}">
@@ -126,7 +132,7 @@
                 </span>
             </a>
 
-            <form method="GET" action="{{ route('products.index') }}" class="order-3 flex min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-inner lg:order-none" role="search" aria-label="{{ __('Search storefront') }}">
+            <form method="GET" action="{{ route($productsRoute) }}" class="order-3 flex min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-inner lg:order-none" role="search" aria-label="{{ __('Search storefront') }}">
                 <label for="storefront-search" class="sr-only">{{ __('Search products, brands, offers...') }}</label>
                 <input id="storefront-search" name="search" type="search" value="{{ request('search') }}" autocomplete="off" class="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none" placeholder="{{ __('Search products, brands, offers...') }}">
                 <button class="rounded-xl px-5 py-3 text-sm font-bold text-white transition hover:opacity-90" style="background-color: var(--store-primary)" aria-label="{{ __('Submit product search') }}">{{ __('Search') }}</button>
@@ -175,7 +181,7 @@
                         <span aria-hidden="true">🛒</span>
                         <span class="store-badge" data-cart-count aria-hidden="true">{{ $cartCount ?? 0 }}</span>
                     </a>
-                    <a href="{{ route('account.dashboard') }}" class="hidden rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-red-200 hover:text-red-700 sm:inline-flex">{{ __('Account') }}</a>
+                    <a href="{{ route($accountRoute) }}" class="hidden rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-red-200 hover:text-red-700 sm:inline-flex">{{ $isWholesaleUser ? __('Wholesale account') : __('Account') }}</a>
                 @else
                     <a href="{{ route('customer.login') }}" class="store-icon-button" aria-label="{{ __('Wishlist, :count items', ['count' => 0]) }}">
                         <span aria-hidden="true">♡</span>
@@ -235,7 +241,8 @@
                     </a>
                 @endforeach
                 @auth
-                    <a href="{{ route('account.dashboard') }}" class="store-nav-link">{{ __('Account') }}</a>
+                    <a href="{{ route($accountRoute) }}" class="store-nav-link">{{ $isWholesaleUser ? __('Wholesale account') : __('Account') }}</a>
+                    <a href="{{ route('account.wallet.index') }}" class="store-nav-link">{{ __('My Wallet') }}</a>
                     <form method="POST" action="{{ route('customer.logout') }}">
                         @csrf
                         <button class="store-nav-link w-full">{{ __('Logout') }}</button>
@@ -326,11 +333,13 @@
             <nav aria-labelledby="footer-shop-title">
                 <h3 id="footer-shop-title" class="store-footer-heading text-sm font-black uppercase tracking-normal">{{ __('Shop') }}</h3>
                 <div class="store-footer-links mt-4 grid gap-3 text-sm font-semibold">
-                    <a class="transition" href="{{ route('products.index') }}">{{ __('All Products') }}</a>
-                    <a class="transition" href="{{ route('offers.index') }}">{{ __('Offers') }}</a>
-                    <a class="transition" href="{{ route('categories.index') }}">{{ __('Categories') }}</a>
-                    <a class="transition" href="{{ route('brands.index') }}">{{ __('Brands') }}</a>
-                    <a class="transition" href="{{ route('products.latest') }}">{{ __('New Arrivals') }}</a>
+                    <a class="transition" href="{{ route($productsRoute) }}">{{ $isWholesaleUser ? __('Wholesale products') : __('All Products') }}</a>
+                    <a class="transition" href="{{ route($offersRoute) }}">{{ $isWholesaleUser ? __('Wholesale offers') : __('Offers') }}</a>
+                    @unless($isWholesaleUser)
+                        <a class="transition" href="{{ route('categories.index') }}">{{ __('Categories') }}</a>
+                        <a class="transition" href="{{ route('brands.index') }}">{{ __('Brands') }}</a>
+                        <a class="transition" href="{{ route('products.latest') }}">{{ __('New Arrivals') }}</a>
+                    @endunless
                 </div>
             </nav>
 
@@ -338,8 +347,9 @@
                 <h3 id="footer-account-title" class="store-footer-heading text-sm font-black uppercase tracking-normal">{{ __('Account links') }}</h3>
                 <div class="store-footer-links mt-4 grid gap-3 text-sm font-semibold">
                     @auth
-                        <a class="transition" href="{{ route('account.dashboard') }}">{{ __('Account') }}</a>
-                        <a class="transition" href="{{ route('orders.index') }}">{{ __('Orders') }}</a>
+                        <a class="transition" href="{{ route($accountRoute) }}">{{ $isWholesaleUser ? __('Wholesale account') : __('Account') }}</a>
+                        <a class="transition" href="{{ route('account.wallet.index') }}">{{ __('My Wallet') }}</a>
+                        <a class="transition" href="{{ route($ordersRoute) }}">{{ $isWholesaleUser ? __('Wholesale orders') : __('Orders') }}</a>
                         <a class="transition" href="{{ route('cart.index') }}">{{ __('Cart') }}</a>
                         <a class="transition" href="{{ route('favorites.index') }}">{{ __('Wishlist') }}</a>
                         <a class="transition" href="{{ route('account.addresses.index') }}">{{ __('Addresses') }}</a>

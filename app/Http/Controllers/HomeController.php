@@ -31,7 +31,7 @@ class HomeController extends Controller
             'featuredProducts' => Product::with($productRelations)->where('status', true)->where('is_featured', true)->latest()->take(8)->get(),
             'latestProducts' => Product::with($productRelations)->where('status', true)->latest()->take(8)->get(),
             'bestSellingProducts' => Product::with($productRelations)->where('status', true)->withCount('orderItems')->orderByDesc('order_items_count')->latest()->take(8)->get(),
-            'topRatedProducts' => Product::with($productRelations)->where('status', true)->withAvg('reviews', 'rating')->orderByDesc('reviews_avg_rating')->latest()->take(8)->get(),
+            'topRatedProducts' => Product::with($productRelations)->where('status', true)->orderByDesc('average_rating')->orderByDesc('reviews_count')->latest()->take(8)->get(),
             'flashOffers' => $flashOffers->getActiveOffers()->take(3),
             'storeStats' => [
                 ['value' => Product::where('status', true)->count(), 'label' => __('Products')],

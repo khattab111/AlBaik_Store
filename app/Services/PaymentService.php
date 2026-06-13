@@ -9,6 +9,7 @@ use App\Payments\Contracts\PaymentDriver;
 use App\Payments\Drivers\BankTransferDriver;
 use App\Payments\Drivers\CashOnDeliveryDriver;
 use App\Payments\Drivers\ManualPaymentDriver;
+use App\Payments\Drivers\WalletPaymentDriver;
 use InvalidArgumentException;
 
 class PaymentService
@@ -35,6 +36,7 @@ class PaymentService
             'cod' => new CashOnDeliveryDriver(),
             'bank_transfer' => new BankTransferDriver(),
             'manual' => new ManualPaymentDriver(),
+            'wallet' => new WalletPaymentDriver(),
             default => throw new InvalidArgumentException("Unsupported payment driver [{$type}]."),
         };
     }

@@ -19,8 +19,12 @@ use Illuminate\Http\Request;
 
 class OfferController extends Controller
 {
-    public function index(OfferFilterRequest $request, FlashOfferService $flashOffers, FlashOfferPresenter $presenter): View
+    public function index(OfferFilterRequest $request, FlashOfferService $flashOffers, FlashOfferPresenter $presenter): View|RedirectResponse
     {
+        if ($request->user()?->isWholesaleCustomer()) {
+            return redirect()->route('wholesale.offers.index', $request->query());
+        }
+
         $locale = app()->getLocale();
         $filters = $request->filters();
         $perPage = (int) ($filters['per_page'] ?? 12);
@@ -70,9 +74,17 @@ class OfferController extends Controller
         ]);
     }
 
-    public function show(FlashOffer $flashOffer, Request $request, FlashOfferService $flashOffers, FlashOfferPresenter $presenter): View
+    public function show(FlashOffer $flashOffer, Request $request, FlashOfferService $flashOffers, FlashOfferPresenter $presenter): View|RedirectResponse
     {
+        if ($request->user()?->isWholesaleCustomer() && ! $request->routeIs('wholesale.offers.show')) {
+            return redirect()->route('wholesale.offers.show', $flashOffer->slug);
+        }
+
         abort_unless($flashOffers->isOfferValid($flashOffer, $this->audienceForRequest($request)), 404);
+
+        if ($request->routeIs('wholesale.offers.show')) {
+            abort_unless($flashOffer->items()->whereHas('product', fn ($product) => $product->where('is_wholesale_available', true))->exists(), 404);
+        }
 
         $flashOffer->load(['items.product.images', 'items.product.brand', 'items.product.reviews']);
 

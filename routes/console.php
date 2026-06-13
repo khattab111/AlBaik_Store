@@ -8,9 +8,13 @@ use App\Jobs\SendNewsletterCampaignJob;
 use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\FlashOffer;
 use App\Models\NewsletterCampaign;
 use App\Models\Product;
+use App\Models\User;
+use App\Models\Wallet;
+use App\Services\WalletService;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -52,6 +56,34 @@ Artisan::command('store:generate-missing-slugs', function () {
 
     $this->info("Done. {$total} records updated.");
 })->purpose('Generate missing slugs for store content models');
+
+Artisan::command('wallets:ensure {--fresh-currency : Fill missing wallet currency with the current default currency}', function (WalletService $wallets) {
+    $created = 0;
+    $updated = 0;
+
+    User::query()
+        ->orderBy('id')
+        ->each(function (User $user) use ($wallets, &$created, &$updated): void {
+            $hadWallet = Wallet::where('user_id', $user->id)->exists();
+            $wallet = $wallets->getOrCreateWallet($user);
+
+            if (! $hadWallet) {
+                $created++;
+            }
+
+            if ($this->option('fresh-currency') && blank($wallet->currency_code)) {
+                $defaultCurrency = Currency::query()->where('is_default', true)->value('code');
+
+                if ($defaultCurrency) {
+                    $wallet->forceFill(['currency_code' => $defaultCurrency])->save();
+                    $updated++;
+                }
+            }
+        });
+
+    $this->info("Wallets created: {$created}");
+    $this->info("Wallets updated: {$updated}");
+})->purpose('Create missing wallets for existing users');
 
 Schedule::call(function (): void {
     NewsletterCampaign::readyToSend()

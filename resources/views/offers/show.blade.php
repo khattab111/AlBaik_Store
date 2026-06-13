@@ -1,14 +1,17 @@
 @extends('layouts.app')
 
+@php($isWholesaleOffer = auth()->user()?->isWholesaleCustomer() ?? false)
+
 @section('title', $details['title'])
 @section('meta_description', $details['description'] ?: $details['summary'])
+@section('canonical', $isWholesaleOffer ? route('wholesale.offers.show', $offer->slug) : route('offers.show', $offer->slug))
 
 @section('content')
 <section class="store-section">
     <nav class="store-breadcrumb" aria-label="{{ __('Breadcrumb') }}">
         <a href="{{ route('home') }}" class="transition hover:text-red-700">{{ __('Home') }}</a>
         <span aria-hidden="true">›</span>
-        <a href="{{ route('offers.index') }}" class="transition hover:text-red-700">{{ __('Offers') }}</a>
+        <a href="{{ $isWholesaleOffer ? route('wholesale.offers.index') : route('offers.index') }}" class="transition hover:text-red-700">{{ $isWholesaleOffer ? __('Wholesale offers') : __('Offers') }}</a>
         <span aria-hidden="true">›</span>
         <span class="text-slate-950">{{ $details['title'] }}</span>
     </nav>

@@ -46,5 +46,17 @@ class PaymentMethodsSeeder extends Seeder
             'fee' => 1.50,
             'is_active' => true,
         ]);
+
+        PaymentMethod::updateOrCreate(['slug' => 'wallet'], [
+            'name' => $this->tr('Pay with wallet', 'الدفع من المحفظة'),
+            'type' => 'wallet',
+            'description' => $this->tr('Pay instantly from your store wallet balance.', 'ادفع مباشرة من رصيد محفظتك داخل المتجر.'),
+            'image' => null,
+            'wallet_url' => null,
+            'barcode_image' => null,
+            'settings' => [],
+            'fee' => 0,
+            'is_active' => true,
+        ]);
     }
 }
