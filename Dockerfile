@@ -24,6 +24,7 @@ RUN apt-get update \
         libpng-dev \
         libxml2-dev \
         libzip-dev \
+        libpq-dev \
         unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
@@ -33,6 +34,8 @@ RUN apt-get update \
         intl \
         pcntl \
         pdo_mysql \
+        pdo_pgsql \
+        pgsql \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
