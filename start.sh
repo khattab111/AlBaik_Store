@@ -3,7 +3,7 @@ set -e
 
 echo "Starting AlBaik Store..."
 
-php artisan optimize:clear
+php artisan optimize:clear || true
 
 php artisan migrate --force
 
