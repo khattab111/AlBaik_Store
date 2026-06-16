@@ -26,8 +26,20 @@ class HomeController extends Controller
                 ->get(),
             'homeAfterHeroBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_HOME_AFTER_HERO)->orderBy('sort_order')->get(),
             'homeBeforeProductsBanners' => Banner::activeNow()->forPlacement(Banner::PLACEMENT_HOME_BEFORE_PRODUCTS)->orderBy('sort_order')->get(),
-            'brands' => Brand::where('status', true)->withCount('products')->orderBy("name->{$locale}")->take(8)->get(),
-            'categories' => Category::where('status', true)->whereNull('parent_id')->withCount('products')->orderBy("name->{$locale}")->take(8)->get(),
+            // 'brands' => Brand::where('status', true)->withCount('products')->orderBy("name->{$locale}")->take(8)->get(),
+            // 'categories' => Category::where('status', true)->whereNull('parent_id')->withCount('products')->orderBy("name->{$locale}")->take(8)->get(),
+            'brands' => Brand::where('status', true)
+    ->withCount('products')
+    ->orderBy('name')
+    ->take(8)
+    ->get(),
+
+'categories' => Category::where('status', true)
+    ->whereNull('parent_id')
+    ->withCount('products')
+    ->orderBy('name')
+    ->take(8)
+    ->get(),
             'featuredProducts' => Product::with($productRelations)->where('status', true)->where('is_featured', true)->latest()->take(8)->get(),
             'latestProducts' => Product::with($productRelations)->where('status', true)->latest()->take(8)->get(),
             'bestSellingProducts' => Product::with($productRelations)->where('status', true)->withCount('orderItems')->orderByDesc('order_items_count')->latest()->take(8)->get(),
