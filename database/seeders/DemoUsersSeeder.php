@@ -11,7 +11,7 @@ class DemoUsersSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            ['email' => 'admin@albaik.test', 'name' => 'Demo Admin', 'mobile' => '+963900000001', 'type' => 'admin', 'role' => 'Admin'],
+            ['email' => 'adminssss@albaik.test', 'name' => 'Demo Admin', 'mobile' => '+963900000001', 'type' => 'admin', 'role' => 'Admin'],
             ['email' => 'manager@albaik.test', 'name' => 'Electronics Manager', 'mobile' => '+963900000004', 'type' => 'manager', 'role' => 'Manager'],
             ['email' => 'customer@albaik.test', 'name' => 'Demo Customer', 'mobile' => '+963900000002', 'type' => 'customer', 'role' => 'Customer'],
             ['email' => 'wholesale@albaik.test', 'name' => 'Wholesale Electronics Customer', 'mobile' => '+963900000003', 'type' => 'wholesale_customer', 'role' => 'Wholesale Customer'],
