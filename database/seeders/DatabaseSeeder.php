@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             ThreeLwanProviderSeeder::class,
             DemoCustomerDataSeeder::class,
             ProductReviewSeeder::class,
-            StoreSettingsAndBannersSeeder::class,
+          //  StoreSettingsAndBannersSeeder::class,
         ]);
     }
 }
