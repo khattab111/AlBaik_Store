@@ -357,3 +357,6 @@ class StoreSettingsAndBannersSeeder extends Seeder
         return ['en' => $en, 'ar' => $ar];
     }
 }
+
+
+

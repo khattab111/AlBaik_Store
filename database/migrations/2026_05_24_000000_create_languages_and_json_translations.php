@@ -26,9 +26,9 @@ return new class extends Migration
             ['name' => 'English', 'code' => 'en', 'direction' => 'ltr', 'is_default' => false, 'is_active' => true, 'flag' => '🇺🇸', 'sort_order' => 2, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
-            return;
-        }
+      if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb', 'pgsql'], true)) {
+    return;
+}
 
         $this->jsonize('categories', ['name' => 'required', 'description' => 'nullable']);
         $this->jsonize('brands', ['name' => 'required', 'description' => 'nullable']);
@@ -48,19 +48,29 @@ return new class extends Migration
 
         Schema::table('banners', function (Blueprint $table) {
             if (! Schema::hasColumn('banners', 'eyebrow')) {
-                $table->json('eyebrow')->nullable()->after('subtitle');
-            }
-            if (! Schema::hasColumn('banners', 'primary_button_text')) {
-                $table->json('primary_button_text')->nullable()->after('url');
-            }
-            if (! Schema::hasColumn('banners', 'secondary_button_text')) {
-                $table->json('secondary_button_text')->nullable()->after('primary_button_text');
-            }
+        $table->json('eyebrow')->nullable();
+    }
+    if (! Schema::hasColumn('banners', 'primary_button_text')) {
+        $table->json('primary_button_text')->nullable();
+    }
+    if (! Schema::hasColumn('banners', 'secondary_button_text')) {
+        $table->json('secondary_button_text')->nullable();
+    }
         });
 
-        DB::statement("UPDATE banners SET eyebrow = JSON_OBJECT('ar', COALESCE(eyebrow_ar, ''), 'en', COALESCE(eyebrow_en, '')) WHERE eyebrow IS NULL");
-        DB::statement("UPDATE banners SET primary_button_text = JSON_OBJECT('ar', COALESCE(primary_button_text_ar, ''), 'en', COALESCE(primary_button_text_en, '')) WHERE primary_button_text IS NULL");
-        DB::statement("UPDATE banners SET secondary_button_text = JSON_OBJECT('ar', COALESCE(secondary_button_text_ar, ''), 'en', COALESCE(secondary_button_text_en, '')) WHERE secondary_button_text IS NULL");
+     $driver = DB::connection()->getDriverName();
+
+if (in_array($driver, ['mysql', 'mariadb'], true)) {
+    DB::statement("UPDATE banners SET eyebrow = JSON_OBJECT('ar', COALESCE(eyebrow_ar, ''), 'en', COALESCE(eyebrow_en, '')) WHERE eyebrow IS NULL");
+    DB::statement("UPDATE banners SET primary_button_text = JSON_OBJECT('ar', COALESCE(primary_button_text_ar, ''), 'en', COALESCE(primary_button_text_en, '')) WHERE primary_button_text IS NULL");
+    DB::statement("UPDATE banners SET secondary_button_text = JSON_OBJECT('ar', COALESCE(secondary_button_text_ar, ''), 'en', COALESCE(secondary_button_text_en, '')) WHERE secondary_button_text IS NULL");
+}
+
+if ($driver === 'pgsql') {
+    DB::statement("UPDATE banners SET eyebrow = jsonb_build_object('ar', COALESCE(eyebrow_ar, ''), 'en', COALESCE(eyebrow_en, '')) WHERE eyebrow IS NULL");
+    DB::statement("UPDATE banners SET primary_button_text = jsonb_build_object('ar', COALESCE(primary_button_text_ar, ''), 'en', COALESCE(primary_button_text_en, '')) WHERE primary_button_text IS NULL");
+    DB::statement("UPDATE banners SET secondary_button_text = jsonb_build_object('ar', COALESCE(secondary_button_text_ar, ''), 'en', COALESCE(secondary_button_text_en, '')) WHERE secondary_button_text IS NULL");
+}
     }
 
     public function down(): void
@@ -68,16 +78,44 @@ return new class extends Migration
         Schema::dropIfExists('languages');
     }
 
-    private function jsonize(string $table, array $columns): void
-    {
-        foreach ($columns as $column => $mode) {
-            if (! Schema::hasColumn($table, $column)) {
-                continue;
-            }
+  private function jsonize(string $table, array $columns): void
+{
+    $driver = DB::connection()->getDriverName();
 
+    foreach ($columns as $column => $mode) {
+        if (! Schema::hasColumn($table, $column)) {
+            continue;
+        }
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
             DB::statement("UPDATE {$table} SET {$column} = CASE WHEN {$column} IS NULL THEN NULL ELSE JSON_OBJECT('ar', {$column}, 'en', {$column}) END WHERE JSON_VALID({$column}) = 0 OR {$column} IS NULL");
+
             $nullable = $mode === 'nullable' ? 'NULL' : 'NOT NULL';
+
             DB::statement("ALTER TABLE {$table} MODIFY {$column} JSON {$nullable}");
         }
+
+        if ($driver === 'pgsql') {
+            DB::statement("
+                UPDATE {$table}
+                SET {$column} = CASE
+                    WHEN {$column} IS NULL THEN NULL
+                    ELSE jsonb_build_object('ar', {$column}, 'en', {$column})::text
+                END
+            ");
+
+            DB::statement("
+                ALTER TABLE {$table}
+                ALTER COLUMN {$column} TYPE jsonb
+                USING {$column}::jsonb
+            ");
+
+            if ($mode === 'nullable') {
+                DB::statement("ALTER TABLE {$table} ALTER COLUMN {$column} DROP NOT NULL");
+            } else {
+                DB::statement("ALTER TABLE {$table} ALTER COLUMN {$column} SET NOT NULL");
+            }
+        }
     }
+}
 };

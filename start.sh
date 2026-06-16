@@ -5,8 +5,8 @@ echo "Starting AlBaik Store..."
 
 php artisan optimize:clear || true
 
-php artisan migrate --force
-php artisan db:seed --force
+# php artisan migrate --force
+php artisan migrate:fresh --seed --force
 
 
 php artisan storage:link || true
