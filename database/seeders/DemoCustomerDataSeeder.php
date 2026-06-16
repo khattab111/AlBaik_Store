@@ -28,7 +28,7 @@ class DemoCustomerDataSeeder extends Seeder
     {
         $customer = User::where('email', 'customer@albaik.test')->firstOrFail();
         $wholesale = User::where('email', 'wholesale@albaik.test')->firstOrFail();
-        $admin = User::where('email', 'admin@albaik.test')->firstOrFail();
+        $admin = User::where('email', 'adminssss@albaik.test')->firstOrFail();
         $usd = Currency::where('code', 'USD')->firstOrFail();
         $cod = PaymentMethod::where('slug', 'cod')->firstOrFail();
         $bank = PaymentMethod::where('slug', 'bank-transfer')->firstOrFail();
